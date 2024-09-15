@@ -56,10 +56,17 @@ const updateAuctionIntoDB = async (id, newImages, data) => {
   return result;
 };
 
+// delete auction from db
+const deleteAuctionFromDB = async (id) => {
+  const result = await Auction.findByIdAndDelete(id);
+  return result;
+};
+
 const auctionService = {
   createAuctionIntoDB,
   getAllAuctionFromDB,
   updateAuctionIntoDB,
+  deleteAuctionFromDB,
 };
 
 module.exports = auctionService;

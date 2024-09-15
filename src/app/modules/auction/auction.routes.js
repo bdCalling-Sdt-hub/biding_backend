@@ -23,5 +23,6 @@ router.patch(
   },
   auctionController.updateAuction
 );
+router.delete("/delete-auction/:id", auctionController.deleteAuction);
 
 module.exports = router;

@@ -26,6 +26,7 @@ const getAllAuction = catchAsync(async (req, res) => {
     data: result,
   });
 });
+// update auction
 const updateAuction = catchAsync(async (req, res) => {
   const id = req.params?.id;
   const data = req?.body;
@@ -40,11 +41,25 @@ const updateAuction = catchAsync(async (req, res) => {
     data: result,
   });
 });
+// delete auction
+const deleteAuction = catchAsync(async (req, res) => {
+  const id = req.params?.id;
+
+  const result = await auctionService.deleteAuctionFromDB(id);
+
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Auction deleted successfully",
+    data: result,
+  });
+});
 
 const auctionController = {
   createAuction,
   getAllAuction,
   updateAuction,
+  deleteAuction,
 };
 
 module.exports = auctionController;
