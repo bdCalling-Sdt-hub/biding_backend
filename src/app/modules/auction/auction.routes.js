@@ -13,5 +13,6 @@ router.post(
   },
   auctionController.createAuction
 );
+router.get("/", auctionController.getAllAuction);
 
 module.exports = router;

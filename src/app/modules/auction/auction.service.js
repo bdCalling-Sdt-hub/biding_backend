@@ -22,8 +22,15 @@ const createAuctionIntoDB = async (images, data) => {
   return result;
 };
 
+// get all auction
+const getAllAuctionFromDB = async () => {
+  const result = await Auction.find();
+  return result;
+};
+
 const auctionService = {
   createAuctionIntoDB,
+  getAllAuctionFromDB,
 };
 
 module.exports = auctionService;
