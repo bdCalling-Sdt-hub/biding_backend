@@ -1,9 +1,10 @@
 const catchAsync = require("../../../shared/catchasync");
+const sendResponse = require("../../../shared/sendResponse");
 const bookmarkService = require("./bookmark.service");
 
 const createBookmark = catchAsync(async (req, res) => {
   const result = await bookmarkService.createBookmarkIntoDB(
-    req?.params?.auctionId,
+    req?.body?.auctionId,
     req?.user
   );
 
