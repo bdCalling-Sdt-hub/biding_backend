@@ -5,7 +5,7 @@ const AdminRoutes = require("../modules/admin/admin.routes");
 const ManageRoutes = require("../modules/manage-web/manage.routes");
 const DashboardRoutes = require("../modules/dashboard/dashboard.routes");
 const PaymentRoutes = require("../modules/payment/payment.routes");
-
+const categoryRoutes = require("../modules/category/category.route");
 const moduleRoutes = [
   {
     path: "/user",
@@ -14,6 +14,10 @@ const moduleRoutes = [
   {
     path: "/admin",
     route: AdminRoutes,
+  },
+  {
+    path: "/category",
+    route: categoryRoutes,
   },
   {
     path: "/manage",
