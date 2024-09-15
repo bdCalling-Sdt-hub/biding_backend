@@ -24,5 +24,6 @@ router.patch(
   },
   categoryController.updateCategory
 );
+router.delete("/delete-category/:id", categoryController.deleteCategory);
 
 module.exports = router;

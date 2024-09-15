@@ -41,10 +41,16 @@ const updateCategoryIntoDB = async (id, image, categoryData) => {
   return result;
 };
 
+const deleteCategoryFromDB = async (id) => {
+  const result = await Category.findByIdAndDelete(id);
+  return result;
+};
+
 const categoryService = {
   createCategoryIntoDB,
   getAllCategoryFromDB,
   updateCategoryIntoDB,
+  deleteCategoryFromDB,
 };
 
 module.exports = categoryService;
