@@ -1,3 +1,5 @@
+const httpStatus = require("http-status");
+const ApiError = require("../../../errors/ApiError");
 const {
   sendImageToCloudinary,
 } = require("../../../helpers/sendImageToCloudinary");
@@ -28,9 +30,36 @@ const getAllAuctionFromDB = async () => {
   return result;
 };
 
+// update auction into db
+const updateAuctionIntoDB = async (id, newImages, data) => {
+  const auction = await Auction.findById(id);
+  if (!auction) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
+  }
+  let imageUrls = [...data?.images];
+  if (newImages) {
+    for (const image of newImages) {
+      const imageName = image?.filename;
+      const { secure_url } = await sendImageToCloudinary(
+        imageName,
+        image?.path
+      );
+      imageUrls.push(secure_url);
+    }
+  }
+
+  data.images = imageUrls;
+  const result = await Auction.findByIdAndUpdate(id, data, {
+    runValidators: true,
+    new: true,
+  });
+  return result;
+};
+
 const auctionService = {
   createAuctionIntoDB,
   getAllAuctionFromDB,
+  updateAuctionIntoDB,
 };
 
 module.exports = auctionService;

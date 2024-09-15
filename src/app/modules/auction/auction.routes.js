@@ -14,5 +14,14 @@ router.post(
   auctionController.createAuction
 );
 router.get("/", auctionController.getAllAuction);
+router.patch(
+  "/update-auction/:id",
+  uploadFile(),
+  (req, res, next) => {
+    req.body = JSON.parse(req.body.data);
+    next();
+  },
+  auctionController.updateAuction
+);
 
 module.exports = router;
