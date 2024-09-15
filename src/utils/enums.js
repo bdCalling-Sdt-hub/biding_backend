@@ -4,6 +4,13 @@ const ENUM_USER_ROLE = {
   USER: "USER",
 };
 
+const ENUM_AUCTION_STATUS = {
+  UPCOMING: "UPCOMING",
+  ACTIVE: "ACTIVE",
+  COMPLETED: "COMPLETED",
+};
+
 module.exports = {
   ENUM_USER_ROLE,
+  ENUM_AUCTION_STATUS,
 };

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { ENUM_AUCTION_STATUS } = require("../../../utils/enums");
 
 const auctionSchema = new mongoose.Schema(
   {
@@ -16,6 +17,11 @@ const auctionSchema = new mongoose.Schema(
     images: {
       type: [String],
       required: true,
+    },
+    status: {
+      type: String,
+      enum: Object.values(ENUM_AUCTION_STATUS),
+      default: ENUM_AUCTION_STATUS.UPCOMING,
     },
   },
   {
