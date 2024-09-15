@@ -8,7 +8,7 @@ const Category = require("./category.model");
 const createCategoryIntoDB = async (file, categoryData) => {
   console.log(categoryData);
   if (file) {
-    const imageName = `${categoryData?.name}`;
+    const imageName = `${file?.originalname}`;
     // send image to cloudinary --------
     const { secure_url } = await sendImageToCloudinary(imageName, file?.path);
     categoryData.image = secure_url;
@@ -29,7 +29,7 @@ const updateCategoryIntoDB = async (id, image, categoryData) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Category does not exits");
   }
   if (image) {
-    const imageName = `${categoryData?.name}`;
+    const imageName = `${image?.originalname}`;
     // send image to cloudinary --------
     const { secure_url } = await sendImageToCloudinary(imageName, image?.path);
     categoryData.image = secure_url;

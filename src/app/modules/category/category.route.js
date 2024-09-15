@@ -19,7 +19,7 @@ router.patch(
   "/update-category/:id",
   uploadFile(),
   (req, res, next) => {
-    req.body = JSON.parse(req.body.data);
+    req.body = JSON.parse(req?.body?.data);
     next();
   },
   categoryController.updateCategory

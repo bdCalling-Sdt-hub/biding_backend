@@ -27,7 +27,7 @@ const getAllCategory = catchAsync(async (req, res) => {
 // update category
 const updateCategory = catchAsync(async (req, res) => {
   console.log("imageFile", req?.file);
-  const image = req?.files?.image[0];
+  const image = req?.files?.image?.[0] || null;
   console.log("data", req.body);
   const result = await categoryService.updateCategoryIntoDB(
     req.params?.id,
