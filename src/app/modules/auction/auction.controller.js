@@ -54,12 +54,26 @@ const deleteAuction = catchAsync(async (req, res) => {
     data: result,
   });
 });
+// single auction
+const getSingleAuction = catchAsync(async (req, res) => {
+  const id = req.params?.id;
+
+  const result = await auctionService.getSingleAuctionFromDB(id);
+
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Auction retrieved successfully",
+    data: result,
+  });
+});
 
 const auctionController = {
   createAuction,
   getAllAuction,
   updateAuction,
   deleteAuction,
+  getSingleAuction,
 };
 
 module.exports = auctionController;

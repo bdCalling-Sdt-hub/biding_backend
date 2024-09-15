@@ -30,6 +30,15 @@ const getAllAuctionFromDB = async () => {
   return result;
 };
 
+// get single auction
+const getSingleAuctionFromDB = async (id) => {
+  const result = await Auction.findById(id);
+  if (!result) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
+  }
+  return result;
+};
+
 // update auction into db
 const updateAuctionIntoDB = async (id, newImages, data) => {
   const auction = await Auction.findById(id);
@@ -67,6 +76,7 @@ const auctionService = {
   getAllAuctionFromDB,
   updateAuctionIntoDB,
   deleteAuctionFromDB,
+  getSingleAuctionFromDB,
 };
 
 module.exports = auctionService;

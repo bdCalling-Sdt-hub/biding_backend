@@ -14,6 +14,7 @@ router.post(
   auctionController.createAuction
 );
 router.get("/", auctionController.getAllAuction);
+router.get("/get-single-auction/:id", auctionController.getSingleAuction);
 router.patch(
   "/update-auction/:id",
   uploadFile(),
