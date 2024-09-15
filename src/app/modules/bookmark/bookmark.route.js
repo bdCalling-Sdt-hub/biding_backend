@@ -15,5 +15,10 @@ router.get(
   auth(ENUM_USER_ROLE.USER),
   bookmarkController.getMyBookmark
 );
+router.delete(
+  "/delete-bookmark/:id",
+  auth(ENUM_USER_ROLE.USER),
+  bookmarkController.deleteBookmark
+);
 
 module.exports = router;

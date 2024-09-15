@@ -26,10 +26,25 @@ const getMyBookmark = catchAsync(async (req, res) => {
     data: result,
   });
 });
+// delete bookmark
+const deleteBookmark = catchAsync(async (req, res) => {
+  const result = await bookmarkService.deleteBookmarkFromDB(
+    req?.params?.id,
+    req?.user
+  );
+
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Bookmark deleted successfully",
+    data: result,
+  });
+});
 
 const bookmarkController = {
   createBookmark,
   getMyBookmark,
+  deleteBookmark,
 };
 
 module.exports = bookmarkController;
