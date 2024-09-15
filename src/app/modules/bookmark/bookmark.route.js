@@ -10,5 +10,10 @@ router.post(
   auth(ENUM_USER_ROLE.USER),
   bookmarkController.createBookmark
 );
+router.get(
+  "/my-bookmarks",
+  auth(ENUM_USER_ROLE.USER),
+  bookmarkController.getMyBookmark
+);
 
 module.exports = router;

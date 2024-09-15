@@ -15,9 +15,21 @@ const createBookmark = catchAsync(async (req, res) => {
     data: result,
   });
 });
+// get my bookmark
+const getMyBookmark = catchAsync(async (req, res) => {
+  const result = await bookmarkService.getMyBookmarkFromDB(req?.user);
+
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Bookmark retrieved successfully",
+    data: result,
+  });
+});
 
 const bookmarkController = {
   createBookmark,
+  getMyBookmark,
 };
 
 module.exports = bookmarkController;
