@@ -20,7 +20,9 @@ const createBookmarkIntoDB = async (auctionId, user) => {
 
 // get bookmark from db
 const getMyBookmarkFromDB = async (user) => {
-  const result = await Bookmark.find({ user: user?.userId });
+  const result = await Bookmark.find({ user: user?.userId }).populate(
+    "auction"
+  );
   return result;
 };
 

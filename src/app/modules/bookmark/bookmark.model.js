@@ -5,10 +5,12 @@ const bookmarkSchema = new Schema(
     user: {
       type: Schema.Types.ObjectId,
       required: true,
+      ref: "User",
     },
     auction: {
       type: Schema.Types.ObjectId,
       required: true,
+      ref: "Auction",
     },
   },
   {
