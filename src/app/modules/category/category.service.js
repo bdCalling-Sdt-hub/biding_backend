@@ -14,8 +14,14 @@ const createCategoryIntoDB = async (file, categoryData) => {
   return result;
 };
 
+const getAllCategoryFromDB = async () => {
+  const result = await Category.find();
+  return result;
+};
+
 const categoryService = {
   createCategoryIntoDB,
+  getAllCategoryFromDB,
 };
 
 module.exports = categoryService;
