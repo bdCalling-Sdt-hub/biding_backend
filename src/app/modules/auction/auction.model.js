@@ -10,7 +10,7 @@ const auctionSchema = new mongoose.Schema(
     incrementValue: { type: Number, required: true },
 
     startingDate: { type: Date, required: true },
-    startingTime: { type: String, required: true }, // Time in HH:MM format
+    startingTime: { type: String, required: true },
 
     description: { type: String, required: true },
 
