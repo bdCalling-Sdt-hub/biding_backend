@@ -1,11 +1,14 @@
 const express = require("express");
 const auctionController = require("./auction.controller");
 const { uploadFile } = require("../../middlewares/fileUploader");
+const auth = require("../../middlewares/auth");
+const { ENUM_USER_ROLE } = require("../../../utils/enums");
 
 const router = express.Router();
 
 router.post(
   "/create-auction",
+  auth(ENUM_USER_ROLE.ADMIN),
   uploadFile(),
   (req, res, next) => {
     req.body = JSON.parse(req.body.data);
@@ -17,6 +20,7 @@ router.get("/", auctionController.getAllAuction);
 router.get("/get-single-auction/:id", auctionController.getSingleAuction);
 router.patch(
   "/update-auction/:id",
+  auth(ENUM_USER_ROLE.ADMIN),
   uploadFile(),
   (req, res, next) => {
     req.body = JSON.parse(req.body.data);
@@ -24,6 +28,10 @@ router.patch(
   },
   auctionController.updateAuction
 );
-router.delete("/delete-auction/:id", auctionController.deleteAuction);
+router.delete(
+  "/delete-auction/:id",
+  auth(ENUM_USER_ROLE.ADMIN),
+  auctionController.deleteAuction
+);
 
 module.exports = router;
