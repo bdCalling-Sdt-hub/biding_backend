@@ -7,7 +7,7 @@ const uploadFile = () => {
       let uploadPath = "";
 
       if (file.fieldname === "image") {
-        uploadPath = "uploads/images/image";
+        uploadPath = "uploads";
       } else if (file.fieldname === "profile_image") {
         uploadPath = "uploads/images/profile";
       } else if (file.fieldname === "video") {

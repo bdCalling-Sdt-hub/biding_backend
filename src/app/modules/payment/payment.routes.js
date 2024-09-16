@@ -6,6 +6,12 @@ const { ENUM_USER_ROLE } = require("../../../utils/enums");
 const router = Router();
 
 router.post(
+  "/payment-with-card",
+  auth(ENUM_USER_ROLE.USER),
+  PaymentController.makePaymentWithCreditCard
+);
+
+router.post(
   "/create-payment-intent",
   auth(ENUM_USER_ROLE.USER),
   PaymentController.createPaymentIntent
