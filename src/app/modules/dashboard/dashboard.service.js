@@ -68,20 +68,37 @@ const blockUnblockUser = async (payload) => {
 
 const addBanner = async (req) => {
   const { files, body } = req || {};
-
-  if (!files || !body) {
+  console.log(files);
+  // console.log(Object.keys(body).length);
+  if (!files.banner?.length || Object.keys(body).length === 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Image or body is not provided");
   }
 
   const { banner } = files;
   const { originalname, path } = banner[0];
 
-  // console.log(banner);
-  // console.log(originalname, path);
+  const { secure_url: url } =
+    (await sendImageToCloudinary(originalname, path)) || {};
 
-  const res = await sendImageToCloudinary(originalname, path);
+  if (!url) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Image upload failed");
+  }
 
-  return res;
+  const existingUrl = await Banner.findOne({ url });
+
+  if (existingUrl) {
+    throw new ApiError(
+      httpStatus.CONFLICT,
+      "You have already uploaded the image"
+    );
+  }
+
+  const newBanner = {
+    url,
+    ...body,
+  };
+
+  return await Banner.create(newBanner);
 };
 
 // // --- driver ---

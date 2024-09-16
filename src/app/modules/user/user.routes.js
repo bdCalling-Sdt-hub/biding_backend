@@ -34,5 +34,10 @@ router.patch(
   uploadFile(),
   UserController.updateProfile
 );
+router.post(
+  "/auth/refresh-token",
+  auth(ENUM_USER_ROLE.ADMIN),
+  UserController.refreshToken
+);
 
 module.exports = router;

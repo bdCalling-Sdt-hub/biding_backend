@@ -35,6 +35,10 @@ router.delete(
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   AdminController.deleteAdmin
 );
-router.post("/auth/refresh-token", AdminController.refreshToken);
+router.post(
+  "/auth/refresh-token",
+  auth(ENUM_USER_ROLE.ADMIN),
+  AdminController.refreshToken
+);
 
 module.exports = router;

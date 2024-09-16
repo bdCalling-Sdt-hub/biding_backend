@@ -104,6 +104,26 @@ const deleteMyAccount = catchAsync(async (req, res) => {
   });
 });
 
+const refreshToken = catchAsync(async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  const result = await UserService.refreshToken(refreshToken);
+
+  // set refresh token into cookie
+  const cookieOptions = {
+    secure: config.env === "production",
+    httpOnly: true,
+  };
+  res.cookie("refreshToken", refreshToken, cookieOptions);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User logged in successfully!",
+    data: result,
+  });
+});
+
 const UserController = {
   registrationUser,
   activateUser,
@@ -113,6 +133,7 @@ const UserController = {
   forgotPass,
   resendActivationCode,
   updateProfile,
+  refreshToken,
 };
 
 module.exports = { UserController };
