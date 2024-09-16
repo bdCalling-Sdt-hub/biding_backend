@@ -5,7 +5,6 @@ const bannerSchema = new Schema(
     index: {
       type: Number,
       required: true,
-      unique: true,
     },
     url: {
       type: String,

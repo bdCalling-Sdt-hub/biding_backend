@@ -48,6 +48,26 @@ const addBanner = catchAsync(async (req, res) => {
   });
 });
 
+const updateBannerIndex = catchAsync(async (req, res) => {
+  const result = await DashboardServices.updateBannerIndex(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Banner Index updated successfully",
+    data: result,
+  });
+});
+
+const deleteBanner = catchAsync(async (req, res) => {
+  const result = await DashboardServices.deleteBanner(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Banner deleted successfully",
+    data: result,
+  });
+});
+
 // // --- driver ---
 
 // const getAllDriver = catchAsync(async (req, res) => {
@@ -111,6 +131,8 @@ const DashboardController = {
   getSingleUser,
   blockUnblockUser,
   addBanner,
+  updateBannerIndex,
+  deleteBanner,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,

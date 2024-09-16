@@ -30,6 +30,7 @@ const uploadFile = () => {
         file.mimetype === "image/jpeg" ||
         file.mimetype === "image/png" ||
         file.mimetype === "image/jpg" ||
+        file.mimetype === "image/webp" ||
         file.mimetype === "video/mp4" ||
         file.mimetype === "application/pdf" // Allow PDF files
       ) {
@@ -61,6 +62,7 @@ const uploadFile = () => {
         file.mimetype === "image/jpeg" ||
         file.mimetype === "image/png" ||
         file.mimetype === "image/jpg" ||
+        file.mimetype === "image/webp" ||
         file.mimetype === "video/mp4" ||
         file.mimetype === "application/pdf" // Allow PDF files
       ) {

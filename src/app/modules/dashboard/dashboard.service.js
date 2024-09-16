@@ -68,10 +68,17 @@ const blockUnblockUser = async (payload) => {
 
 const addBanner = async (req) => {
   const { files, body } = req || {};
-  console.log(files);
-  // console.log(Object.keys(body).length);
+
   if (!files.banner?.length || Object.keys(body).length === 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Image or body is not provided");
+  }
+
+  const existingIndex = await Banner.findOne({ index: body.index });
+  if (existingIndex) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Index already exists. Please choose a different index."
+    );
   }
 
   const { banner } = files;
@@ -99,6 +106,49 @@ const addBanner = async (req) => {
   };
 
   return await Banner.create(newBanner);
+};
+
+const updateBannerIndex = async (payload) => {
+  const { newIndex, id } = payload;
+
+  const bannerToUpdate = await Banner.findById(id);
+
+  if (!bannerToUpdate) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Banner not found");
+  }
+
+  const oldIndex = bannerToUpdate.index;
+
+  if (newIndex > oldIndex) {
+    // Decrease the index of all pictures that are between oldIndex+1 and newIndex
+    await Banner.updateMany(
+      { index: { $gt: oldIndex, $lte: newIndex } },
+      { $inc: { index: -1 } }
+    );
+  } else if (newIndex < oldIndex) {
+    // Increase the index of all pictures that are between newIndex and oldIndex-1
+    await Banner.updateMany(
+      { index: { $gte: newIndex, $lt: oldIndex } },
+      { $inc: { index: 1 } }
+    );
+  }
+
+  bannerToUpdate.index = newIndex;
+  return await bannerToUpdate.save();
+};
+
+const deleteBanner = async (payload) => {
+  const { id } = payload;
+  if (!id) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "No id provided");
+  }
+
+  const banner = await Banner.findById(id);
+  if (!banner) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Banner does not exist");
+  }
+
+  return await Banner.findByIdAndDelete(id);
 };
 
 // // --- driver ---
@@ -185,6 +235,8 @@ const DashboardServices = {
   getSingleUser,
   blockUnblockUser,
   addBanner,
+  updateBannerIndex,
+  deleteBanner,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,
