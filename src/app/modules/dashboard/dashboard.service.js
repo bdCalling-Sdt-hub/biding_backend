@@ -3,6 +3,9 @@ const ApiError = require("../../../errors/ApiError");
 const User = require("../user/user.model");
 const QueryBuilder = require("../../../builder/QueryBuilder");
 const Banner = require("./banner.model");
+const {
+  sendImageToCloudinary,
+} = require("../../../helpers/sendImageToCloudinary");
 
 // --- user ---
 
@@ -64,22 +67,21 @@ const blockUnblockUser = async (payload) => {
 // --- banner ---
 
 const addBanner = async (req) => {
-  // const { files, body } = req;
-  // // const { url } = body;
+  const { files, body } = req || {};
 
-  // console.log(body, files);
+  if (!files || !body) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Image or body is not provided");
+  }
 
-  // if (!files || !body) {
-  //   throw new ApiError(httpStatus.BAD_REQUEST, "Image or body is not provided");
-  // }
+  const { banner } = files;
+  const { originalname, path } = banner[0];
 
-  // const existingBanner = await Banner.find({ url });
+  // console.log(banner);
+  // console.log(originalname, path);
 
-  // if (existingBanner) {
-  //   throw new ApiError(httpStatus.CONFLICT, "Banner already exists");
-  // }
+  const res = await sendImageToCloudinary(originalname, path);
 
-  // // return await Banner.create(payload);
+  return res;
 };
 
 // // --- driver ---

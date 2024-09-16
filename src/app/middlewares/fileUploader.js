@@ -77,7 +77,7 @@ const uploadFile = () => {
     storage: storage,
     fileFilter: fileFilter,
   }).fields([
-    { name: "image", maxCount: 1 },
+    { name: "image", maxCount: 10 },
     { name: "banner", maxCount: 1 },
     { name: "product_img", maxCount: 1 },
     { name: "video", maxCount: 1 },
