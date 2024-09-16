@@ -36,6 +36,18 @@ const blockUnblockUser = catchAsync(async (req, res) => {
   });
 });
 
+// --- banner ---
+
+const addBanner = catchAsync(async (req, res) => {
+  const result = await DashboardServices.addBanner(req);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Banner added successfully",
+    data: result,
+  });
+});
+
 // // --- driver ---
 
 // const getAllDriver = catchAsync(async (req, res) => {
@@ -98,6 +110,7 @@ const DashboardController = {
   getAllUsers,
   getSingleUser,
   blockUnblockUser,
+  addBanner,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,

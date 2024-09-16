@@ -5,9 +5,11 @@ const uploadFile = () => {
   const storage = multer.diskStorage({
     destination: function (req, file, cb) {
       let uploadPath = "";
-
+      // console.log(file);
       if (file.fieldname === "image") {
         uploadPath = "uploads/images/image";
+      } else if (file.fieldname === "banner") {
+        uploadPath = "uploads/images/banner";
       } else if (file.fieldname === "profile_image") {
         uploadPath = "uploads/images/profile";
       } else if (file.fieldname === "video") {
@@ -45,6 +47,7 @@ const uploadFile = () => {
   const fileFilter = (req, file, cb) => {
     const allowedFieldnames = [
       "image",
+      "banner",
       "product_img",
       "profile_image",
       "video",
@@ -75,6 +78,7 @@ const uploadFile = () => {
     fileFilter: fileFilter,
   }).fields([
     { name: "image", maxCount: 1 },
+    { name: "banner", maxCount: 1 },
     { name: "product_img", maxCount: 1 },
     { name: "video", maxCount: 1 },
     { name: "profile_image", maxCount: 1 },

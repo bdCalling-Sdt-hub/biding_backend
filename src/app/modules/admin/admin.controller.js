@@ -14,6 +14,7 @@ const registrationAdmin = catchAsync(async (req, res) => {
 });
 
 const updateAdminProfile = catchAsync(async (req, res) => {
+  console.log(req.body);
   const result = await AdminService.updateAdminProfile(req);
   sendResponse(res, {
     statusCode: 200,

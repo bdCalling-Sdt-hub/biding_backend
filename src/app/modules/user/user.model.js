@@ -67,6 +67,12 @@ const UserSchema = new Schema(
       type: Number,
       default: 0,
     },
+    totalWin: {
+      type: Number,
+    },
+    availableBid: {
+      type: Number,
+    },
     streetAddress: String,
     city: String,
     state: String,

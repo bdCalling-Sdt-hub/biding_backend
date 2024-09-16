@@ -26,6 +26,10 @@ router.patch(
   DashboardController.blockUnblockUser
 );
 
+// --- banner ---
+
+router.post("/auth/banner", uploadFile(), DashboardController.addBanner);
+
 // --- driver ---
 
 // router.get(

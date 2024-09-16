@@ -2,6 +2,7 @@ const httpStatus = require("http-status");
 const ApiError = require("../../../errors/ApiError");
 const User = require("../user/user.model");
 const QueryBuilder = require("../../../builder/QueryBuilder");
+const Banner = require("./banner.model");
 
 // --- user ---
 
@@ -58,6 +59,27 @@ const blockUnblockUser = async (payload) => {
       runValidators: true,
     }
   );
+};
+
+// --- banner ---
+
+const addBanner = async (req) => {
+  // const { files, body } = req;
+  // // const { url } = body;
+
+  // console.log(body, files);
+
+  // if (!files || !body) {
+  //   throw new ApiError(httpStatus.BAD_REQUEST, "Image or body is not provided");
+  // }
+
+  // const existingBanner = await Banner.find({ url });
+
+  // if (existingBanner) {
+  //   throw new ApiError(httpStatus.CONFLICT, "Banner already exists");
+  // }
+
+  // // return await Banner.create(payload);
 };
 
 // // --- driver ---
@@ -143,6 +165,7 @@ const DashboardServices = {
   getAllUsers,
   getSingleUser,
   blockUnblockUser,
+  addBanner,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,
