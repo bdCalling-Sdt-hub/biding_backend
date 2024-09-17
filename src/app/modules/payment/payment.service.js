@@ -146,27 +146,30 @@ const executePaymentWithPaypal = async (paymentId, payerId, orderDetails) => {
         if (error) {
           reject(error);
         } else {
+          let order = null;
           // // Save order and transaction to the database
-          const orderData = {
-            shippingAddress: orderDetails.shippingAddress,
-            item: orderDetails.item,
-            winingBid: orderDetails.winingBid,
-            paidBy: ENUM_PAID_BY.PAYPAL,
-            status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-            statusWithTime: [
-              {
-                status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-                time: new Date(),
-              },
-            ],
-          };
+          if (orderDetails?.shippingAddress) {
+            const orderData = {
+              shippingAddress: orderDetails.shippingAddress,
+              item: orderDetails.item,
+              winingBid: orderDetails.winingBid,
+              paidBy: ENUM_PAID_BY.PAYPAL,
+              status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+              statusWithTime: [
+                {
+                  status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+                  time: new Date(),
+                },
+              ],
+            };
+            order = await Order.create(orderData);
+          }
           const transactionData = {
             item: orderDetails.item,
             paymentStatus: ENUM_PAYMENT_STATUS.PAID,
             paidAmount: orderDetails.totalAmount,
             paymentType: "Online Payment",
           };
-          const order = await Order.create(orderData);
 
           const transaction = await Transaction.create(transactionData);
 
