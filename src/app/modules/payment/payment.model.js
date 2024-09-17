@@ -39,10 +39,6 @@ const ObjectId = Schema.Types.ObjectId;
 
 const transactionSchema = new Schema(
   {
-    userName: {
-      type: String,
-      required: true,
-    },
     item: {
       type: String,
       required: true,

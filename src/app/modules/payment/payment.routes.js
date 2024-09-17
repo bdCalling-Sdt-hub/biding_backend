@@ -11,7 +11,11 @@ router.post(
   PaymentController.makePaymentWithCreditCard
 );
 // Create PayPal payment and return approval URL
-router.post("/create-payment", PaymentController.createPaymentWithPaypal);
+router.post(
+  "/create-payment",
+  auth(ENUM_USER_ROLE.USER),
+  PaymentController.createPaymentWithPaypal
+);
 
 // Execute payment after approval
 router.post("/execute-payment", PaymentController.executePaymentWithPaypal);

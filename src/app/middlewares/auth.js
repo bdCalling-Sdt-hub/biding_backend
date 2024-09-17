@@ -30,7 +30,6 @@ const auth =
 
         const isExist = await User.findById(verifyUser?.userId);
         const checkAdmin = await Admin.findById(verifyUser?.userId);
-
         if (verifyUser.role === ENUM_USER_ROLE.USER && !isExist) {
           throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized");
         }

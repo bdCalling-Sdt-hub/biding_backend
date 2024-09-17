@@ -2,9 +2,10 @@ const httpStatus = require("http-status");
 const config = require("../../../config");
 const ApiError = require("../../../errors/ApiError");
 const User = require("../user/user.model");
-const { Payment, Transaction } = require("./payment.model");
+const { Transaction } = require("./payment.model");
 const stripe = require("stripe")(config.stripe.stripe_secret_key);
 const paypal = require("paypal-rest-sdk");
+const Order = require("../order/order.model");
 // PayPal configuration
 paypal.configure({
   mode: process.env.PAYPAL_MODE,
@@ -84,7 +85,8 @@ const makePaymentWithCreditCard = async (
 };
 
 // Create PayPal payment
-const createPaymentWithPaypal = async (amount) => {
+const createPaymentWithPaypal = async (amount, productName) => {
+  console.log(amount, productName);
   const create_payment_json = {
     intent: "sale",
     payer: { payment_method: "paypal" },
@@ -97,8 +99,9 @@ const createPaymentWithPaypal = async (amount) => {
         item_list: {
           items: [
             {
-              name: "Item",
-              sku: "item",
+              name: productName,
+              // name: "Item",
+              // sku: "item",
               price: amount,
               currency: "USD",
               quantity: 1,
@@ -127,6 +130,7 @@ const createPaymentWithPaypal = async (amount) => {
 
 // Execute PayPal payment
 const executePaymentWithPaypal = async (paymentId, payerId, orderDetails) => {
+  console.log(payerId, paymentId, orderDetails);
   const execute_payment_json = { payer_id: payerId };
 
   return new Promise(async (resolve, reject) => {
@@ -137,22 +141,12 @@ const executePaymentWithPaypal = async (paymentId, payerId, orderDetails) => {
         if (error) {
           reject(error);
         } else {
-          // Save order and transaction to the database
-          const order = await Order.create({
-            ...orderDetails, // Use the orderDetails sent from the client
-            paymentId: payment.id,
-            total: payment.transactions[0].amount.total,
-            status: "Completed",
-          });
+          // // Save order and transaction to the database
+          const order = await Order.create({});
 
-          const transaction = await Transaction.create({
-            orderId: order._id,
-            transactionId: payment.id,
-            amount: payment.transactions[0].amount.total,
-            status: "Completed",
-          });
+          const transaction = await Transaction.create({});
 
-          resolve({ order, transaction });
+          resolve({ message: "Payment successfull" });
         }
       }
     );

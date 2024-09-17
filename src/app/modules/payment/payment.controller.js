@@ -26,8 +26,11 @@ const makePaymentWithCreditCard = catchAsync(async (req, res) => {
 
 // create payment with paypal
 const createPaymentWithPaypal = catchAsync(async (req, res) => {
-  const { amount } = req.body;
-  const approvalUrl = await paypalService.createPayment(amount);
+  const { amount, productName } = req.body;
+  const approvalUrl = await PaymentService.createPaymentWithPaypal(
+    amount,
+    productName
+  );
 
   sendResponse(res, {
     statusCode: 200,
@@ -40,7 +43,7 @@ const createPaymentWithPaypal = catchAsync(async (req, res) => {
 // execute payment with paypal
 const executePaymentWithPaypal = catchAsync(async (req, res) => {
   const { paymentId, payerId, orderDetails } = req.body; // Include orderDetails
-  const paymentResult = await paypalService.executePayment(
+  const paymentResult = await PaymentService.executePaymentWithPaypal(
     paymentId,
     payerId,
     orderDetails
