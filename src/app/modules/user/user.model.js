@@ -69,9 +69,11 @@ const UserSchema = new Schema(
     },
     totalWin: {
       type: Number,
+      default: 0,
     },
     availableBid: {
       type: Number,
+      default: 0,
     },
     streetAddress: String,
     city: String,
