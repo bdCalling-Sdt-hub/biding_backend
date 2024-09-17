@@ -4,6 +4,7 @@ const {
   sendImageToCloudinary,
 } = require("../../../helpers/sendImageToCloudinary");
 const Auction = require("./auction.model");
+const QueryBuilder = require("../../../builder/QueryBuilder");
 
 const createAuctionIntoDB = async (images, data) => {
   console.log("images", images);
@@ -25,9 +26,18 @@ const createAuctionIntoDB = async (images, data) => {
 };
 
 // get all auction
-const getAllAuctionFromDB = async () => {
-  const result = await Auction.find();
-  return result;
+const getAllAuctionFromDB = async (query) => {
+  const auctionQuery = new QueryBuilder(Auction.find(), query)
+    .search(["name"])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+  const result = await auctionQuery.modelQuery;
+  const meta = await auctionQuery.countTotal();
+  return { meta, result };
+  // const result = await Auction.find();
+  // return result;
 };
 
 // get single auction

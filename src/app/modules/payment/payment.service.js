@@ -6,7 +6,7 @@ const { Payment, Transaction } = require("./payment.model");
 const stripe = require("stripe")(config.stripe.stripe_secret_key);
 
 const makePaymentWithCreditCard = async (
-  user,
+  userData,
   item,
   quantity,
   amount,
@@ -15,7 +15,7 @@ const makePaymentWithCreditCard = async (
 ) => {
   let customer;
 
-  const user = await User.findById(user?.userId);
+  const user = await User.findById(userData?.userId);
   const email = user?.email;
   // if (existingCustomerId) {
   //   // If customer already exists, reuse the customer

@@ -3,7 +3,6 @@ const auctionController = require("./auction.controller");
 const { uploadFile } = require("../../middlewares/fileUploader");
 const auth = require("../../middlewares/auth");
 const { ENUM_USER_ROLE } = require("../../../utils/enums");
-
 const router = express.Router();
 
 router.post(
