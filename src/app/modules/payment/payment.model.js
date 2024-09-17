@@ -1,4 +1,5 @@
 const { Schema, model } = require("mongoose");
+const { ENUM_PAYMENT_STATUS } = require("../../../utils/enums");
 const ObjectId = Schema.Types.ObjectId;
 
 // const paymentSchema = new Schema(
@@ -39,14 +40,19 @@ const ObjectId = Schema.Types.ObjectId;
 
 const transactionSchema = new Schema(
   {
+    user: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
     item: {
       type: String,
       required: true,
     },
     paymentStatus: {
       type: String,
-      default: "paid",
-      enum: ["paid", "unpaid"],
+      default: ENUM_PAYMENT_STATUS.PAID,
+      enum: Object.values(ENUM_PAYMENT_STATUS),
     },
     paidAmount: {
       type: Number,

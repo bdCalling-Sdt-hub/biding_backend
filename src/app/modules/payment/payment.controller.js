@@ -44,6 +44,7 @@ const createPaymentWithPaypal = catchAsync(async (req, res) => {
 const executePaymentWithPaypal = catchAsync(async (req, res) => {
   const { paymentId, payerId, orderDetails } = req.body; // Include orderDetails
   const paymentResult = await PaymentService.executePaymentWithPaypal(
+    req?.user?.userId,
     paymentId,
     payerId,
     orderDetails

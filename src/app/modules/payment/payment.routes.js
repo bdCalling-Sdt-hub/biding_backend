@@ -18,7 +18,11 @@ router.post(
 );
 
 // Execute payment after approval
-router.post("/execute-payment", PaymentController.executePaymentWithPaypal);
+router.post(
+  "/execute-payment",
+  auth(ENUM_USER_ROLE.USER),
+  PaymentController.executePaymentWithPaypal
+);
 
 // router.post(
 //   "/create-payment-intent",

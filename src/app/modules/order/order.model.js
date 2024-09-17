@@ -12,6 +12,11 @@ const statusWithTimeSchema = new Schema({
   },
 });
 const orderSchema = new Schema({
+  user: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
   shippingAddress: {
     type: Schema.Types.ObjectId,
     required: true,

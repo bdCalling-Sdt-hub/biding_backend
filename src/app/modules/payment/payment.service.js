@@ -134,8 +134,13 @@ const createPaymentWithPaypal = async (amount, productName) => {
 };
 
 // Execute PayPal payment
-const executePaymentWithPaypal = async (paymentId, payerId, orderDetails) => {
-  console.log(payerId, paymentId, orderDetails);
+const executePaymentWithPaypal = async (
+  userId,
+  paymentId,
+  payerId,
+  orderDetails
+) => {
+  console.log(payerId, paymentId, orderDetails, userId);
   const execute_payment_json = { payer_id: payerId };
 
   return new Promise(async (resolve, reject) => {
@@ -143,6 +148,7 @@ const executePaymentWithPaypal = async (paymentId, payerId, orderDetails) => {
       paymentId,
       execute_payment_json,
       async (error, payment) => {
+        console.log("apyment", payment);
         if (error) {
           reject(error);
         } else {
@@ -150,6 +156,7 @@ const executePaymentWithPaypal = async (paymentId, payerId, orderDetails) => {
           // // Save order and transaction to the database
           if (orderDetails?.shippingAddress) {
             const orderData = {
+              user: userId,
               shippingAddress: orderDetails.shippingAddress,
               item: orderDetails.item,
               winingBid: orderDetails.winingBid,
@@ -165,6 +172,7 @@ const executePaymentWithPaypal = async (paymentId, payerId, orderDetails) => {
             order = await Order.create(orderData);
           }
           const transactionData = {
+            user: userId,
             item: orderDetails.item,
             paymentStatus: ENUM_PAYMENT_STATUS.PAID,
             paidAmount: orderDetails.totalAmount,
@@ -173,7 +181,18 @@ const executePaymentWithPaypal = async (paymentId, payerId, orderDetails) => {
 
           const transaction = await Transaction.create(transactionData);
 
-          resolve({ order, transaction });
+          if (orderDetails?.totalBid) {
+            const userData = await User.findById(userId);
+            await User.findByIdAndUpdate(userId, {
+              availableBid: userData?.availableBid + orderDetails?.totalBid,
+            });
+          }
+
+          resolve({
+            message: "Payment execute successful",
+            order,
+            transaction,
+          });
         }
       }
     );
