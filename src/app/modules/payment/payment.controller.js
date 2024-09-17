@@ -24,6 +24,36 @@ const makePaymentWithCreditCard = catchAsync(async (req, res) => {
   });
 });
 
+// create payment with paypal
+const createPaymentWithPaypal = catchAsync(async (req, res) => {
+  const { amount } = req.body;
+  const approvalUrl = await paypalService.createPayment(amount);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "PayPal payment created successfully",
+    data: { approvalUrl },
+  });
+});
+
+// execute payment with paypal
+const executePaymentWithPaypal = catchAsync(async (req, res) => {
+  const { paymentId, payerId, orderDetails } = req.body; // Include orderDetails
+  const paymentResult = await paypalService.executePayment(
+    paymentId,
+    payerId,
+    orderDetails
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Payment executed successfully",
+    data: paymentResult,
+  });
+});
+
 // const createPaymentIntent = catchAsync(async (req, res) => {
 //   console.log(req.user);
 //   const result = await PaymentService.createPaymentIntent(req.body);
@@ -75,6 +105,8 @@ const PaymentController = {
   // updateTotalEarning,
   // allPayments,
   makePaymentWithCreditCard,
+  createPaymentWithPaypal,
+  executePaymentWithPaypal,
 };
 
 module.exports = PaymentController;
