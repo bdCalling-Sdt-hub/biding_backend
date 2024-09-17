@@ -6,6 +6,11 @@ const { Transaction } = require("./payment.model");
 const stripe = require("stripe")(config.stripe.stripe_secret_key);
 const paypal = require("paypal-rest-sdk");
 const Order = require("../order/order.model");
+const {
+  ENUM_PAID_BY,
+  ENUM_DELIVERY_STATUS,
+  ENUM_PAYMENT_STATUS,
+} = require("../../../utils/enums");
 // PayPal configuration
 paypal.configure({
   mode: process.env.PAYPAL_MODE,
@@ -142,11 +147,30 @@ const executePaymentWithPaypal = async (paymentId, payerId, orderDetails) => {
           reject(error);
         } else {
           // // Save order and transaction to the database
-          const order = await Order.create({});
+          const orderData = {
+            shippingAddress: orderDetails.shippingAddress,
+            item: orderDetails.item,
+            winingBid: orderDetails.winingBid,
+            paidBy: ENUM_PAID_BY.PAYPAL,
+            status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+            statusWithTime: [
+              {
+                status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+                time: new Date(),
+              },
+            ],
+          };
+          const transactionData = {
+            item: orderDetails.item,
+            paymentStatus: ENUM_PAYMENT_STATUS.PAID,
+            paidAmount: orderDetails.totalAmount,
+            paymentType: "Online Payment",
+          };
+          const order = await Order.create(orderData);
 
-          const transaction = await Transaction.create({});
+          const transaction = await Transaction.create(transactionData);
 
-          resolve({ message: "Payment successfull" });
+          resolve({ order, transaction });
         }
       }
     );
