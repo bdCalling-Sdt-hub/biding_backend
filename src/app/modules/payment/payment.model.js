@@ -35,7 +35,7 @@ const ObjectId = Schema.Types.ObjectId;
 //   }
 // );
 
-const Payment = model("Payment", paymentSchema);
+// const Payment = model("Payment", paymentSchema);
 
 const transactionSchema = new Schema(
   {
@@ -68,4 +68,4 @@ const transactionSchema = new Schema(
 
 const Transaction = model("Transaction", transactionSchema);
 
-module.exports = { Payment, Transaction };
+module.exports = { Transaction };

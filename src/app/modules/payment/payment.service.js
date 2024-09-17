@@ -4,7 +4,13 @@ const ApiError = require("../../../errors/ApiError");
 const User = require("../user/user.model");
 const { Payment, Transaction } = require("./payment.model");
 const stripe = require("stripe")(config.stripe.stripe_secret_key);
-
+const paypal = require("paypal-rest-sdk");
+// PayPal configuration
+paypal.configure({
+  mode: process.env.PAYPAL_MODE,
+  client_id: process.env.PAYPAL_CLIENT_ID,
+  client_secret: process.env.PAYPAL_CLIENT_SECRET,
+});
 const makePaymentWithCreditCard = async (
   userData,
   item,
@@ -75,6 +81,82 @@ const makePaymentWithCreditCard = async (
   await User.findByIdAndUpdate(user?.userId, { stripCustomerId: customer?.id });
 
   return { charge, customerId: customer.id };
+};
+
+// Create PayPal payment
+const createPaymentWithPaypal = async (amount) => {
+  const create_payment_json = {
+    intent: "sale",
+    payer: { payment_method: "paypal" },
+    redirect_urls: {
+      return_url: process.env.PAYPAL_SUCCESS_URL,
+      cancel_url: process.env.PAYPAL_CANCEL_URL,
+    },
+    transactions: [
+      {
+        item_list: {
+          items: [
+            {
+              name: "Item",
+              sku: "item",
+              price: amount,
+              currency: "USD",
+              quantity: 1,
+            },
+          ],
+        },
+        amount: { currency: "USD", total: amount },
+        description: "Payment for your order.",
+      },
+    ],
+  };
+
+  return new Promise((resolve, reject) => {
+    paypal.payment.create(create_payment_json, (error, payment) => {
+      if (error) {
+        reject(error);
+      } else {
+        const approvalUrl = payment.links.find(
+          (link) => link.rel === "approval_url"
+        ).href;
+        resolve(approvalUrl);
+      }
+    });
+  });
+};
+
+// Execute PayPal payment
+const executePaymentWithPaypal = async (paymentId, payerId, orderDetails) => {
+  const execute_payment_json = { payer_id: payerId };
+
+  return new Promise(async (resolve, reject) => {
+    paypal.payment.execute(
+      paymentId,
+      execute_payment_json,
+      async (error, payment) => {
+        if (error) {
+          reject(error);
+        } else {
+          // Save order and transaction to the database
+          const order = await Order.create({
+            ...orderDetails, // Use the orderDetails sent from the client
+            paymentId: payment.id,
+            total: payment.transactions[0].amount.total,
+            status: "Completed",
+          });
+
+          const transaction = await Transaction.create({
+            orderId: order._id,
+            transactionId: payment.id,
+            amount: payment.transactions[0].amount.total,
+            status: "Completed",
+          });
+
+          resolve({ order, transaction });
+        }
+      }
+    );
+  });
 };
 
 // const createPaymentIntent = async (payload) => {
@@ -172,6 +254,8 @@ const PaymentService = {
   // updateTotalEarning,
   // allPayments,
   makePaymentWithCreditCard,
+  createPaymentWithPaypal,
+  executePaymentWithPaypal,
 };
 
 module.exports = PaymentService;
