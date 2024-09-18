@@ -5,6 +5,12 @@ const getAllOrderFromDB = async () => {
   return result;
 };
 
+// get single order
+const getSingleOrder = async (id) => {
+  const result = Order.findById(id);
+  return result;
+};
+
 // get my orders
 const getMyOrderFromDB = async (userId) => {
   const result = await Order.find({ user: userId });
@@ -14,6 +20,7 @@ const getMyOrderFromDB = async (userId) => {
 const orderService = {
   getAllOrderFromDB,
   getMyOrderFromDB,
+  getSingleOrder,
 };
 
 module.exports = orderService;

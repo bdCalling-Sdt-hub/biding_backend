@@ -5,5 +5,10 @@ const orderController = require("./order.controller");
 const router = express.Router();
 
 router.get("/", auth(ENUM_USER_ROLE.ADMIN), orderController.getAllOrder);
+router.get(
+  "/:id",
+  auth(ENUM_USER_ROLE.USER, ENUM_USER_ROLE.ADMIN),
+  orderController.getSingleOrder
+);
 router.get("/my-orders", auth(ENUM_USER_ROLE.USER), orderController.getMyOrder);
 module.exports = router;
