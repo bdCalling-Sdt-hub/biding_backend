@@ -96,6 +96,10 @@ const auctionSchema = new mongoose.Schema(
     bidHistory: {
       type: [bidHistorySchema],
     },
+    countdownTime: {
+      type: Number,
+      default: null,
+    },
   },
   {
     timestamps: true,
