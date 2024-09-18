@@ -1,4 +1,5 @@
 const Auction = require("../../app/modules/auction/auction.model");
+const User = require("../../app/modules/user/user.model");
 
 const placeRandomBid = async (auctionId) => {
   const auction = await Auction.findById(auctionId)
@@ -24,6 +25,11 @@ const placeRandomBid = async (auctionId) => {
     const newBidAmount = auction.currentPrice + auction.incrementValue;
 
     randomUser.availableBids -= 1;
+    // update the user data-----------
+    const user = await User.findById(randomUser?.user).select("availableBid");
+    await User.findByIdAndUpdate(randomUser?.user, {
+      availableBid: user?.availableBid - 1,
+    });
     if (randomUser.availableBids === 0) {
       randomUser.isActive = false;
     }
