@@ -28,6 +28,7 @@ const handleCountdown = async (auctionId) => {
       await placeRandomBid(auctionId);
     }
 
+    // reduce the countdown ------------
     auction.countdownTime -= 1;
     auction.lastUpdated = new Date();
     await auction.save();
