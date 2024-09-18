@@ -21,7 +21,6 @@ const placeRandomBid = async (auctionId) => {
         Math.floor(Math.random() * activeBidBuddyUsers.length)
       ];
 
-    // Calculate new bid amount
     const newBidAmount = auction.currentPrice + auction.incrementValue;
 
     randomUser.availableBids -= 1;

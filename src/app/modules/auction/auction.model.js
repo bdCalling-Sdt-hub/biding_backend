@@ -36,6 +36,7 @@
 const mongoose = require("mongoose");
 const { ENUM_AUCTION_STATUS } = require("../../../utils/enums");
 
+// bid buddy user schema
 const bidBuddyUserSchema = {
   user: {
     type: mongoose.Schema.Types.ObjectId,
