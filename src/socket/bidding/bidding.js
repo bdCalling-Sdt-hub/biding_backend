@@ -51,7 +51,7 @@ const handleBidding = async (io, socket) => {
     io.to(auctionId).emit("bidBuddyUpdated", updatedAuction.bidBuddyUsers);
   });
 
-  // stop bid buddy
+  // stop bid buddy-------------------
   socket.on("stopBidBuddy", async ({ auctionId, userId }) => {
     const updatedAuction = await Auction.findOneAndUpdate(
       { _id: auctionId, "bidBuddyUsers.user": userId },

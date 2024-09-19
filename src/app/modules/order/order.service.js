@@ -17,10 +17,17 @@ const getMyOrderFromDB = async (userId) => {
   return result;
 };
 
+const changeOrderStatusIntoDB = async (id, status) => {
+  console.log(status);
+  // const result = await Order.findByIdAndUpdate(id, { status: status });
+  // return result;
+};
+
 const orderService = {
   getAllOrderFromDB,
   getMyOrderFromDB,
   getSingleOrder,
+  changeOrderStatusIntoDB,
 };
 
 module.exports = orderService;

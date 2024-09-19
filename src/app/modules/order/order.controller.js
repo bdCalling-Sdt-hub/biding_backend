@@ -38,10 +38,25 @@ const getMyOrder = catchAsync(async (req, res) => {
   });
 });
 
+// change order status
+const changeOrderStatus = catchAsync(async (req, res) => {
+  const result = await orderService.changeOrderStatusIntoDB(
+    req?.params?.id,
+    req?.body?.status
+  );
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Order status updated successfully",
+    data: result,
+  });
+});
+
 const orderController = {
   getAllOrder,
   getMyOrder,
   getSingleOrder,
+  changeOrderStatus,
 };
 
 module.exports = orderController;
