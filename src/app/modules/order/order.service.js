@@ -1,3 +1,5 @@
+const httpStatus = require("http-status");
+const ApiError = require("../../../errors/ApiError");
 const Order = require("./order.model");
 
 const getAllOrderFromDB = async () => {
@@ -19,8 +21,16 @@ const getMyOrderFromDB = async (userId) => {
 
 const changeOrderStatusIntoDB = async (id, status) => {
   console.log(status);
-  // const result = await Order.findByIdAndUpdate(id, { status: status });
-  // return result;
+  const order = await Order.findById(id);
+  if (!order) {
+    throw new ApiError(httpStatus.NOT_FOUND, "This order does not exists");
+  }
+  const result = await Order.findByIdAndUpdate(
+    id,
+    { status: status },
+    { runValidators: true, new: true }
+  );
+  return result;
 };
 
 const orderService = {

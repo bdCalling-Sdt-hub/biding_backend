@@ -34,11 +34,23 @@ const orderSchema = new Schema({
     type: String,
     required: true,
     enum: Object.values(ENUM_PAID_BY),
+    validate: {
+      validator: function (value) {
+        return Object.values(ENUM_PAID_BY).includes(value);
+      },
+      message: (props) => `${props.value} is not a valid payment method!`,
+    },
   },
   status: {
     type: String,
     default: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
     enum: Object.values(ENUM_DELIVERY_STATUS),
+    validate: {
+      validator: function (value) {
+        return Object.values(ENUM_DELIVERY_STATUS).includes(value);
+      },
+      message: (props) => `${props.value} is not a valid delivery status!`,
+    },
   },
   statusWithTime: [statusWithTimeSchema],
 });
