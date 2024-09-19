@@ -52,6 +52,20 @@ const changeOrderStatus = catchAsync(async (req, res) => {
   });
 });
 
+//update delivery date
+const updateExpectedDeliveryDate = catchAsync(async (req, res) => {
+  const result = await orderService.updateExpectedDeliveryDateIntoDB(
+    req?.params?.id,
+    req?.body?.date
+  );
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Expected delivery date updated successfully",
+    data: result,
+  });
+});
+
 const orderController = {
   getAllOrder,
   getMyOrder,
