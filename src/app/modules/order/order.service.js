@@ -33,11 +33,22 @@ const changeOrderStatusIntoDB = async (id, status) => {
   return result;
 };
 
+// update expected delivery data
+const updateExpectedDeliveryDateIntoDB = async (id, date) => {
+  const result = await Order.findByIdAndUpdate(
+    id,
+    { expectedDeliveryData: data },
+    { runValidators: true, new: true }
+  );
+  return result;
+};
+
 const orderService = {
   getAllOrderFromDB,
   getMyOrderFromDB,
   getSingleOrder,
   changeOrderStatusIntoDB,
+  updateExpectedDeliveryDateIntoDB,
 };
 
 module.exports = orderService;
