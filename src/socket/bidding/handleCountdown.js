@@ -1,4 +1,5 @@
 const Auction = require("../../app/modules/auction/auction.model");
+const User = require("../../app/modules/user/user.model");
 const { ENUM_AUCTION_STATUS } = require("../../utils/enums");
 const placeRandomBid = require("./placeRandomBid");
 
@@ -10,6 +11,10 @@ const handleCountdown = async (auctionId) => {
       // Handle auction end logic
       if (auction.bidHistory.length > 0) {
         const highestBid = auction.bidHistory[auction.bidHistory.length - 1];
+        const user = await User.findById(highestBid.user).select("totalWin");
+        await User.findByIdAndUpdate(highestBid.user, {
+          totalWin: user?.totalWin + 1,
+        });
         io.to(auctionId).emit("auctionEnded", {
           winner: highestBid.user,
           finalPrice: auction.currentPrice,
