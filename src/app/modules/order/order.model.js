@@ -53,6 +53,10 @@ const orderSchema = new Schema({
     },
   },
   statusWithTime: [statusWithTimeSchema],
+  expectedDeliveryData: {
+    type: Date,
+    default: null,
+  },
 });
 
 const Order = mongoose.model("Order", orderSchema);
