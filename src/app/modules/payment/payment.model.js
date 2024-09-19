@@ -1,5 +1,5 @@
 const { Schema, model } = require("mongoose");
-const { ENUM_PAYMENT_STATUS } = require("../../../utils/enums");
+const { ENUM_PAYMENT_STATUS, ENUM_ITEM_TYPE } = require("../../../utils/enums");
 const ObjectId = Schema.Types.ObjectId;
 
 // const paymentSchema = new Schema(
@@ -61,6 +61,10 @@ const transactionSchema = new Schema(
     paymentType: {
       type: String,
       default: "Online Payment",
+    },
+    itemType: {
+      type: String,
+      enum: Object.values(ENUM_ITEM_TYPE),
     },
   },
   {

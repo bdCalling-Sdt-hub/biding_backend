@@ -157,9 +157,9 @@ const executePaymentWithPaypal = async (
           if (orderDetails?.shippingAddress) {
             const orderData = {
               user: userId,
-              shippingAddress: orderDetails.shippingAddress,
-              item: orderDetails.item,
-              winingBid: orderDetails.winingBid,
+              shippingAddress: orderDetails?.shippingAddress,
+              item: orderDetails?.item,
+              winingBid: orderDetails?.winingBid,
               paidBy: ENUM_PAID_BY.PAYPAL,
               status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
               statusWithTime: [
@@ -173,9 +173,10 @@ const executePaymentWithPaypal = async (
           }
           const transactionData = {
             user: userId,
-            item: orderDetails.item,
+            item: orderDetails?.item,
             paymentStatus: ENUM_PAYMENT_STATUS.PAID,
-            paidAmount: orderDetails.totalAmount,
+            paidAmount: orderDetails?.totalAmount,
+            itemType: orderDetails?.itemType,
             paymentType: "Online Payment",
           };
 
