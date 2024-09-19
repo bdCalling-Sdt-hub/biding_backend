@@ -148,7 +148,7 @@ const executePaymentWithPaypal = async (
       paymentId,
       execute_payment_json,
       async (error, payment) => {
-        console.log("apyment", payment);
+        console.log("print payment", payment);
         if (error) {
           reject(error);
         } else {
