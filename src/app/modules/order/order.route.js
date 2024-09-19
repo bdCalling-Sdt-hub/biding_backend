@@ -20,4 +20,8 @@ router.patch(
   auth(ENUM_USER_ROLE.ADMIN),
   orderController.changeOrderStatus
 );
+router.patch(
+  "/update-expected-delivery-date/:id",
+  orderController.updateExpectedDeliveryDate
+);
 module.exports = router;

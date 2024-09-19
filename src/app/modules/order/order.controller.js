@@ -71,6 +71,7 @@ const orderController = {
   getMyOrder,
   getSingleOrder,
   changeOrderStatus,
+  updateExpectedDeliveryDate,
 };
 
 module.exports = orderController;
