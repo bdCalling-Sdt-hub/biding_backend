@@ -4,9 +4,13 @@ const { ENUM_USER_ROLE } = require("../../../utils/enums");
 const orderController = require("./order.controller");
 const router = express.Router();
 
-router.get("/", auth(ENUM_USER_ROLE.ADMIN), orderController.getAllOrder);
 router.get(
-  "/:id",
+  "/get-all-orders",
+  auth(ENUM_USER_ROLE.ADMIN),
+  orderController.getAllOrder
+);
+router.get(
+  "/get-single-order/:id",
   auth(ENUM_USER_ROLE.USER, ENUM_USER_ROLE.ADMIN),
   orderController.getSingleOrder
 );
