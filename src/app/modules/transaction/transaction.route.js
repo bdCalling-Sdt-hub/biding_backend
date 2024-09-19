@@ -5,9 +5,14 @@ const transactionController = require("./transaction.controller");
 const router = express.Router();
 
 router.get(
-  "/all-transactions",
+  "/get-all-transaction",
   auth(ENUM_USER_ROLE.ADMIN),
   transactionController.getAllTransaction
+);
+router.get(
+  "/get-single-transaction/:id",
+  auth(ENUM_USER_ROLE.ADMIN),
+  transactionController.getSingleTransaction
 );
 
 module.exports = router;

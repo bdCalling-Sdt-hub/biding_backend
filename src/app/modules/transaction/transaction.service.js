@@ -5,9 +5,15 @@ const getAllTransactionFromDB = async () => {
 
   return result;
 };
+// get single transaction
+const getSingleTransactionFromDB = async (id) => {
+  const result = await Transaction.findById(id);
+  return result;
+};
 
 const transactionService = {
   getAllTransactionFromDB,
+  getSingleTransactionFromDB,
 };
 
 module.exports = transactionService;
