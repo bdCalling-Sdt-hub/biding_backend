@@ -68,12 +68,26 @@ const getSingleAuction = catchAsync(async (req, res) => {
   });
 });
 
+// get my bidding history
+const getMyBiddingHistory = catchAsync(async (req, res) => {
+  const result = await auctionService.getMyBiddingHistoryFromDB(
+    req?.user?.userId
+  );
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Bidding history retrieved successfully",
+    data: result,
+  });
+});
+
 const auctionController = {
   createAuction,
   getAllAuction,
   updateAuction,
   deleteAuction,
   getSingleAuction,
+  getMyBiddingHistory,
 };
 
 module.exports = auctionController;

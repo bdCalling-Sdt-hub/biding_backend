@@ -32,5 +32,10 @@ router.delete(
   auth(ENUM_USER_ROLE.ADMIN),
   auctionController.deleteAuction
 );
+router.get(
+  "/get-bidding-history",
+  auth(ENUM_USER_ROLE.USER),
+  auctionController.getMyBiddingHistory
+);
 
 module.exports = router;

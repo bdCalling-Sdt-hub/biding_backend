@@ -79,12 +79,24 @@ const deleteAuctionFromDB = async (id) => {
   return result;
 };
 
+// get my bidding history
+const getMyBiddingHistoryFromDB = async (userId) => {
+  const result = await Auction.find({
+    bidBuddyUsers: {
+      $elemMatch: { user: userId },
+    },
+  }).select("name category reservedBid status images currentPrice");
+
+  return result;
+};
+
 const auctionService = {
   createAuctionIntoDB,
   getAllAuctionFromDB,
   updateAuctionIntoDB,
   deleteAuctionFromDB,
   getSingleAuctionFromDB,
+  getMyBiddingHistoryFromDB,
 };
 
 module.exports = auctionService;
