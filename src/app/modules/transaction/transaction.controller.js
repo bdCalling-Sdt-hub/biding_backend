@@ -3,7 +3,7 @@ const sendResponse = require("../../../shared/sendResponse");
 const transactionService = require("./transaction.service");
 
 const getAllTransaction = catchAsync(async (req, res) => {
-  const result = await transactionService.getAllTransactionFromDB();
+  const result = await transactionService.getAllTransactionFromDB(req?.query);
 
   sendResponse(res, {
     statusCode: 200,

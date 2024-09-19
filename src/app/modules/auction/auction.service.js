@@ -36,8 +36,6 @@ const getAllAuctionFromDB = async (query) => {
   const result = await auctionQuery.modelQuery;
   const meta = await auctionQuery.countTotal();
   return { meta, result };
-  // const result = await Auction.find();
-  // return result;
 };
 
 // get single auction
