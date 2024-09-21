@@ -148,7 +148,7 @@ const executePaymentWithPaypal = async (
       paymentId,
       execute_payment_json,
       async (error, payment) => {
-        console.log("print payment", payment);
+        // console.log("print payment", payment);
         if (error) {
           reject(error);
         } else {
@@ -176,6 +176,7 @@ const executePaymentWithPaypal = async (
             item: orderDetails?.item,
             paymentStatus: ENUM_PAYMENT_STATUS.PAID,
             paidAmount: orderDetails?.totalAmount,
+            transactionId: payment?.cart,
             itemType: orderDetails?.itemType,
             paymentType: "Online Payment",
           };

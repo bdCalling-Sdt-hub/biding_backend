@@ -4,7 +4,7 @@ const User = require("../../app/modules/user/user.model");
 const placeRandomBid = async (auctionId) => {
   const auction = await Auction.findById(auctionId)
     .select(
-      "bidBuddyUsers currentPrice incrementValue bidHistory countdownTime"
+      "bidBuddyUsers currentPrice incrementValue bidHistory countdownTime reservedBid"
     )
     .populate({
       path: "bidHistory.user",
@@ -24,11 +24,11 @@ const placeRandomBid = async (auctionId) => {
 
     const newBidAmount = auction.currentPrice + auction.incrementValue;
 
-    randomUser.availableBids -= 1;
+    randomUser.availableBids -= auction?.reservedBid;
     // update the user data-----------
     const user = await User.findById(randomUser?.user).select("availableBid");
     await User.findByIdAndUpdate(randomUser?.user, {
-      availableBid: user?.availableBid - 1,
+      availableBid: user?.availableBid - auction?.reservedBid,
     });
     if (randomUser.availableBids === 0) {
       randomUser.isActive = false;

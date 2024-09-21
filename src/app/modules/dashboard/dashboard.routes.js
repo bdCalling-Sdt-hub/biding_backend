@@ -6,8 +6,6 @@ const DashboardController = require("./dashboard.controller");
 
 const router = express.Router();
 
-// --- user ---
-
 router.get(
   "/auth/get-all-user",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),

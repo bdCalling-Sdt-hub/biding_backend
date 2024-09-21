@@ -91,6 +91,9 @@ const auctionSchema = new mongoose.Schema(
       enum: Object.values(ENUM_AUCTION_STATUS),
       default: ENUM_AUCTION_STATUS.UPCOMING,
     },
+    currentPrice: {
+      type: Number,
+    },
     bidBuddyUsers: {
       type: [bidBuddyUserSchema],
     },
