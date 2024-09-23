@@ -10,6 +10,7 @@ const auctionRoutes = require("../modules/auction/auction.routes");
 const bookmarkRoutes = require("../modules/bookmark/bookmark.route");
 const orderRoutes = require("../modules/order/order.route");
 const transactionRoutes = require("../modules/transaction/transaction.route");
+const notificationRoutes = require("../modules/notification/notification.route");
 const moduleRoutes = [
   {
     path: "/user",
@@ -50,6 +51,10 @@ const moduleRoutes = [
   {
     path: "/transaction",
     route: transactionRoutes,
+  },
+  {
+    path: "/notification",
+    route: notificationRoutes,
   },
 ];
 
