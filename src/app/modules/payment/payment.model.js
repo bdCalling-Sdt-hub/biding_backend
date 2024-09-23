@@ -58,6 +58,10 @@ const transactionSchema = new Schema(
       type: Number,
       required: true,
     },
+    transactionId: {
+      type: String,
+      required: true,
+    },
     paymentType: {
       type: String,
       default: "Online Payment",
