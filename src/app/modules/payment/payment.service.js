@@ -11,6 +11,7 @@ const {
   ENUM_DELIVERY_STATUS,
   ENUM_PAYMENT_STATUS,
 } = require("../../../utils/enums");
+const Notification = require("../notification/notification.model");
 // PayPal configuration
 paypal.configure({
   mode: process.env.PAYPAL_MODE,
@@ -182,13 +183,18 @@ const executePaymentWithPaypal = async (
           };
 
           const transaction = await Transaction.create(transactionData);
-
+          const userData = await User.findById(userId);
           if (orderDetails?.totalBid) {
-            const userData = await User.findById(userId);
             await User.findByIdAndUpdate(userId, {
               availableBid: userData?.availableBid + orderDetails?.totalBid,
             });
           }
+
+          await Notification.create({
+            message: `Payment of $${orderDetails?.totalAmount} has been received for "${orderDetails?.item}" from ${userData?.name}`,
+          });
+          const getNotification = await Notification.find({ seen: false });
+          global.io.emit("notifications", getNotification);
 
           resolve({
             message: "Payment execute successful",
