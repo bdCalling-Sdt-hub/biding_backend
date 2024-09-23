@@ -7,6 +7,7 @@ const Auction = require("./auction.model");
 const QueryBuilder = require("../../../builder/QueryBuilder");
 const createNotification = require("../../../helpers/createNotification");
 const getUnseenNotificationCount = require("../../../helpers/getUnseenNotificationCount");
+const { default: mongoose } = require("mongoose");
 
 // const createAuctionIntoDB = async (images, data) => {
 //   console.log("images", images);
@@ -64,6 +65,7 @@ const getUnseenNotificationCount = require("../../../helpers/getUnseenNotificati
 
 // get all auction
 const createAuctionIntoDB = async (images, data) => {
+  console.log("data", data);
   // Start a new session for the transaction
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -107,13 +109,14 @@ const createAuctionIntoDB = async (images, data) => {
       hour12: true,
     };
     const formattedDate = startingDate.toLocaleDateString("en-US", options);
-    const formattedTime = startingDate.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-    });
+    console.log("formated data", formattedDate);
+    // const formattedTime = startingDate.toLocaleTimeString("en-US", {
+    //   hour: "numeric",
+    //   minute: "numeric",
+    //   hour12: true,
+    // });
 
-    const notificationMessage = `Vintage Car Collection has been successfully created and scheduled to start on ${formattedDate} at ${formattedTime}.`;
+    const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
 
     await createNotification(notificationMessage, session);
 
