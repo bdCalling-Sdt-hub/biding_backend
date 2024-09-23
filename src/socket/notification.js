@@ -1,16 +1,19 @@
 const Notification = require("../app/modules/notification/notification.model");
+const getUnseenNotificationCount = require("../helpers/getUnseenNotificationCount");
 
 const handleNotification = async (io, socket) => {
-  const notifications = await Notification.find({ seen: false });
-  socket.emit("notifications", notifications);
+  const unseenNotificationCount = await getUnseenNotificationCount();
+  socket.emit("notifications", unseenNotificationCount);
   // see notification
   socket.on("seen-notification", async () => {
     const updateNotification = await Notification.updateMany(
       { seen: false },
       { $set: { seen: true } }
     );
-    const updatedNotifications = await Notification.find({ seen: false });
-    socket.emit("notifications", updatedNotifications);
+    const updatedNotificationCount = await Notification.countDocuments({
+      seen: false,
+    });
+    socket.emit("notifications", updatedNotificationCount);
   });
 };
 
