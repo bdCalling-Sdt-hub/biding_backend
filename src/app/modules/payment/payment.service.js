@@ -225,7 +225,6 @@ const executePaymentWithPaypal = async (
   payerId,
   orderDetails
 ) => {
-  console.log(payerId, paymentId, orderDetails, userId);
   const execute_payment_json = { payer_id: payerId };
 
   // Start a new session for transaction
@@ -333,7 +332,7 @@ const executePaymentWithPaypal = async (
 
     // Create a notification
     const notificationMessage = `Payment of $${orderDetails?.totalAmount} has been received for "${orderDetails?.item}" from ${userData?.name}`;
-    await createNotification(notificationMessage, session); // Assuming createNotification supports transactions
+    await createNotification(notificationMessage, session);
 
     const unseenNotificationCount = await getUnseenNotificationCount();
     global.io.emit("notifications", unseenNotificationCount);
@@ -353,10 +352,9 @@ const executePaymentWithPaypal = async (
     session.endSession();
 
     if (err instanceof ApiError) {
-      throw err; // If the error is an ApiError, rethrow it
+      throw err;
     }
 
-    // Throw a general error if something else fails
     throw new ApiError(
       httpStatus.SERVICE_UNAVAILABLE,
       "Something went wrong. Try again later."

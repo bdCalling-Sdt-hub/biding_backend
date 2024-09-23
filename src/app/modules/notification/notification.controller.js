@@ -3,7 +3,7 @@ const sendResponse = require("../../../shared/sendResponse");
 const notificationService = require("./notification.service");
 
 const getAllNotification = catchAsync(async (req, res) => {
-  const result = await notificationService.getAllNotificationFromDB();
+  const result = await notificationService.getAllNotificationFromDB(req?.query);
 
   sendResponse(res, {
     statusCode: 200,

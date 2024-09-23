@@ -1,9 +1,16 @@
+const QueryBuilder = require("../../../builder/QueryBuilder");
 const Notification = require("./notification.model");
 
-const getAllNotificationFromDB = async () => {
-  const result = await Notification.find();
-
-  return result;
+const getAllNotificationFromDB = async (query) => {
+  const notificationQuery = new QueryBuilder(Notification.find(), query)
+    .search(["name"])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+  const result = await notificationQuery.modelQuery;
+  const meta = await notificationQuery.countTotal();
+  return { meta, result };
 };
 
 const notificationService = {
