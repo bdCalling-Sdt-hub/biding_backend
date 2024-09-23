@@ -2,6 +2,9 @@ const httpStatus = require("http-status");
 const ApiError = require("../../../errors/ApiError");
 const User = require("../user/user.model");
 const QueryBuilder = require("../../../builder/QueryBuilder");
+const { Transaction } = require("../payment/payment.model");
+const { ENUM_PAYMENT_STATUS } = require("../../../utils/enums");
+const Auction = require("../auction/auction.model");
 
 // --- user ---
 
@@ -58,6 +61,41 @@ const blockUnblockUser = async (payload) => {
       runValidators: true,
     }
   );
+};
+
+const getDashboardMetaDataFromDB = async () => {
+  const income = await Transaction.aggregate([
+    {
+      $match: { paymentStatus: ENUM_PAYMENT_STATUS.PAID },
+    },
+    {
+      $group: {
+        _id: null,
+        totalIncome: { $sum: "$paidAmount" },
+      },
+    },
+  ]);
+  const totalIncome = income?.length > 0 ? income[0].totalIncome : 0;
+
+  const totalUser = await User.countDocuments();
+  const totalAuction = await Auction.countDocuments();
+
+  const topBidders = await User.find()
+    .sort({ totalWin: -1 })
+    .limit(4)
+    .select("name profile_image totalWin");
+  const topAuctions = await Auction.find()
+    .sort({ currentPrice: -1 })
+    .limit(4)
+    .select("name images currentPrice");
+
+  return {
+    totalIncome,
+    totalUser,
+    totalAuction,
+    topBidders,
+    topAuctions,
+  };
 };
 
 // // --- driver ---
@@ -143,6 +181,7 @@ const DashboardServices = {
   getAllUsers,
   getSingleUser,
   blockUnblockUser,
+  getDashboardMetaDataFromDB,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,

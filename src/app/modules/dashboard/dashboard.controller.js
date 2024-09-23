@@ -5,6 +5,7 @@ const DashboardServices = require("./dashboard.service");
 // --- user ---
 
 const getAllUsers = catchAsync(async (req, res) => {
+  console.log("get all user");
   const { result, meta } = await DashboardServices.getAllUsers(req.query);
 
   sendResponse(res, {
@@ -28,6 +29,16 @@ const getSingleUser = catchAsync(async (req, res) => {
 
 const blockUnblockUser = catchAsync(async (req, res) => {
   const result = await DashboardServices.blockUnblockUser(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User retrieved successfully",
+    data: result,
+  });
+});
+
+const getDashboardMetaData = catchAsync(async (req, res) => {
+  const result = await DashboardServices.getDashboardMetaDataFromDB();
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -98,6 +109,7 @@ const DashboardController = {
   getAllUsers,
   getSingleUser,
   blockUnblockUser,
+  getDashboardMetaData,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,

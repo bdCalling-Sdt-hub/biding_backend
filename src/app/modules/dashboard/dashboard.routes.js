@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.get(
   "/auth/get-all-user",
-  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+  auth(ENUM_USER_ROLE.ADMIN),
   DashboardController.getAllUsers
 );
 
@@ -22,6 +22,12 @@ router.patch(
   "/auth/block-unblock-user",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   DashboardController.blockUnblockUser
+);
+
+router.get(
+  "/get-dashboard-meta-data",
+  auth(ENUM_USER_ROLE.ADMIN),
+  DashboardController.getDashboardMetaData
 );
 
 // --- driver ---
