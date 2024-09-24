@@ -13,6 +13,9 @@ const {
 const { ENUM_USER_ROLE } = require("../../../utils/enums");
 const { sendResetEmail } = require("../../../utils/sendResetMails");
 const createActivationToken = require("../../../utils/createActivationToken");
+const {
+  sendImageToCloudinary,
+} = require("../../../helpers/sendImageToCloudinary");
 
 const registrationAdmin = async (payload) => {
   const { name, email, password, confirmPassword } = payload;
@@ -48,36 +51,47 @@ const registrationAdmin = async (payload) => {
 };
 
 const updateAdminProfile = async (req) => {
-  const { files } = req;
-  const id = req.params.id;
+  const profile_image = req?.files?.profile_image[0];
+  const userId = req?.user?.userId;
+  const data = req?.body;
+  console.log(profile_image, userId, data);
 
-  let profile_image = undefined;
-
-  if (files && files.profile_image) {
-    profile_image = `/images/profile/${files.profile_image[0].filename}`;
+  if (profile_image) {
+    const imageName = `${image?.originalname}`;
+    // send image to cloudinary --------
+    const { secure_url } = await sendImageToCloudinary(
+      imageName,
+      profile_image?.path
+    );
+    data.profile_image = secure_url;
   }
+  // let profile_image = undefined;
 
-  const data = req.body;
-  if (!data) {
-    throw new Error(402, "Data is missing in the request body!");
-  }
+  // if (files && files.profile_image) {
+  //   profile_image = `/images/profile/${files.profile_image[0].filename}`;
+  // }
 
-  const isExist = await Admin.findOne({ _id: id });
-  if (!isExist) {
-    throw new ApiError(404, "Admin not found !");
-  }
+  // const data = req.body;
+  // if (!data) {
+  //   throw new Error(402, "Data is missing in the request body!");
+  // }
 
-  const updatedAdminData = { ...data };
+  // const isExist = await Admin.findById(userId);
+  // if (!isExist) {
+  //   throw new ApiError(404, "Admin not found !");
+  // }
 
-  const result = await Admin.findOneAndUpdate(
-    { _id: id },
-    { profile_image, ...updatedAdminData },
-    {
-      new: true,
-    }
-  );
+  // const updatedAdminData = { ...data };
 
-  return result;
+  // const result = await Admin.findOneAndUpdate(
+  //   { _id: userId },
+  //   { profile_image, ...updatedAdminData },
+  //   {
+  //     new: true,
+  //   }
+  // );
+
+  // return result;
 };
 
 const login = async (payload) => {
