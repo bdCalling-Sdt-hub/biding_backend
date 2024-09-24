@@ -7,7 +7,7 @@ const { UserController } = require("../user/user.controller");
 const router = express.Router();
 
 router.post("/auth/register", UserController.registrationUser);
-router.post("/auth/activate-user", UserController.activateUser);
+router.get("/auth/activate-user", UserController.activateUser);
 router.post("/auth/login", UserController.login);
 router.delete(
   "/auth/delete-account",
@@ -19,11 +19,14 @@ router.patch(
   auth(ENUM_USER_ROLE.USER),
   UserController.changePassword
 );
-router.post(
-  "/auth/forgot-password",
-  auth(ENUM_USER_ROLE.USER),
-  UserController.forgotPass
+router.post("/auth/forgot-password", UserController.forgotPass);
+
+router.patch(
+  "/auth/verify-otp-forgot-password",
+  UserController.verifyForgetPassOTP
 );
+router.patch("/auth/reset-password", UserController.resetPassword);
+
 router.post(
   "/auth/resend-activation-code",
   UserController.resendActivationCode
@@ -39,5 +42,7 @@ router.post(
   auth(ENUM_USER_ROLE.ADMIN),
   UserController.refreshToken
 );
+// =====
+router.get("/activate-user-2", UserController.activateUser2);
 
 module.exports = router;

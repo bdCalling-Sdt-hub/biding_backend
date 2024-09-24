@@ -99,11 +99,10 @@ const registrationSuccessEmailBody = (userData) => `
         </div>
         <div class="content">
           <h2>Hello, ${userData?.user?.name}</h2>
-          <p>Thank you for registering with Bidding Website. To activate your account, please use the following activation code:</p>
-          <div class="activation-code">${userData?.activationCode}</div>
-          <p>Please enter this code on the activation page within the next 5 minutes.</p>
+          <p>Thank you for registering with Bidding Website. To activate your account, please use the following activation link.</p>
+          <p>Please click this link within the next 5 minutes.</p>
           <div class="button-container">
-            <a href="https://yourwebsite.com/activate" class="button">
+            <a href=${`http://192.168.10.32:6053/user/auth/activate-user?email=${userData?.email}&code=${userData?.activationCode}`} class="button">
               <span class="button-text">Activate Now</span>
             </a>
           </div>

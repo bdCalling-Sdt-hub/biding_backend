@@ -42,6 +42,7 @@ const registrationUser = async (payload) => {
   const data = {
     user: { name: name },
     activationCode,
+    email,
   };
 
   try {
@@ -59,8 +60,8 @@ const registrationUser = async (payload) => {
   return await User.create(user);
 };
 
-const activateUser = async (payload) => {
-  const { activation_code, email } = payload;
+const activateUser = async (payload, query) => {
+  const { email, code: activation_code } = query;
 
   const existUser = await User.findOne({ email: email });
 
@@ -68,16 +69,17 @@ const activateUser = async (payload) => {
     throw new ApiError(400, "User not found");
   }
 
-  if (existUser.activationCode !== activation_code) {
+  if (existUser.activationCode !== parseInt(activation_code)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Code didn't match");
   }
 
   const user = await User.findOneAndUpdate(
-    { email: email },
-    { isActive: true },
+    { email },
+    { $set: { isActive: true, verified: true } },
     {
       new: true,
       runValidators: true,
+      projection: { verified: 1 },
     }
   );
 
@@ -107,6 +109,86 @@ const activateUser = async (payload) => {
     refreshToken,
     user,
   };
+};
+
+const verifyForgetPassOTP = async (payload) => {
+  const { email, verifyCode } = payload;
+
+  if (!email || !verifyCode) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Missing email or code");
+  }
+
+  const user = await User.findOne(
+    { email },
+    { verifyCode: 1, verifyExpire: 1 }
+  );
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User does not exist!");
+  }
+  if (!user.verifyCode) {
+    throw new ApiError(httpStatus.NOT_FOUND, "You have no verification code");
+  }
+  if (user.verifyCode !== verifyCode) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid verification code!");
+  }
+  if (new Date() > user.verifyExpire) {
+    throw new ApiError(httpStatus.GONE, "Verification code has expired!");
+  }
+
+  return await User.findOneAndUpdate(
+    { email },
+    { $set: { verified: true } },
+    {
+      new: true,
+      runValidators: true,
+      projection: { verified: 1 },
+    }
+  );
+};
+
+const resetPassword = async (payload) => {
+  const { email, newPassword, confirmPassword } = payload;
+
+  if (!email || !newPassword || !confirmPassword) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Missing credentials");
+  }
+  if (newPassword !== confirmPassword) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "newPassword & confirmPassword doesn't match"
+    );
+  }
+
+  const worker = await Worker.findOne(
+    { email },
+    { _id: 1, verified: 1, verifyCode: 1 }
+  );
+
+  if (!worker) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Client not found!");
+  }
+  if (!worker.verifyCode) {
+    throw new ApiError(httpStatus.NOT_FOUND, "You have no verification code");
+  }
+  if (!worker.verified) {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      "You are not verified. Please verify the OTP"
+    );
+  }
+
+  const hashedPassword = await bcrypt.hash(
+    newPassword,
+    Number(config.bcrypt_salt_rounds)
+  );
+
+  await Worker.updateOne({ email }, { password: hashedPassword });
+
+  worker.verifyCode = null;
+  worker.verifyExpire = null;
+
+  await worker.save();
 };
 
 // Scheduled task to delete expired inactive users
@@ -338,13 +420,21 @@ const refreshToken = async (token) => {
   };
 };
 
+const activateUser2 = async (query) => {
+  console.log(query);
+  // const {email} = query+
+};
+
 const UserService = {
   registrationUser,
   loginUser,
   changePassword,
   updateProfile,
   forgotPass,
+  resetPassword,
+  verifyForgetPassOTP,
   activateUser,
+  activateUser2,
   deleteMyAccount,
   resendActivationCode,
   refreshToken,
