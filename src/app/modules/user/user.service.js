@@ -40,7 +40,7 @@ const registrationUser = async (payload) => {
   const activationToken = createActivationToken();
   const activationCode = activationToken.activationCode;
   const data = {
-    user: { name: name },
+    user: { name: name, email },
     activationCode,
     email,
   };

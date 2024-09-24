@@ -8,6 +8,9 @@ const PaymentRoutes = require("../modules/payment/payment.routes");
 const categoryRoutes = require("../modules/category/category.route");
 const auctionRoutes = require("../modules/auction/auction.routes");
 const bookmarkRoutes = require("../modules/bookmark/bookmark.route");
+const orderRoutes = require("../modules/order/order.route");
+const transactionRoutes = require("../modules/transaction/transaction.route");
+const notificationRoutes = require("../modules/notification/notification.route");
 const ShippingRoutes = require("../modules/shippingAddress/shipping.routes");
 const moduleRoutes = [
   {
@@ -41,6 +44,18 @@ const moduleRoutes = [
   {
     path: "/payment",
     route: PaymentRoutes,
+  },
+  {
+    path: "/order",
+    route: orderRoutes,
+  },
+  {
+    path: "/transaction",
+    route: transactionRoutes,
+  },
+  {
+    path: "/notification",
+    route: notificationRoutes,
   },
   {
     path: "/shipping",

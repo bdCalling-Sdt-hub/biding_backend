@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-unused-expressions */
 /* eslint-disable no-console */
-const { Error } = require("mongoose");
+const { Error: mongooseError } = require("mongoose");
 const config = require("../../config");
 
 const handleValidationError = require("../../errors/handleValidationError");
@@ -77,7 +77,7 @@ const globalErrorHandler = (error, req, res, next) => {
         message: error.message,
       },
     ];
-  } else if (error instanceof Error) {
+  } else if (error instanceof mongooseError) {
     message = error?.message;
     errorMessages = error?.message
       ? [

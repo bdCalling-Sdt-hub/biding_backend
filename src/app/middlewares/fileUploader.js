@@ -1,17 +1,16 @@
 const multer = require("multer");
 const fs = require("fs");
-
+///
 const uploadFile = () => {
   const storage = multer.diskStorage({
     destination: function (req, file, cb) {
       let uploadPath = "";
       // console.log(file);
       if (file.fieldname === "image") {
-        uploadPath = "uploads/images/image";
-      } else if (file.fieldname === "banner") {
-        uploadPath = "uploads/images/banner";
+        uploadPath = "uploads";
       } else if (file.fieldname === "profile_image") {
-        uploadPath = "uploads/images/profile";
+        uploadPath = "uploads";
+        // uploadPath = "uploads/images/profile";
       } else if (file.fieldname === "video") {
         uploadPath = "uploads/video";
       } else if (file.fieldname === "product_img") {
@@ -84,7 +83,7 @@ const uploadFile = () => {
     { name: "product_img", maxCount: 1 },
     { name: "video", maxCount: 1 },
     { name: "profile_image", maxCount: 1 },
-    { name: "document", maxCount: 1 }, // Add the document field here
+    { name: "document", maxCount: 1 },
   ]);
 
   return upload;

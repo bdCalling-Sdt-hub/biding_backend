@@ -20,9 +20,13 @@ router.patch(
   AdminController.changePassword
 );
 router.patch(
-  "/auth/update-profile/:id",
+  "/auth/update-profile",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   uploadFile(),
+  (req, res, next) => {
+    req.body = JSON.parse(req.body.data);
+    next();
+  },
   AdminController.updateAdminProfile
 );
 router.get(

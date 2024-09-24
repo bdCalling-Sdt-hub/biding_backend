@@ -65,8 +65,8 @@ const registrationSuccessEmailBody = (userData) => `
           font-size: 16px;
           font-weight: 600;
         }
-        .button-text{
-          color: #fff
+        .button-text {
+          color: #fff;
         }
         .button:hover {
           background-color: #0056b3;
@@ -99,13 +99,25 @@ const registrationSuccessEmailBody = (userData) => `
         </div>
         <div class="content">
           <h2>Hello, ${userData?.user?.name}</h2>
+<<<<<<< HEAD
           <p>Thank you for registering with Bidding Website. To activate your account, please use the following activation link.</p>
           <p>Please click this link within the next 5 minutes.</p>
           <div class="button-container">
             <a href=${`http://192.168.10.32:6053/user/auth/activate-user?email=${userData?.email}&code=${userData?.activationCode}`} class="button">
+=======
+          <p>Thank you for registering with Bidding Website. To activate your account, please click the button below:</p>
+
+          <div class="button-container">
+            <a href="http://localhost:3000/activate?email=${encodeURIComponent(
+              userData?.user?.email
+            )}&code=${encodeURIComponent(
+  userData?.activationCode
+)}" class="button">
+>>>>>>> 01303fd963965852ba43c98a68a5de1447908d41
               <span class="button-text">Activate Now</span>
             </a>
           </div>
+
           <p>If you didn't register for Bidding Website, please ignore this email.</p>
           <p>If you have any questions, feel free to contact us at <a href="mailto:thakursaad613@gmail.com">thakursaad613@gmail.com</a>.</p>
         </div>

@@ -26,7 +26,7 @@ const activateUser = catchAsync(async (req, res) => {
   res.cookie("refreshToken", refreshToken, cookieOptions);
 
   sendResponse(res, {
-    statusCode: 201,
+    statusCode: 200,
     success: true,
     message: "User activated successfully",
     data: result,

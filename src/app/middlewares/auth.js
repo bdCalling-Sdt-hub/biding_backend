@@ -1,11 +1,10 @@
-const { Secret } = require("jsonwebtoken");
 const config = require("../../config");
 const ApiError = require("../../errors/ApiError");
 const httpStatus = require("http-status");
 const { jwtHelpers } = require("../../helpers/jwtHelpers");
+const { ENUM_USER_ROLE } = require("../../utils/enums");
 const User = require("../modules/user/user.model");
 const Admin = require("../modules/admin/admin.model");
-const { ENUM_USER_ROLE } = require("../../utils/enums");
 
 const auth =
   (...roles) =>
@@ -30,7 +29,6 @@ const auth =
 
         const isExist = await User.findById(verifyUser?.userId);
         const checkAdmin = await Admin.findById(verifyUser?.userId);
-
         if (verifyUser.role === ENUM_USER_ROLE.USER && !isExist) {
           throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized");
         }
