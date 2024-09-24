@@ -1,15 +1,16 @@
 const multer = require("multer");
 const fs = require("fs");
-
+///
 const uploadFile = () => {
   const storage = multer.diskStorage({
     destination: function (req, file, cb) {
       let uploadPath = "";
-
+      // console.log(file);
       if (file.fieldname === "image") {
         uploadPath = "uploads";
       } else if (file.fieldname === "profile_image") {
-        uploadPath = "uploads/images/profile";
+        uploadPath = "uploads";
+        // uploadPath = "uploads/images/profile";
       } else if (file.fieldname === "video") {
         uploadPath = "uploads/video";
       } else if (file.fieldname === "product_img") {
@@ -28,6 +29,7 @@ const uploadFile = () => {
         file.mimetype === "image/jpeg" ||
         file.mimetype === "image/png" ||
         file.mimetype === "image/jpg" ||
+        file.mimetype === "image/webp" ||
         file.mimetype === "video/mp4" ||
         file.mimetype === "application/pdf" // Allow PDF files
       ) {
@@ -45,6 +47,7 @@ const uploadFile = () => {
   const fileFilter = (req, file, cb) => {
     const allowedFieldnames = [
       "image",
+      "banner",
       "product_img",
       "profile_image",
       "video",
@@ -58,6 +61,7 @@ const uploadFile = () => {
         file.mimetype === "image/jpeg" ||
         file.mimetype === "image/png" ||
         file.mimetype === "image/jpg" ||
+        file.mimetype === "image/webp" ||
         file.mimetype === "video/mp4" ||
         file.mimetype === "application/pdf" // Allow PDF files
       ) {
@@ -75,10 +79,11 @@ const uploadFile = () => {
     fileFilter: fileFilter,
   }).fields([
     { name: "image", maxCount: 10 },
+    { name: "banner", maxCount: 1 },
     { name: "product_img", maxCount: 1 },
     { name: "video", maxCount: 1 },
     { name: "profile_image", maxCount: 1 },
-    { name: "document", maxCount: 1 }, // Add the document field here
+    { name: "document", maxCount: 1 },
   ]);
 
   return upload;

@@ -20,7 +20,13 @@ async function main() {
     const socketIO = new Server(server, {
       pingTimeout: 60000,
       cors: {
-        origin: "http://localhost:5173",
+        origin: [
+          "http://localhost:5173",
+          "http://192.168.10.103:3000",
+          "http://192.168.10.103:3001",
+          "http://192.168.10.103:3002",
+          "http://192.168.10.103:3003",
+        ],
       },
     });
     // Assign Socket.IO to global for potential use in other parts of the application
@@ -28,23 +34,23 @@ async function main() {
     // handle unhandled promise rejections
     process.on("unhandledRejection", (error) => {
       logger.error("Unhandled Rejection:", error);
-      server.close(() => process.exit(1));
+      // server.close(() => process.exit(1));
     });
 
     // handle uncaught exceptions
     process.on("uncaughtException", (error) => {
       errorLogger.error("Uncaught Exception:", error);
-      process.exit(1);
+      // process.exit(1);
     });
 
     // handle termination signals
     process.on("SIGTERM", () => {
       logger.info("SIGTERM received");
-      server.close(() => process.exit(0));
+      // server.close(() => process.exit(0));
     });
   } catch (err) {
     errorLogger.error("Main Function Error:", err);
-    process.exit(1);
+    // process.exit(1);
   }
 }
 

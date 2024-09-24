@@ -1,11 +1,10 @@
-const { Secret } = require("jsonwebtoken");
 const config = require("../../config");
 const ApiError = require("../../errors/ApiError");
 const httpStatus = require("http-status");
 const { jwtHelpers } = require("../../helpers/jwtHelpers");
+const { ENUM_USER_ROLE } = require("../../utils/enums");
 const User = require("../modules/user/user.model");
 const Admin = require("../modules/admin/admin.model");
-const { ENUM_USER_ROLE } = require("../../utils/enums");
 
 const auth =
   (...roles) =>

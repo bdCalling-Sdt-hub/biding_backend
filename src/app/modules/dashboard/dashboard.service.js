@@ -5,6 +5,7 @@ const QueryBuilder = require("../../../builder/QueryBuilder");
 const { Transaction } = require("../payment/payment.model");
 const { ENUM_PAYMENT_STATUS } = require("../../../utils/enums");
 const Auction = require("../auction/auction.model");
+const Banner = require("./banner.model");
 
 // --- user ---
 
@@ -98,90 +99,99 @@ const getDashboardMetaDataFromDB = async () => {
   };
 };
 
-// // --- driver ---
+const addBanner = async (req) => {
+  const { files, body } = req || {};
 
-// const getAllDriver = async (query) => {
-//   const driversQuery = new QueryBuilder(Driver.find(), query)
-//     .search(["name"])
-//     .filter()
-//     .sort()
-//     .paginate()
-//     .fields();
+  if (!files.banner?.length || Object.keys(body).length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Image or body is not provided");
+  }
 
-//   const result = await driversQuery.modelQuery;
-//   const meta = await driversQuery.countTotal();
+  const existingIndex = await Banner.findOne({ index: body.index });
+  if (existingIndex) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Index already exists. Please choose a different index."
+    );
+  }
 
-//   if (!result) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "No drivers found");
-//   }
+  const { banner } = files;
+  const { originalname, path } = banner[0];
 
-//   return { result, meta };
-// };
+  const { secure_url: url } =
+    (await sendImageToCloudinary(originalname, path)) || {};
 
-// const getSingleDriver = async (payload) => {
-//   const { email } = payload;
-//   const driver = await Driver.findOne({ email: email });
+  if (!url) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Image upload failed");
+  }
 
-//   if (!driver) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-//   }
+  const existingUrl = await Banner.findOne({ url });
 
-//   return driver;
-// };
+  if (existingUrl) {
+    throw new ApiError(
+      httpStatus.CONFLICT,
+      "You have already uploaded the image"
+    );
+  }
 
-// const blockUnblockDriver = async (payload) => {
-//   const { email, is_block } = payload;
-//   const existingDriver = await Driver.findOne({ email: email });
+  const newBanner = {
+    url,
+    ...body,
+  };
 
-//   if (!existingDriver) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "Driver not found");
-//   }
+  return await Banner.create(newBanner);
+};
 
-//   return await Driver.findOneAndUpdate(
-//     { email: email },
-//     { $set: { is_block } },
-//     {
-//       new: true,
-//       runValidators: true,
-//     }
-//   );
-// };
+const updateBannerIndex = async (payload) => {
+  const { newIndex, id } = payload;
 
-// const verifyDriver = async (payload) => {
-//   const { email, isVerified } = payload;
-//   const existingDriver = await Driver.findOne({ email: email });
+  const bannerToUpdate = await Banner.findById(id);
 
-//   if (!existingDriver) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "Driver not found");
-//   }
+  if (!bannerToUpdate) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Banner not found");
+  }
 
-//   return await Driver.findOneAndUpdate(
-//     { email: email },
-//     { $set: { isVerified } },
-//     {
-//       new: true,
-//       runValidators: true,
-//     }
-//   );
-// };
+  const oldIndex = bannerToUpdate.index;
 
-// -------------------
+  if (newIndex > oldIndex) {
+    // Decrease the index of all pictures that are between oldIndex+1 and newIndex
+    await Banner.updateMany(
+      { index: { $gt: oldIndex, $lte: newIndex } },
+      { $inc: { index: -1 } }
+    );
+  } else if (newIndex < oldIndex) {
+    // Increase the index of all pictures that are between newIndex and oldIndex-1
+    await Banner.updateMany(
+      { index: { $gte: newIndex, $lt: oldIndex } },
+      { $inc: { index: 1 } }
+    );
+  }
 
-// const createUser = async (userData) => {
-//   const newUser = await User.create(userData);
-//   return newUser;
-// };
+  bannerToUpdate.index = newIndex;
+  return await bannerToUpdate.save();
+};
 
-// const getAllAdmin = async () => {
-//   const results = await Admin.find({}).lean();
-//   return results;
-// };
+const deleteBanner = async (payload) => {
+  const { id } = payload;
+  if (!id) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "No id provided");
+  }
+
+  const banner = await Banner.findById(id);
+  if (!banner) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Banner does not exist");
+  }
+
+  return await Banner.findByIdAndDelete(id);
+};
 
 const DashboardServices = {
   getAllUsers,
   getSingleUser,
   blockUnblockUser,
   getDashboardMetaDataFromDB,
+  addBanner,
+  updateBannerIndex,
+  deleteBanner,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,

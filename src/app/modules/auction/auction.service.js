@@ -6,7 +6,7 @@ const {
 const Auction = require("./auction.model");
 const QueryBuilder = require("../../../builder/QueryBuilder");
 const createNotification = require("../../../helpers/createNotification");
-const getUnseenNotificationCount = require("../../../helpers/getUnseenNotificationCount");
+const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
 const { default: mongoose } = require("mongoose");
 
 // const createAuctionIntoDB = async (images, data) => {

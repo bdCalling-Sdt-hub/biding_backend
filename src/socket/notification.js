@@ -1,5 +1,5 @@
 const Notification = require("../app/modules/notification/notification.model");
-const getUnseenNotificationCount = require("../helpers/getUnseenNotificationCount");
+const getUnseenNotificationCount = require("../helpers/getUnseenNotification");
 
 const handleNotification = async (io, socket) => {
   const unseenNotificationCount = await getUnseenNotificationCount();

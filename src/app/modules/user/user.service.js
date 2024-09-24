@@ -40,7 +40,7 @@ const registrationUser = async (payload) => {
   const activationToken = createActivationToken();
   const activationCode = activationToken.activationCode;
   const data = {
-    user: { name: name },
+    user: { name: name, email },
     activationCode,
   };
 
@@ -309,6 +309,35 @@ const resendActivationCode = async (payload) => {
   );
 };
 
+const refreshToken = async (token) => {
+  let verifiedToken = null;
+  try {
+    verifiedToken = jwtHelpers.verifyToken(token, config.jwt.refresh_secret);
+  } catch (err) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Invalid Refresh Token");
+  }
+
+  const { email } = verifiedToken;
+  const isUserExist = await User.isUserExist(email);
+
+  if (!isUserExist) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User does not exist");
+  }
+
+  const newRefreshToken = jwtHelpers.createToken(
+    {
+      id: isUserExist._id,
+      role: isUserExist.role,
+    },
+    config.jwt.secret,
+    config.jwt.expires_in
+  );
+
+  return {
+    refreshToken: newRefreshToken,
+  };
+};
+
 const UserService = {
   registrationUser,
   loginUser,
@@ -318,6 +347,7 @@ const UserService = {
   activateUser,
   deleteMyAccount,
   resendActivationCode,
+  refreshToken,
 };
 
 module.exports = { UserService };

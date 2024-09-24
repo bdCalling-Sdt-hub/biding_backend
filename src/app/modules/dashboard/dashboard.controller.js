@@ -46,70 +46,44 @@ const getDashboardMetaData = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const addBanner = catchAsync(async (req, res) => {
+  const result = await DashboardServices.addBanner(req);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Banner added successfully",
+    data: result,
+  });
+});
 
-// // --- driver ---
+const updateBannerIndex = catchAsync(async (req, res) => {
+  const result = await DashboardServices.updateBannerIndex(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Banner Index updated successfully",
+    data: result,
+  });
+});
 
-// const getAllDriver = catchAsync(async (req, res) => {
-//   const { meta, result } = await DashboardServices.getAllDriver(req.query);
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: "User retrieved successfully",
-//     data: result,
-//     meta,
-//   });
-// });
-
-// const getSingleDriver = catchAsync(async (req, res) => {
-//   const result = await DashboardServices.getSingleDriver(req.body);
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: "User retrieved successfully",
-//     data: result,
-//   });
-// });
-
-// const blockUnblockDriver = catchAsync(async (req, res) => {
-//   const result = await DashboardServices.blockUnblockDriver(req.body);
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: "User retrieved successfully",
-//     data: result,
-//   });
-// });
-
-// const verifyDriver = catchAsync(async (req, res) => {
-//   const result = await DashboardServices.verifyDriver(req.body);
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: "Driver verified successfully",
-//     data: result,
-//   });
-// });
-
-// // ---------------
-
-// // const createUser = catchAsync(async (req, res) => {
-// //   const userData = req.body;
-
-// //   const result = await AdminService.createUser(userData);
-
-// //   sendResponse(res, {
-// //     statusCode: 200,
-// //     success: true,
-// //     message: "User created successfully",
-// //     data: result,
-// //   });
-// // });
+const deleteBanner = catchAsync(async (req, res) => {
+  const result = await DashboardServices.deleteBanner(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Banner deleted successfully",
+    data: result,
+  });
+});
 
 const DashboardController = {
   getAllUsers,
   getSingleUser,
   blockUnblockUser,
   getDashboardMetaData,
+  addBanner,
+  updateBannerIndex,
+  deleteBanner,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,

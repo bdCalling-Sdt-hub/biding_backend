@@ -12,7 +12,7 @@ const {
   ENUM_PAYMENT_STATUS,
 } = require("../../../utils/enums");
 const createNotification = require("../../../helpers/createNotification");
-const getUnseenNotificationCount = require("../../../helpers/getUnseenNotificationCount");
+const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
 const { default: mongoose } = require("mongoose");
 
 // PayPal configuration
