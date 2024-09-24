@@ -65,6 +65,12 @@ const updateAdminProfile = async (req) => {
     );
     data.profile_image = secure_url;
   }
+
+  const result = await Admin.findByIdAndUpdate(userId, data, {
+    runValidators: true,
+    new: true,
+  });
+  return result;
   // let profile_image = undefined;
 
   // if (files && files.profile_image) {

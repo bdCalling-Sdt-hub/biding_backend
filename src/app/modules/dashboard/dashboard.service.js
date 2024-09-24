@@ -99,6 +99,212 @@ const getDashboardMetaDataFromDB = async () => {
   };
 };
 
+// get area chart data
+// const getAreaChartDataForIncomeFromDB = async (year) => {
+//   // Create date objects for the start and end of the year
+//   const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+//   const endDate = new Date(`${year + 1}-01-01T00:00:00.000Z`);
+
+//   const incomeData = await Transaction.aggregate([
+//     {
+//       $match: {
+//         createdAt: {
+//           $gte: startDate,
+//           $lt: endDate,
+//         },
+//       },
+//     },
+//     {
+//       $group: {
+//         _id: { $month: "$createdAt" }, // Group by month
+//         totalIncome: { $sum: "$paidAmount" }, // Sum the paid amounts
+//       },
+//     },
+//     {
+//       $sort: { _id: 1 }, // Sort by month
+//     },
+//   ]);
+
+//   console.log("Aggregated Income Data:", incomeData); // Log the aggregated data
+
+//   // Create an array for all months with default income of 0
+//   const months = [
+//     { month: "January", totalIncome: 0 },
+//     { month: "February", totalIncome: 0 },
+//     { month: "March", totalIncome: 0 },
+//     { month: "April", totalIncome: 0 },
+//     { month: "May", totalIncome: 0 },
+//     { month: "June", totalIncome: 0 },
+//     { month: "July", totalIncome: 0 },
+//     { month: "August", totalIncome: 0 },
+//     { month: "September", totalIncome: 0 },
+//     { month: "October", totalIncome: 0 },
+//     { month: "November", totalIncome: 0 },
+//     { month: "December", totalIncome: 0 },
+//   ];
+
+//   // Map the aggregated data to the corresponding months
+//   incomeData.forEach((data) => {
+//     const monthIndex = data._id - 1; // Convert month (1-12) to index (0-11)
+//     if (months[monthIndex]) {
+//       months[monthIndex].totalIncome = data.totalIncome;
+//     }
+//   });
+
+//   return months;
+// };
+
+const getAreaChartDataForIncomeFromDB = async (year) => {
+  // Create date objects for the start and end of the year
+  const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+  const endDate = new Date(`${year + 1}-01-01T00:00:00.000Z`);
+
+  const incomeData = await Transaction.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startDate,
+          $lt: endDate,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: { $month: "$createdAt" }, // Group by month
+        totalIncome: { $sum: "$paidAmount" }, // Sum the paid amounts
+      },
+    },
+    {
+      $sort: { _id: 1 }, // Sort by month
+    },
+  ]);
+
+  console.log("Aggregated Income Data:", incomeData); // Log the aggregated data
+
+  // Create an array for all months with default income of 0
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    month: new Date(0, i).toLocaleString("default", { month: "long" }), // Month names
+    totalIncome: 0,
+  }));
+
+  // Map the aggregated data to the corresponding months
+  incomeData.forEach((data) => {
+    const monthIndex = data._id - 1; // Convert month (1-12) to index (0-11)
+    if (months[monthIndex]) {
+      months[monthIndex].totalIncome = data.totalIncome;
+    }
+  });
+
+  // Calculate Yearly Growth
+  const previousYearIncomeData = await Transaction.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: new Date(`${year - 1}-01-01T00:00:00.000Z`),
+          $lt: new Date(`${year}-01-01T00:00:00.000Z`),
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalIncome: { $sum: "$paidAmount" },
+      },
+    },
+  ]);
+
+  const currentYearTotalIncome = months.reduce(
+    (acc, month) => acc + month.totalIncome,
+    0
+  );
+  const previousYearTotalIncome = previousYearIncomeData[0]
+    ? previousYearIncomeData[0].totalIncome
+    : 0;
+
+  const yearlyGrowth =
+    previousYearTotalIncome > 0
+      ? ((currentYearTotalIncome - previousYearTotalIncome) /
+          previousYearTotalIncome) *
+        100
+      : currentYearTotalIncome > 0
+      ? 100 // If previous year was 0 and current year is > 0
+      : 0;
+
+  // Calculate Monthly Growth Percentages
+  const currentMonthIndex = new Date().getMonth(); // Current month index (0-11)
+  const previousMonthIndex =
+    currentMonthIndex === 0 ? 11 : currentMonthIndex - 1; // Previous month index
+  const previousMonthIncome = months[previousMonthIndex].totalIncome;
+
+  const monthlyGrowth =
+    previousMonthIncome > 0
+      ? ((months[currentMonthIndex].totalIncome - previousMonthIncome) /
+          previousMonthIncome) *
+        100
+      : months[currentMonthIndex].totalIncome > 0
+      ? 100 // If previous month was 0 and current month is > 0
+      : 0;
+
+  // Calculate Daily Growth
+  const today = new Date();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0));
+  const yesterdayStart = new Date(today.setDate(today.getDate() - 1));
+
+  const dailyIncomeData = await Transaction.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: yesterdayStart,
+          $lt: new Date(yesterdayStart.setHours(24)), // Next day at midnight
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalIncome: { $sum: "$paidAmount" },
+      },
+    },
+  ]);
+
+  const todayIncomeData = await Transaction.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: todayStart,
+          $lt: new Date(todayStart.setHours(24)), // Next day at midnight
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalIncome: { $sum: "$paidAmount" },
+      },
+    },
+  ]);
+
+  const yesterdayIncome = dailyIncomeData[0]
+    ? dailyIncomeData[0].totalIncome
+    : 0;
+  const todayIncome = todayIncomeData[0] ? todayIncomeData[0].totalIncome : 0;
+
+  const dailyGrowth =
+    yesterdayIncome > 0
+      ? ((todayIncome - yesterdayIncome) / yesterdayIncome) * 100
+      : todayIncome > 0
+      ? 100 // If yesterday was 0 and today is > 0
+      : 0;
+
+  // Return the detailed monthly data along with growth percentages
+  return {
+    chartData: months, // Keep the monthly income data
+    yearlyGrowth: yearlyGrowth.toFixed(2) + "%", // Yearly growth percentage
+    monthlyGrowth: monthlyGrowth.toFixed(2) + "%", // Monthly growth percentage
+    dailyGrowth: dailyGrowth.toFixed(2) + "%", // Daily growth percentage
+  };
+};
+
 const addBanner = async (req) => {
   const { files, body } = req || {};
 
@@ -192,6 +398,7 @@ const DashboardServices = {
   addBanner,
   updateBannerIndex,
   deleteBanner,
+  getAreaChartDataForIncomeFromDB,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,

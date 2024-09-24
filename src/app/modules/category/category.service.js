@@ -8,7 +8,7 @@ const Category = require("./category.model");
 const createCategoryIntoDB = async (file, categoryData) => {
   console.log(categoryData);
   if (file) {
-    const imageName = `${file?.originalname}`;
+    const imageName = `${file?.filename.slice(0, -4)}`;
     // send image to cloudinary --------
     const { secure_url } = await sendImageToCloudinary(imageName, file?.path);
     categoryData.image = secure_url;

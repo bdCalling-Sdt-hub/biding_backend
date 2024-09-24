@@ -46,6 +46,19 @@ const getDashboardMetaData = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+const getAreaChartDataForIncome = catchAsync(async (req, res) => {
+  const result = await DashboardServices.getAreaChartDataForIncomeFromDB(
+    Number(req?.query?.year)
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Area chart data retrieved successfully",
+    data: result,
+  });
+});
 const addBanner = catchAsync(async (req, res) => {
   const result = await DashboardServices.addBanner(req);
   sendResponse(res, {
@@ -81,6 +94,7 @@ const DashboardController = {
   getSingleUser,
   blockUnblockUser,
   getDashboardMetaData,
+  getAreaChartDataForIncome,
   addBanner,
   updateBannerIndex,
   deleteBanner,

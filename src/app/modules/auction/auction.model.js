@@ -69,6 +69,18 @@ const bidHistorySchema = {
   },
 };
 
+const winingBidderSchema = {
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
+  bidAmount: {
+    type: Number,
+    required: true,
+  },
+};
+
 const auctionSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -100,8 +112,16 @@ const auctionSchema = new mongoose.Schema(
     bidHistory: {
       type: [bidHistorySchema],
     },
+    totalBidPlace: {
+      type: Number,
+      default: 0,
+    },
     countdownTime: {
       type: Number,
+      default: null,
+    },
+    winingBidder: {
+      type: winingBidderSchema,
       default: null,
     },
   },
@@ -109,8 +129,6 @@ const auctionSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-
 
 const Auction = mongoose.model("Auction", auctionSchema);
 

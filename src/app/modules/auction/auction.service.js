@@ -8,6 +8,7 @@ const QueryBuilder = require("../../../builder/QueryBuilder");
 const createNotification = require("../../../helpers/createNotification");
 const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
 const { default: mongoose } = require("mongoose");
+const { ENUM_AUCTION_STATUS } = require("../../../utils/enums");
 
 // const createAuctionIntoDB = async (images, data) => {
 //   console.log("images", images);
@@ -75,7 +76,7 @@ const createAuctionIntoDB = async (images, data) => {
 
     if (images) {
       for (const image of images) {
-        const imageName = image?.filename;
+        const imageName = image?.filename.slice(0, -4);
         const { secure_url } = await sendImageToCloudinary(
           imageName,
           image?.path
@@ -142,6 +143,17 @@ const createAuctionIntoDB = async (images, data) => {
   }
 };
 
+// const getAllAuctionFromDB = async (query) => {
+//   const auctionQuery = new QueryBuilder(Auction.find(), query)
+//     .search(["name"])
+//     .filter()
+//     .sort()
+//     .paginate()
+//     .fields();
+//   const result = await auctionQuery.modelQuery;
+//   const meta = await auctionQuery.countTotal();
+//   return { meta, result };
+// };
 const getAllAuctionFromDB = async (query) => {
   const auctionQuery = new QueryBuilder(Auction.find(), query)
     .search(["name"])
@@ -149,6 +161,18 @@ const getAllAuctionFromDB = async (query) => {
     .sort()
     .paginate()
     .fields();
+
+  // Populate user details in bidBuddyUsers and bidHistory, selecting only name and image fields
+  auctionQuery.modelQuery = auctionQuery.modelQuery
+    .populate({
+      path: "bidBuddyUsers.user",
+      select: "name profile_image", // Select only name and image fields
+    })
+    .populate({
+      path: "bidHistory.user",
+      select: "name profile_image", // Select only name and image fields
+    });
+
   const result = await auctionQuery.modelQuery;
   const meta = await auctionQuery.countTotal();
   return { meta, result };
@@ -205,6 +229,35 @@ const getMyBiddingHistoryFromDB = async (userId) => {
 
   return result;
 };
+
+let isRunning = false; // Initialize the lock
+
+const updateAuctionStatuses = async () => {
+  if (isRunning) return; // If the function is already running, exit
+
+  isRunning = true; // Set the lock to true, indicating the function is running
+  const currentTime = new Date();
+
+  try {
+    // Perform your auction update logic here
+    const auctionsToActivate = await Auction.updateMany(
+      {
+        startingDate: { $lte: currentTime },
+        status: ENUM_AUCTION_STATUS.UPCOMING,
+      },
+      { $set: { status: ENUM_AUCTION_STATUS.ACTIVE } }
+    );
+
+    console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
+  } catch (error) {
+    console.error("Error updating auctions:", error);
+  } finally {
+    isRunning = false; // Release the lock after execution
+  }
+};
+
+// Schedule to run the update function every second
+setInterval(updateAuctionStatuses, 1000);
 
 const auctionService = {
   createAuctionIntoDB,

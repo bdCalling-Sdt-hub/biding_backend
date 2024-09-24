@@ -47,6 +47,11 @@ router.get(
   auth(ENUM_USER_ROLE.ADMIN),
   DashboardController.getDashboardMetaData
 );
+router.get(
+  "/get-income-chart-data",
+  auth(ENUM_USER_ROLE.ADMIN),
+  DashboardController.getAreaChartDataForIncome
+);
 
 // --- driver ---
 
