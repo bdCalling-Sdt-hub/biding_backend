@@ -6,6 +6,16 @@ const config = require("../../../config");
 // checked
 const registrationUser = catchAsync(async (req, res) => {
   const result = await UserService.registrationUser(req.body);
+
+  if (result?.message) {
+    return sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: result.message,
+      data: result.user[0],
+    });
+  }
+
   sendResponse(res, {
     statusCode: 200,
     success: true,
