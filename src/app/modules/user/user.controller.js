@@ -6,7 +6,6 @@ const config = require("../../../config");
 // checked
 const registrationUser = catchAsync(async (req, res) => {
   const result = await UserService.registrationUser(req.body);
-  console.log(result);
   sendResponse(res, {
     statusCode: 200,
     success: true,

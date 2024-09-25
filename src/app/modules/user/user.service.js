@@ -25,11 +25,19 @@ const registrationUser = async (payload) => {
     expirationTime: Date.now() + 10 * 60 * 1000,
   };
 
-  const isEmailExist = await User.findOne({ email });
+  const existingUser = await User.findOne({ email });
 
-  if (isEmailExist) {
+  if (existingUser && !existingUser?.verified) {
+    const user = await User.find({ email });
+    return {
+      message: "You have already registered. Please verify",
+      user,
+    };
+  }
+  if (existingUser) {
     throw new ApiError(400, "Email already exists");
   }
+
   if (password !== confirmPassword) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
