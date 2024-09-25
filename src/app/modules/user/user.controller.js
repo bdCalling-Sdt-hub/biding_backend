@@ -5,11 +5,12 @@ const config = require("../../../config");
 
 // checked
 const registrationUser = catchAsync(async (req, res) => {
-  await UserService.registrationUser(req.body);
+  const result = await UserService.registrationUser(req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "Please check your email to activate your account",
+    data: result,
   });
 });
 
