@@ -22,7 +22,7 @@ const registrationUser = async (payload) => {
     password,
     confirmPassword,
     phone_number,
-    expirationTime: Date.now() + 5 * 60 * 1000,
+    expirationTime: Date.now() + 10 * 60 * 1000,
   };
 
   const isEmailExist = await User.findOne({ email });
