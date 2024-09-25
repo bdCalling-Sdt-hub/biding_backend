@@ -1,8 +1,13 @@
 const httpStatus = require("http-status");
 const ApiError = require("../../../errors/ApiError");
 const Bookmark = require("./bookmark.model");
+const Auction = require("../auction/auction.model");
 
 const createBookmarkIntoDB = async (auctionId, user) => {
+  const auctionExist = await Auction.findById(auctionId);
+  if (!auctionExist) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
+  }
   const bookmark = await Bookmark.findOne({ auction: auctionId });
   if (bookmark) {
     throw new ApiError(

@@ -211,7 +211,6 @@ const getAllAuctionFromDB = async (query, userId) => {
 
   // Fetch user's bookmarks
   const bookmarks = await Bookmark.find({ user: userId }).select("auction");
-  console.log("bookmarks", bookmarks);
   const bookmarkedAuctionIds = new Set(
     bookmarks.map((b) => b.auction.toString())
   );
