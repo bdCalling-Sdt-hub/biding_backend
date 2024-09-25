@@ -68,16 +68,17 @@ const registrationUser = async (payload) => {
   return await User.create(user);
 };
 
-const activateUser = async (payload, query) => {
-  const { email, code: activation_code } = payload;
+const activateUser = async (payload) => {
+  // console.log("paylaod", payload);
+  const { email, activation_code } = payload;
 
   const existUser = await User.findOne({ email: email });
 
   if (!existUser) {
     throw new ApiError(400, "User not found");
   }
-
-  if (existUser.activationCode !== parseInt(activation_code)) {
+  console.log(existUser.activationCode, activation_code);
+  if (existUser.activationCode !== Number(activation_code)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Code didn't match");
   }
 
@@ -254,6 +255,53 @@ const loginUser = async (payload) => {
     accessToken,
     refreshToken,
   };
+};
+
+const SignUPWithGoogle = async (payload) => {
+  const userExist = await User.findOne({ email: payload?.email });
+  if (userExist) {
+    const userId = userExist?._id;
+    const accessToken = jwtHelpers.createToken(
+      { userId, email, role },
+      config.jwt.secret,
+      config.jwt.expires_in
+    );
+    const refreshToken = jwtHelpers.createToken(
+      { userId, email, role },
+      config.jwt.refresh_secret,
+      config.jwt.refresh_expires_in
+    );
+
+    return {
+      accessToken,
+      refreshToken,
+      user: userExist,
+    };
+  }
+
+  const createUser = await User.create({ ...payload, password: "google" });
+  const userId = createUser?._id;
+  const accessToken = jwtHelpers.createToken(
+    { userId, email, role },
+    config.jwt.secret,
+    config.jwt.expires_in
+  );
+  const refreshToken = jwtHelpers.createToken(
+    { userId, email, role },
+    config.jwt.refresh_secret,
+    config.jwt.refresh_expires_in
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+    user: userExist,
+  };
+};
+
+const getMyProfileFromDB = async (userId) => {
+  const result = await User.findById(userId);
+  return result;
 };
 
 const updateProfile = async (req) => {
@@ -436,6 +484,8 @@ const activateUser2 = async (query) => {
 const UserService = {
   registrationUser,
   loginUser,
+  SignUPWithGoogle,
+  getMyProfileFromDB,
   changePassword,
   updateProfile,
   forgotPass,

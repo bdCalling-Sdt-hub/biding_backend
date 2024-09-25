@@ -124,6 +124,9 @@ const auctionSchema = new mongoose.Schema(
       type: winingBidderSchema,
       default: null,
     },
+    activateTime: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

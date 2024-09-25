@@ -85,6 +85,26 @@ const login = catchAsync(async (req, res) => {
   });
 });
 
+// google sign up
+const googleSignUp = catchAsync(async (req, res) => {
+  const result = await UserService.googleSignUp(req?.body);
+
+  const { refreshToken } = result;
+
+  // set refresh token into cookie
+  const cookieOptions = {
+    secure: config.env === "production",
+    httpOnly: true,
+  };
+  res.cookie("refreshToken", refreshToken, cookieOptions);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User logged in successfully!",
+    data: result,
+  });
+});
 const changePassword = catchAsync(async (req, res) => {
   const passwordData = req.body;
   const userData = req.user;
@@ -102,6 +122,16 @@ const updateProfile = catchAsync(async (req, res) => {
     statusCode: 200,
     success: true,
     message: "Profile updated successfully",
+    data: result,
+  });
+});
+
+const getMyProfile = catchAsync(async (req, res) => {
+  const result = await UserService.getMyProfileFromDB(req?.user?.userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Profile retrieved successfully",
     data: result,
   });
 });
@@ -169,8 +199,10 @@ const activateUser2 = catchAsync(async (req, res) => {
 const UserController = {
   registrationUser,
   activateUser,
+  googleSignUp,
   verifyForgetPassOTP,
   resetPassword,
+  getMyProfile,
   activateUser2,
   login,
   deleteMyAccount,

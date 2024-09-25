@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.post("/auth/register", UserController.registrationUser);
 router.post("/auth/activate-user", UserController.activateUser);
+router.post("/google-sign-up", UserController.googleSignUp);
 router.post("/auth/login", UserController.login);
 router.delete(
   "/auth/delete-account",
@@ -36,6 +37,11 @@ router.patch(
   auth(ENUM_USER_ROLE.USER),
   uploadFile(),
   UserController.updateProfile
+);
+router.get(
+  "/get-my-profile",
+  auth(ENUM_USER_ROLE.USER),
+  UserController.getMyProfile
 );
 router.post(
   "/auth/refresh-token",

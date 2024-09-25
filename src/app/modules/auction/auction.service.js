@@ -10,6 +10,7 @@ const getUnseenNotificationCount = require("../../../helpers/getUnseenNotificati
 const { default: mongoose } = require("mongoose");
 const { ENUM_AUCTION_STATUS } = require("../../../utils/enums");
 const Bookmark = require("../bookmark/bookmark.model");
+const handleCountdown = require("../../../socket/bidding/handleCountdown");
 
 // const createAuctionIntoDB = async (images, data) => {
 //   console.log("images", images);
@@ -66,8 +67,111 @@ const Bookmark = require("../bookmark/bookmark.model");
 // };
 
 // get all auction
+// const createAuctionIntoDB = async (images, data) => {
+//   console.log("data", data);
+//   // Start a new session for the transaction
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+
+//   try {
+//     let imageUrls = [];
+
+//     if (images) {
+//       for (const image of images) {
+//         const imageName = image?.filename.slice(0, -4);
+//         const { secure_url } = await sendImageToCloudinary(
+//           imageName,
+//           image?.path
+//         );
+//         imageUrls.push(secure_url);
+//       }
+//     }
+
+//     data.images = imageUrls;
+//     // Format the starting date and time
+//     const startingDate = new Date(data.startingDate);
+//     data.activateTime = startingDate;
+//     console.log("starting date", startingDate);
+//     // if (startingDate <= new Date()) {
+//     //   throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
+//     // }
+//     // Check if the starting date-time is in the past
+
+//     const currentDate = new Date(); // Current date and time
+
+//     const result = await Auction.create([data], { session });
+//     if (!result || result.length === 0) {
+//       throw new ApiError(
+//         httpStatus.INTERNAL_SERVER_ERROR,
+//         "Auction not created, try again"
+//       );
+//     }
+
+//     const [hours, minutes] = data.startingTime.split(":");
+//     startingDate.setHours(hours, minutes);
+
+//     // Format the date and time to a readable format
+//     const options = {
+//       year: "numeric",
+//       month: "long",
+//       day: "numeric",
+//       hour: "numeric",
+//       minute: "numeric",
+//       hour12: true,
+//     };
+//     const formattedDate = startingDate.toLocaleDateString("en-US", options);
+//     console.log("formated data", formattedDate);
+//     // const formattedTime = startingDate.toLocaleTimeString("en-US", {
+//     //   hour: "numeric",
+//     //   minute: "numeric",
+//     //   hour12: true,
+//     // });
+
+//     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
+
+//     await createNotification(notificationMessage, session);
+
+//     const unseenNotificationCount = await getUnseenNotificationCount();
+//     global.io.emit("notifications", unseenNotificationCount);
+
+//     await session.commitTransaction();
+//     session.endSession();
+
+//     return result;
+//   } catch (err) {
+//     await session.abortTransaction();
+//     session.endSession();
+
+//     if (err instanceof ApiError) {
+//       throw err;
+//     }
+//     if (err instanceof mongoose.Error.ValidationError) {
+//       // Handle Mongoose validation error
+//       const messages = Object.values(err.errors).map((error) => error.message);
+//       throw new ApiError(httpStatus.BAD_REQUEST, messages.join(", "));
+//     }
+
+//     throw new ApiError(
+//       httpStatus.SERVICE_UNAVAILABLE,
+//       "Something went wrong. Try again later."
+//     );
+//   }
+// };
+
 const createAuctionIntoDB = async (images, data) => {
   console.log("data", data);
+
+  // Combine startingDate and startingTime into a single Date object
+  const startingDate = new Date(data.startingDate); // Extract date
+  const [hours, minutes] = data.startingTime.split(":"); // Extract time
+
+  // Set the time part in startingDate
+  startingDate.setHours(hours, minutes);
+
+  // Store the combined date and time in activateDateTime
+  data.activateDateTime = startingDate;
+
+  console.log("Combined Date and Time:", startingDate);
   // Start a new session for the transaction
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -87,6 +191,13 @@ const createAuctionIntoDB = async (images, data) => {
     }
 
     data.images = imageUrls;
+    // Format the starting date and time
+    data.activateTime = startingDate;
+    console.log("starting date", startingDate);
+    if (startingDate <= new Date()) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
+    }
+    // Check if the starting date-time is in the past
 
     const result = await Auction.create([data], { session });
     if (!result || result.length === 0) {
@@ -96,8 +207,6 @@ const createAuctionIntoDB = async (images, data) => {
       );
     }
 
-    // Format the starting date and time
-    const startingDate = new Date(data.startingDate);
     const [hours, minutes] = data.startingTime.split(":");
     startingDate.setHours(hours, minutes);
 
@@ -136,6 +245,11 @@ const createAuctionIntoDB = async (images, data) => {
     if (err instanceof ApiError) {
       throw err;
     }
+    if (err instanceof mongoose.Error.ValidationError) {
+      // Handle Mongoose validation error
+      const messages = Object.values(err.errors).map((error) => error.message);
+      throw new ApiError(httpStatus.BAD_REQUEST, messages.join(", "));
+    }
 
     throw new ApiError(
       httpStatus.SERVICE_UNAVAILABLE,
@@ -143,45 +257,6 @@ const createAuctionIntoDB = async (images, data) => {
     );
   }
 };
-
-// const getAllAuctionFromDB = async (query) => {
-//   const auctionQuery = new QueryBuilder(Auction.find(), query)
-//     .search(["name"])
-//     .filter()
-//     .sort()
-//     .paginate()
-//     .fields();
-//   const result = await auctionQuery.modelQuery;
-//   const meta = await auctionQuery.countTotal();
-//   return { meta, result };
-// };
-// const getAllAuctionFromDB = async (query) => {
-//   const auctionQuery = new QueryBuilder(Auction.find(), query)
-//     .search(["name"])
-//     .filter()
-//     .sort()
-//     .paginate()
-//     .fields();
-
-//   // Populate user details in bidBuddyUsers and bidHistory, selecting only name and image fields
-//   auctionQuery.modelQuery = auctionQuery.modelQuery
-//     .populate({
-//       path: "bidBuddyUsers.user",
-//       select: "name profile_image", // Select only name and image fields
-//     })
-//     .populate({
-//       path: "bidHistory.user",
-//       select: "name profile_image", // Select only name and image fields
-//     })
-//     .populate({
-//       path: "winingBidder.user",
-//       select: "name profile_image",
-//     });
-
-//   const result = await auctionQuery.modelQuery;
-//   const meta = await auctionQuery.countTotal();
-//   return { meta, result };
-// };
 
 const getAllAuctionFromDB = async (query, userId) => {
   console.log(userId);
@@ -191,7 +266,6 @@ const getAllAuctionFromDB = async (query, userId) => {
     .sort()
     .paginate()
     .fields();
-
   auctionQuery.modelQuery = auctionQuery.modelQuery
     .populate({
       path: "bidBuddyUsers.user",
@@ -287,7 +361,7 @@ let isRunning = false; // Initialize the lock
 //     // Perform your auction update logic here
 //     const auctionsToActivate = await Auction.updateMany(
 //       {
-//         startingDate: { $lte: currentTime },
+//         activateTime: { $lte: currentTime },
 //         status: ENUM_AUCTION_STATUS.UPCOMING,
 //       },
 //       { $set: { status: ENUM_AUCTION_STATUS.ACTIVE } }
@@ -298,6 +372,47 @@ let isRunning = false; // Initialize the lock
 //     console.error("Error updating auctions:", error);
 //   } finally {
 //     isRunning = false; // Release the lock after execution
+//   }
+// };
+// const updateAuctionStatuses = async () => {
+//   if (isRunning) return; // If the function is already running, exit
+
+//   isRunning = true; // Set the lock to true, indicating the function is running
+//   const currentTime = new Date();
+
+//   try {
+//     // Perform your auction update logic here
+//     const auctionsToActivate = await Auction.updateMany(
+//       {
+//         startingDate: { $lte: currentTime },
+//         status: ENUM_AUCTION_STATUS.UPCOMING,
+//       },
+//       {
+//         $set: { status: ENUM_AUCTION_STATUS.ACTIVE, countdownTime: 9 },
+//       }
+//     );
+
+//     console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
+
+//     const allAuctions = await Auction.find();
+
+//     global.io.emit("allAuctions", allAuctions);
+
+//     // Start countdown for active auctions
+//     if (auctionsToActivate.modifiedCount > 0) {
+//       const activatedAuctions = await Auction.find({
+//         status: ENUM_AUCTION_STATUS.ACTIVE,
+//         countdownTime: 9,
+//       });
+
+//       activatedAuctions.forEach((auction) => {
+//         handleCountdown(auction._id);
+//       });
+//     }
+//   } catch (error) {
+//     console.error("Error updating auctions:", error);
+//   } finally {
+//     isRunning = false;
 //   }
 // };
 

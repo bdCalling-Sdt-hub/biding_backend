@@ -1,8 +1,5 @@
 const getUserDetailsFromToken = require("../helpers/getUserDetailsFromToken");
 
-const handleNotification = require("./notification");
-
-const handleChat = require("./chat/chat");
 const handleBidding = require("./bidding/bidding");
 
 // online user
