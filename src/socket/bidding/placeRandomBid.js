@@ -107,7 +107,7 @@ const placeRandomBid = async (auctionId) => {
       }
 
       // Update the auction details atomically
-      await Auction.findByIdAndUpdate(
+      const updatedAuction = await Auction.findByIdAndUpdate(
         auctionId,
         {
           $set: {
@@ -126,15 +126,18 @@ const placeRandomBid = async (auctionId) => {
           },
           $inc: { totalBidPlace: 1 },
         },
-        { new: true }
-      );
+        { new: true } // This ensures the updated auction document is returned
+      ).populate({
+        path: "bidHistory.user",
+        select: "name profile_image",
+      });
 
       // Get the updated bid history (last 10 bids)
-      const updatedBidHistory = auction.bidHistory.slice(-10).reverse();
+      const updatedBidHistory = updatedAuction.bidHistory.slice(-10).reverse();
 
-      // Emit updates to clients
+      // Emit updates to clients with the updated data
       io.to(auctionId).emit("updateCountdown", {
-        countdownTime: auction.countdownTime,
+        countdownTime: updatedAuction.countdownTime,
       });
 
       io.to(auctionId).emit("bidHistory", updatedBidHistory);

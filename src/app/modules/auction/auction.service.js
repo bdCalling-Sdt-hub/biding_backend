@@ -171,6 +171,10 @@ const getAllAuctionFromDB = async (query) => {
     .populate({
       path: "bidHistory.user",
       select: "name profile_image", // Select only name and image fields
+    })
+    .populate({
+      path: "winingBidder.user",
+      select: "name profile_image",
     });
 
   const result = await auctionQuery.modelQuery;

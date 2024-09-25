@@ -183,7 +183,7 @@ const getAreaChartDataForIncomeFromDB = async (year) => {
 
   // Create an array for all months with default income of 0
   const months = Array.from({ length: 12 }, (_, i) => ({
-    month: new Date(0, i).toLocaleString("default", { month: "long" }), // Month names
+    month: new Date(0, i).toLocaleString("default", { month: "short" }), // Month names
     totalIncome: 0,
   }));
 
