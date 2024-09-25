@@ -7,7 +7,7 @@ const { UserController } = require("../user/user.controller");
 const router = express.Router();
 
 router.post("/auth/register", UserController.registrationUser);
-router.get("/auth/activate-user", UserController.activateUser);
+router.post("/auth/activate-user", UserController.activateUser);
 router.post("/auth/login", UserController.login);
 router.delete(
   "/auth/delete-account",
