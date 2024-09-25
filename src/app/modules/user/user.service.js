@@ -68,16 +68,16 @@ const registrationUser = async (payload) => {
   return await User.create(user);
 };
 
-const activateUser = async (payload, query) => {
-  const { email, code: activation_code } = payload;
+const activateUser = async (payload) => {
+  const { email, activation_code } = payload;
 
   const existUser = await User.findOne({ email: email });
 
   if (!existUser) {
     throw new ApiError(400, "User not found");
   }
-
-  if (existUser.activationCode !== parseInt(activation_code)) {
+  console.log(existUser.activationCode, activation_code);
+  if (existUser.activationCode !== activation_code) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Code didn't match");
   }
 
