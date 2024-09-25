@@ -5,16 +5,17 @@ const config = require("../../../config");
 
 // checked
 const registrationUser = catchAsync(async (req, res) => {
-  await UserService.registrationUser(req.body);
+  const result = await UserService.registrationUser(req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "Please check your email to activate your account",
+    data: result,
   });
 });
 
 const activateUser = catchAsync(async (req, res) => {
-  const result = await UserService.activateUser(req.body);
+  const result = await UserService.activateUser(req.body, req.query);
 
   const { refreshToken } = result;
 
@@ -30,6 +31,25 @@ const activateUser = catchAsync(async (req, res) => {
     success: true,
     message: "User activated successfully",
     data: result,
+  });
+});
+
+const verifyForgetPassOTP = catchAsync(async (req, res) => {
+  const result = await UserService.verifyForgetPassOTP(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Verification successful",
+    data: result,
+  });
+});
+
+const resetPassword = catchAsync(async (req, res) => {
+  await UserService.resetPassword(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Password has been reset",
   });
 });
 
@@ -124,9 +144,24 @@ const refreshToken = catchAsync(async (req, res) => {
   });
 });
 
+const activateUser2 = catchAsync(async (req, res) => {
+  await UserService.activateUser2(req.query);
+  res.json({
+    message: "hello",
+  });
+  // sendResponse(res, {
+  //   statusCode: 200,
+  //   success: true,
+  //   message: "Account activated",
+  // });
+});
+
 const UserController = {
   registrationUser,
   activateUser,
+  verifyForgetPassOTP,
+  resetPassword,
+  activateUser2,
   login,
   deleteMyAccount,
   changePassword,

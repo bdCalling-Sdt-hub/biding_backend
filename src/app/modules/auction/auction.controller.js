@@ -17,7 +17,10 @@ const createAuction = catchAsync(async (req, res) => {
 });
 
 const getAllAuction = catchAsync(async (req, res) => {
-  const result = await auctionService.getAllAuctionFromDB(req?.query);
+  const result = await auctionService.getAllAuctionFromDB(
+    req?.query,
+    req?.user?.userId
+  );
 
   sendResponse(res, {
     statusCode: 201,

@@ -49,6 +49,10 @@ const UserSchema = new Schema(
       type: Date,
       default: () => Date.now() + 2 * 60 * 1000,
     },
+    verified: {
+      type: Boolean,
+      default: false,
+    },
     verifyCode: {
       type: Number,
     },

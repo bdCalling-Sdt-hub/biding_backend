@@ -9,6 +9,7 @@ const createNotification = require("../../../helpers/createNotification");
 const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
 const { default: mongoose } = require("mongoose");
 const { ENUM_AUCTION_STATUS } = require("../../../utils/enums");
+const Bookmark = require("../bookmark/bookmark.model");
 
 // const createAuctionIntoDB = async (images, data) => {
 //   console.log("images", images);
@@ -154,7 +155,36 @@ const createAuctionIntoDB = async (images, data) => {
 //   const meta = await auctionQuery.countTotal();
 //   return { meta, result };
 // };
-const getAllAuctionFromDB = async (query) => {
+// const getAllAuctionFromDB = async (query) => {
+//   const auctionQuery = new QueryBuilder(Auction.find(), query)
+//     .search(["name"])
+//     .filter()
+//     .sort()
+//     .paginate()
+//     .fields();
+
+//   // Populate user details in bidBuddyUsers and bidHistory, selecting only name and image fields
+//   auctionQuery.modelQuery = auctionQuery.modelQuery
+//     .populate({
+//       path: "bidBuddyUsers.user",
+//       select: "name profile_image", // Select only name and image fields
+//     })
+//     .populate({
+//       path: "bidHistory.user",
+//       select: "name profile_image", // Select only name and image fields
+//     })
+//     .populate({
+//       path: "winingBidder.user",
+//       select: "name profile_image",
+//     });
+
+//   const result = await auctionQuery.modelQuery;
+//   const meta = await auctionQuery.countTotal();
+//   return { meta, result };
+// };
+
+const getAllAuctionFromDB = async (query, userId) => {
+  console.log(userId);
   const auctionQuery = new QueryBuilder(Auction.find(), query)
     .search(["name"])
     .filter()
@@ -162,15 +192,14 @@ const getAllAuctionFromDB = async (query) => {
     .paginate()
     .fields();
 
-  // Populate user details in bidBuddyUsers and bidHistory, selecting only name and image fields
   auctionQuery.modelQuery = auctionQuery.modelQuery
     .populate({
       path: "bidBuddyUsers.user",
-      select: "name profile_image", // Select only name and image fields
+      select: "name profile_image",
     })
     .populate({
       path: "bidHistory.user",
-      select: "name profile_image", // Select only name and image fields
+      select: "name profile_image",
     })
     .populate({
       path: "winingBidder.user",
@@ -179,7 +208,20 @@ const getAllAuctionFromDB = async (query) => {
 
   const result = await auctionQuery.modelQuery;
   const meta = await auctionQuery.countTotal();
-  return { meta, result };
+
+  // Fetch user's bookmarks
+  const bookmarks = await Bookmark.find({ user: userId }).select("auction");
+  console.log("bookmarks", bookmarks);
+  const bookmarkedAuctionIds = new Set(
+    bookmarks.map((b) => b.auction.toString())
+  );
+
+  const enrichedResult = result.map((auction) => ({
+    ...auction.toObject(),
+    isBookmark: bookmarkedAuctionIds.has(auction._id.toString()),
+  }));
+
+  return { meta, result: enrichedResult };
 };
 
 // get single auction
@@ -236,32 +278,32 @@ const getMyBiddingHistoryFromDB = async (userId) => {
 
 let isRunning = false; // Initialize the lock
 
-const updateAuctionStatuses = async () => {
-  if (isRunning) return; // If the function is already running, exit
+// const updateAuctionStatuses = async () => {
+//   if (isRunning) return; // If the function is already running, exit
 
-  isRunning = true; // Set the lock to true, indicating the function is running
-  const currentTime = new Date();
+//   isRunning = true; // Set the lock to true, indicating the function is running
+//   const currentTime = new Date();
 
-  try {
-    // Perform your auction update logic here
-    const auctionsToActivate = await Auction.updateMany(
-      {
-        startingDate: { $lte: currentTime },
-        status: ENUM_AUCTION_STATUS.UPCOMING,
-      },
-      { $set: { status: ENUM_AUCTION_STATUS.ACTIVE } }
-    );
+//   try {
+//     // Perform your auction update logic here
+//     const auctionsToActivate = await Auction.updateMany(
+//       {
+//         startingDate: { $lte: currentTime },
+//         status: ENUM_AUCTION_STATUS.UPCOMING,
+//       },
+//       { $set: { status: ENUM_AUCTION_STATUS.ACTIVE } }
+//     );
 
-    console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
-  } catch (error) {
-    console.error("Error updating auctions:", error);
-  } finally {
-    isRunning = false; // Release the lock after execution
-  }
-};
+//     console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
+//   } catch (error) {
+//     console.error("Error updating auctions:", error);
+//   } finally {
+//     isRunning = false; // Release the lock after execution
+//   }
+// };
 
-// Schedule to run the update function every second
-setInterval(updateAuctionStatuses, 1000);
+// // Schedule to run the update function every second
+// setInterval(updateAuctionStatuses, 1000);
 
 const auctionService = {
   createAuctionIntoDB,
