@@ -61,7 +61,7 @@ const registrationUser = async (payload) => {
 };
 
 const activateUser = async (payload, query) => {
-  const { email, code: activation_code } = query;
+  const { email, code: activation_code } = payload;
 
   const existUser = await User.findOne({ email: email });
 
