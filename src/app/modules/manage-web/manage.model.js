@@ -112,7 +112,6 @@ const customerSchema = new mongoose.Schema(
     contactNumber: {
       type: String,
       trim: true,
-      unique: true,
       required: true,
     },
   },

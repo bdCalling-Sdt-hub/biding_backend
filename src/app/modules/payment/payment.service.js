@@ -333,27 +333,26 @@ const executePaymentWithPaypal = async (
     }
 
     // Create a notification for admin
-    const notificationMessage = `Payment of $${orderDetails?.totalAmount} has been received for "${orderDetails?.item}" from ${userData?.name}`;
-    await createNotification(
-      {
-        title: "",
-        message: notificationMessage,
-        receiver: ENUM_USER_ROLE.ADMIN,
-      },
-      session
-    );
+    // const notificationMessage = `Payment of $${orderDetails?.totalAmount} has been received for "${orderDetails?.item}" from ${userData?.name}`;
+    const adminNotificationData = {
+      title: "",
+      message: `Payment of $${orderDetails?.totalAmount} has been received for "${orderDetails?.item}" from ${userData?.name}`,
+      receiver: ENUM_USER_ROLE.ADMIN,
+    };
+    await createNotification(adminNotificationData, session);
 
     const adminUnseenNotificationCount = await getAdminNotificationCount();
     global.io.emit("admin-notifications", adminUnseenNotificationCount);
 
     const userNotificationData = {
       title: "Payment successfully completed",
-      message:
-        "Your payment for order #233925834689 is successful. Your product is ready for delivery, track your product for further details",
+      message: `Your payment for order ${order?._id} is successful. Your product is ready for delivery, track your product for further details`,
       receiver: userId,
     };
 
     await createNotification(userNotificationData);
+    const userNotificationCount = await getUnseenNotificationCount(userId);
+    global.io.to(userId).emit("notifications", userNotificationCount);
 
     // Commit the transaction
     await session.commitTransaction();

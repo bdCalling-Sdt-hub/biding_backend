@@ -12,6 +12,9 @@ const {
 const { sendResetEmail } = require("../../../utils/sendResetMails");
 const { logger } = require("../../../shared/logger");
 const createActivationToken = require("../../../utils/createActivationToken");
+const {
+  sendImageToCloudinary,
+} = require("../../../helpers/sendImageToCloudinary");
 
 const registrationUser = async (payload) => {
   const { name, email, password, confirmPassword, phone_number } = payload;
@@ -329,7 +332,7 @@ const updateProfile = async (req) => {
     data.profile_image = secure_url;
   }
 
-  const result = await Admin.findByIdAndUpdate(userId, data, {
+  const result = await User.findByIdAndUpdate(userId, data, {
     runValidators: true,
     new: true,
   });
