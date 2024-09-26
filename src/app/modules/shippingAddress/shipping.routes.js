@@ -33,9 +33,9 @@ router.get(
   ShippingController.getSpecificUserShipping
 );
 
-router.get(
+router.patch(
   "/update-shipping-address/:id",
-  auth(ENUM_USER_ROLE.USER, ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+  auth(ENUM_USER_ROLE.USER),
   ShippingController.updateShippingAddress
 );
 
