@@ -149,7 +149,7 @@ const deleteTermsConditions = async (id) => {
 
 const addCustomerCare = async (payload) => {
   const isExist = await Customer.findOne({
-    contactNumber: payload.contactNumber,
+    contactUs: payload.contactUs,
   });
 
   if (isExist) {
@@ -158,7 +158,7 @@ const addCustomerCare = async (payload) => {
       runValidators: true,
     });
 
-    const message = { message: "customer care contact Number updated" };
+    const message = { message: "contact us updated" };
 
     return message;
   } else {
