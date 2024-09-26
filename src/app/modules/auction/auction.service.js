@@ -12,152 +12,6 @@ const { ENUM_AUCTION_STATUS, ENUM_USER_ROLE } = require("../../../utils/enums");
 const Bookmark = require("../bookmark/bookmark.model");
 const handleCountdown = require("../../../socket/bidding/handleCountdown");
 
-// const createAuctionIntoDB = async (images, data) => {
-//   console.log("images", images);
-//   console.log("data", data);
-//   let imageUrls = [];
-//   if (images) {
-//     for (const image of images) {
-//       const imageName = image?.filename;
-//       const { secure_url } = await sendImageToCloudinary(
-//         imageName,
-//         image?.path
-//       );
-//       imageUrls.push(secure_url);
-//     }
-//   }
-//   data.images = imageUrls;
-//   const result = await Auction.create(data);
-//   if (result) {
-//     const startingDate = new Date(data.startingDate);
-//     const [hours, minutes] = data.startingTime.split(":");
-
-//     // Set the time
-//     startingDate.setHours(hours, minutes);
-
-//     // Format the date and time to a readable format
-//     const options = {
-//       year: "numeric",
-//       month: "long",
-//       day: "numeric",
-//       hour: "numeric",
-//       minute: "numeric",
-//       hour12: true,
-//     };
-//     const formattedDate = startingDate.toLocaleDateString("en-US", options);
-//     const formattedTime = startingDate.toLocaleTimeString("en-US", {
-//       hour: "numeric",
-//       minute: "numeric",
-//       hour12: true,
-//     });
-
-//     const notificationMessage = `Vintage Car Collection has been successfully created and scheduled to start on ${formattedDate} at ${formattedTime}.`;
-//     const createNotificationIntoDB = await createNotification(
-//       notificationMessage
-//     );
-//     const unseenNotificationCount = await getUnseenNotificationCount();
-//     global.io.emit("notifications", unseenNotificationCount);
-//   } else {
-//     throw new ApiError(
-//       httpStatus.INTERNAL_SERVER_ERROR,
-//       "Auction not created , try again"
-//     );
-//   }
-//   return result;
-// };
-
-// get all auction
-// const createAuctionIntoDB = async (images, data) => {
-//   console.log("data", data);
-//   // Start a new session for the transaction
-//   const session = await mongoose.startSession();
-//   session.startTransaction();
-
-//   try {
-//     let imageUrls = [];
-
-//     if (images) {
-//       for (const image of images) {
-//         const imageName = image?.filename.slice(0, -4);
-//         const { secure_url } = await sendImageToCloudinary(
-//           imageName,
-//           image?.path
-//         );
-//         imageUrls.push(secure_url);
-//       }
-//     }
-
-//     data.images = imageUrls;
-//     // Format the starting date and time
-//     const startingDate = new Date(data.startingDate);
-//     data.activateTime = startingDate;
-//     console.log("starting date", startingDate);
-//     // if (startingDate <= new Date()) {
-//     //   throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
-//     // }
-//     // Check if the starting date-time is in the past
-
-//     const currentDate = new Date(); // Current date and time
-
-//     const result = await Auction.create([data], { session });
-//     if (!result || result.length === 0) {
-//       throw new ApiError(
-//         httpStatus.INTERNAL_SERVER_ERROR,
-//         "Auction not created, try again"
-//       );
-//     }
-
-//     const [hours, minutes] = data.startingTime.split(":");
-//     startingDate.setHours(hours, minutes);
-
-//     // Format the date and time to a readable format
-//     const options = {
-//       year: "numeric",
-//       month: "long",
-//       day: "numeric",
-//       hour: "numeric",
-//       minute: "numeric",
-//       hour12: true,
-//     };
-//     const formattedDate = startingDate.toLocaleDateString("en-US", options);
-//     console.log("formated data", formattedDate);
-//     // const formattedTime = startingDate.toLocaleTimeString("en-US", {
-//     //   hour: "numeric",
-//     //   minute: "numeric",
-//     //   hour12: true,
-//     // });
-
-//     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
-
-//     await createNotification(notificationMessage, session);
-
-//     const unseenNotificationCount = await getUnseenNotificationCount();
-//     global.io.emit("notifications", unseenNotificationCount);
-
-//     await session.commitTransaction();
-//     session.endSession();
-
-//     return result;
-//   } catch (err) {
-//     await session.abortTransaction();
-//     session.endSession();
-
-//     if (err instanceof ApiError) {
-//       throw err;
-//     }
-//     if (err instanceof mongoose.Error.ValidationError) {
-//       // Handle Mongoose validation error
-//       const messages = Object.values(err.errors).map((error) => error.message);
-//       throw new ApiError(httpStatus.BAD_REQUEST, messages.join(", "));
-//     }
-
-//     throw new ApiError(
-//       httpStatus.SERVICE_UNAVAILABLE,
-//       "Something went wrong. Try again later."
-//     );
-//   }
-// };
-
 const createAuctionIntoDB = async (images, data) => {
   const startingDate = new Date(data.startingDate);
   const [hours, minutes] = data.startingTime.split(":");
@@ -365,104 +219,82 @@ const getMyBiddingHistoryFromDB = async (userId) => {
 
   console.log(auctions);
 
-  // const result = auctions.map((auction) => {
-  //   const userBidHistory = auction.bidHistory.filter(
-  //     (bid) => bid.user.toString() === userId.toString()
-  //   );
+  const result = auctions.map((auction) => {
+    const userBidHistory = auction.bidHistory.filter(
+      (bid) => bid.user.toString() === userId.toString()
+    );
 
-  //   const finalBid = userBidHistory.length
-  //     ? userBidHistory[userBidHistory.length - 1].bidAmount
-  //     : null;
+    const finalBid = userBidHistory.length
+      ? userBidHistory[userBidHistory.length - 1].bidAmount
+      : null;
 
-  //   const isWinner =
-  //     auction.winingBidder &&
-  //     auction.winingBidder.user._id.toString() === userId.toString();
+    const isWinner =
+      auction.winingBidder &&
+      auction.winingBidder.user._id.toString() === userId.toString();
 
-  //   return {
-  //     name: auction.name,
-  //     category: auction.category,
-  //     status: isWinner ? "Winner" : "Outbid",
-  //     image: auction.images[0],
-  //     currentPrice: auction.currentPrice,
-  //     finalBid: finalBid,
-  //     bidPlace: auction.bidPlace,
-  //     winningBidderName: auction.winingBidder
-  //       ? auction.winingBidder.user.name
-  //       : null,
-  //   };
-  // });
+    return {
+      name: auction.name,
+      category: auction.category,
+      status: isWinner ? "Winner" : "Outbid",
+      image: auction.images[0],
+      currentPrice: auction.currentPrice,
+      finalBid: finalBid,
+      bidPlace: auction.bidPlace,
+      winningBidderName: auction.winingBidder
+        ? auction.winingBidder.user.name
+        : null,
+    };
+  });
 
-  // return result;
+  return result;
 };
 
-let isRunning = false; // Initialize the lock
+// run function in every second for update the auction status----------------
+let isRunning = false;
 
-// const updateAuctionStatuses = async () => {
-//   if (isRunning) return; // If the function is already running, exit
+const updateAuctionStatuses = async () => {
+  if (isRunning) return;
 
-//   isRunning = true; // Set the lock to true, indicating the function is running
-//   const currentTime = new Date();
+  isRunning = true;
+  const currentTime = new Date();
+  const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
 
-//   try {
-//     // Perform your auction update logic here
-//     const auctionsToActivate = await Auction.updateMany(
-//       {
-//         activateTime: { $lte: currentTime },
-//         status: ENUM_AUCTION_STATUS.UPCOMING,
-//       },
-//       { $set: { status: ENUM_AUCTION_STATUS.ACTIVE } }
-//     );
+  try {
+    const auctionsToActivate = await Auction.updateMany(
+      {
+        activateTime: { $eq: nineSecondsAgo },
+        status: ENUM_AUCTION_STATUS.UPCOMING,
+      },
+      {
+        $set: { status: ENUM_AUCTION_STATUS.ACTIVE },
+      }
+    );
 
-//     console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
-//   } catch (error) {
-//     console.error("Error updating auctions:", error);
-//   } finally {
-//     isRunning = false; // Release the lock after execution
-//   }
-// };
-// const updateAuctionStatuses = async () => {
-//   if (isRunning) return; // If the function is already running, exit
+    console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
 
-//   isRunning = true; // Set the lock to true, indicating the function is running
-//   const currentTime = new Date();
+    const allAuctions = await Auction.find();
 
-//   try {
-//     // Perform your auction update logic here
-//     const auctionsToActivate = await Auction.updateMany(
-//       {
-//         startingDate: { $lte: currentTime },
-//         status: ENUM_AUCTION_STATUS.UPCOMING,
-//       },
-//       {
-//         $set: { status: ENUM_AUCTION_STATUS.ACTIVE, countdownTime: 9 },
-//       }
-//     );
+    global.io.emit("allAuctions", allAuctions);
 
-//     console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
+    // Start countdown for active auctions
+    // if (auctionsToActivate.modifiedCount > 0) {
+    //   const activatedAuctions = await Auction.find({
+    //     status: ENUM_AUCTION_STATUS.ACTIVE,
+    //     countdownTime: 9,
+    //   });
 
-//     const allAuctions = await Auction.find();
+    //   activatedAuctions.forEach((auction) => {
+    //     handleCountdown(auction._id);
+    //   });
+    // }
+  } catch (error) {
+    console.error("Error updating auctions:", error);
+  } finally {
+    isRunning = false;
+  }
+};
 
-//     global.io.emit("allAuctions", allAuctions);
-
-//     // Start countdown for active auctions
-//     if (auctionsToActivate.modifiedCount > 0) {
-//       const activatedAuctions = await Auction.find({
-//         status: ENUM_AUCTION_STATUS.ACTIVE,
-//         countdownTime: 9,
-//       });
-
-//       activatedAuctions.forEach((auction) => {
-//         handleCountdown(auction._id);
-//       });
-//     }
-//   } catch (error) {
-//     console.error("Error updating auctions:", error);
-//   } finally {
-//     isRunning = false;
-//   }
-// };
-
-// // Schedule to run the update function every second
+// Schedule to run the update function every second
 // setInterval(updateAuctionStatuses, 1000);
 
 const auctionService = {

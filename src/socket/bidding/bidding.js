@@ -1,6 +1,8 @@
 const Auction = require("../../app/modules/auction/auction.model");
+const User = require("../../app/modules/user/user.model");
 const { ENUM_AUCTION_STATUS } = require("../../utils/enums");
 const handleCountdown = require("./handleCountdown");
+const handleManualBid = require("./handleManualBid");
 
 const handleBidding = async (io, socket) => {
   // join the auction
@@ -9,6 +11,9 @@ const handleBidding = async (io, socket) => {
     const auction = await Auction.findById(auctionId);
     io.to(auctionId).emit("auctionData", auction);
   });
+
+  // handle manual bit
+  handleManualBid(io, socket);
 
   // activate bid buddy -----------
   socket.on("activateBidBuddy", async (auctionId, userId, totalBids) => {
@@ -30,6 +35,12 @@ const handleBidding = async (io, socket) => {
         },
         { new: true }
       );
+      // get user
+      const userData = await User.findById(userId).select("availableBid");
+      // update user
+      await User.findByIdAndUpdate(userId, {
+        availableBid: userData?.availableBid - totalBids,
+      });
     } else {
       // Update existing user in bidBuddyUsers
       await Auction.findOneAndUpdate(
@@ -37,12 +48,17 @@ const handleBidding = async (io, socket) => {
         {
           $set: {
             "bidBuddyUsers.$.isActive": true,
-            "bidBuddyUsers.&.availableBids":
-              existsUser?.availableBids + totalBids,
+            "bidBuddyUsers.&.availableBids": totalBids,
           },
         },
         { new: true }
       );
+      // get user
+      const userData = await User.findById(userId).select("availableBid");
+      // update user
+      await User.findByIdAndUpdate(userId, {
+        availableBid: userData?.availableBid - totalBids,
+      });
     }
 
     const updatedAuction = await Auction.findById(auctionId).select(
@@ -52,15 +68,24 @@ const handleBidding = async (io, socket) => {
   });
 
   // stop bid buddy-------------------
-  socket.on("stopBidBuddy", async ({ auctionId, userId }) => {
-    const updatedAuction = await Auction.findOneAndUpdate(
-      { _id: auctionId, "bidBuddyUsers.user": userId },
-      { $set: { "bidBuddyUsers.$.isActive": false } },
-      { new: true }
-    ).select("bidBuddyUsers");
+  socket.on("stopBidBuddy", async (auctionId, userId) => {
+    try {
+      const updatedAuction = await Auction.findOneAndUpdate(
+        { _id: auctionId, "bidBuddyUsers.user._id": userId },
+        {
+          $set: {
+            "bidBuddyUsers.$.isActive": false,
+            "bidBuddyUsers.$.availableBids": 0,
+          },
+        },
+        { new: true }
+      ).select("bidBuddyUsers");
 
-    if (updatedAuction) {
-      io.to(auctionId).emit("bidBuddyUpdated", updatedAuction.bidBuddyUsers);
+      if (updatedAuction) {
+        io.to(auctionId).emit("bidBuddyUpdated", updatedAuction.bidBuddyUsers);
+      }
+    } catch (error) {
+      console.error("Error updating bidBuddy status:", error);
     }
   });
 
