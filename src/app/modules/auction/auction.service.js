@@ -334,14 +334,65 @@ const deleteAuctionFromDB = async (id) => {
 };
 
 // get my bidding history
-const getMyBiddingHistoryFromDB = async (userId) => {
-  const result = await Auction.find({
-    bidBuddyUsers: {
-      $elemMatch: { user: userId },
-    },
-  }).select("name category reservedBid status images currentPrice");
+// const getMyBiddingHistoryFromDB = async (userId) => {
+//   const result = await Auction.find({
+//     bidBuddyUsers: {
+//       $elemMatch: { user: userId },
+//     },
+//   }).select("name category reservedBid status images currentPrice bidPlace");
 
-  return result;
+//   return result;
+// };
+
+const getMyBiddingHistoryFromDB = async (userId) => {
+  console.log("userId", userId);
+  // const auctions = await Auction.find({
+  //   bidBuddyUsers: { $elemMatch: { user: userId } },
+  // })
+  //   .select(
+  //     "name category reservedBid status images currentPrice bidPlace bidHistory winingBidder"
+  //   )
+  //   .populate("winingBidder.user", "name");
+  const auctions = await Auction.find()
+    .select(
+      "name category reservedBid status images bidBuddyUsers currentPrice bidPlace bidHistory winingBidder"
+    )
+    .populate("winingBidder.user", "name")
+    .populate({
+      path: "bidBuddyUsers.user",
+      select: "name",
+    });
+
+  console.log(auctions);
+
+  // const result = auctions.map((auction) => {
+  //   const userBidHistory = auction.bidHistory.filter(
+  //     (bid) => bid.user.toString() === userId.toString()
+  //   );
+
+  //   const finalBid = userBidHistory.length
+  //     ? userBidHistory[userBidHistory.length - 1].bidAmount
+  //     : null;
+
+  //   const isWinner =
+  //     auction.winingBidder &&
+  //     auction.winingBidder.user._id.toString() === userId.toString();
+
+  //   return {
+  //     name: auction.name,
+  //     category: auction.category,
+  //     status: isWinner ? "Winner" : "Outbid",
+  //     image: auction.images[0],
+  //     currentPrice: auction.currentPrice,
+  //     finalBid: finalBid,
+  //     bidPlace: auction.bidPlace,
+  //     winningBidderName: auction.winingBidder
+  //       ? auction.winingBidder.user.name
+  //       : null,
+  //   };
+  // });
+
+  // return result;
 };
 
 let isRunning = false; // Initialize the lock

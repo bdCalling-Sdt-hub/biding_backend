@@ -27,6 +27,11 @@ router.post(
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   ManageController.createTipsAndTricks
 );
+// router.delete(
+//   "/tips-and-tricks",
+//   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+//   ManageController.deleteTipsAndTricks
+// );
 router.get("/tips-and-tricks", ManageController.getTipsAndTricks);
 router.post(
   "/about-us",
@@ -49,6 +54,11 @@ router.post(
   "/add-contact-us",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   ManageController.addCustomerCare
+);
+router.post(
+  "/delete-contact-us",
+  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+  ManageController.deleteCustomerCare
 );
 router.post(
   "/add-privacy-policy",

@@ -12,10 +12,10 @@ const {
   ENUM_PAYMENT_STATUS,
   ENUM_USER_ROLE,
 } = require("../../../utils/enums");
-const createNotification = require("../../../helpers/createNotification");
 const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
 const { default: mongoose } = require("mongoose");
 const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
+const Notification = require("../notification/notification.model");
 
 // PayPal configuration
 paypal.configure({
@@ -140,87 +140,6 @@ const createPaymentWithPaypal = async (amount, productName) => {
 };
 
 // Execute PayPal payment
-// const executePaymentWithPaypal = async (
-//   userId,
-//   paymentId,
-//   payerId,
-//   orderDetails
-// ) => {
-//   console.log(payerId, paymentId, orderDetails, userId);
-//   const execute_payment_json = { payer_id: payerId };
-
-//   return new Promise(async (resolve, reject) => {
-//     paypal.payment.execute(
-//       paymentId,
-//       execute_payment_json,
-//       async (error, payment) => {
-//         // console.log("print payment", payment);
-//         if (error) {
-//           reject(error);
-//         } else {
-//           const isExistPayment = await Transaction.findOne({
-//             transactionId: payment.cart,
-//           });
-//           if (isExistPayment) {
-//             return new ApiError(
-//               httpStatus.BAD_REQUEST,
-//               "This payment already executed"
-//             );
-//           }
-//           let order = null;
-//           // // Save order and transaction to the database
-//           if (orderDetails?.shippingAddress) {
-//             const orderData = {
-//               user: userId,
-//               shippingAddress: orderDetails?.shippingAddress,
-//               item: orderDetails?.item,
-//               winingBid: orderDetails?.winingBid,
-//               paidBy: ENUM_PAID_BY.PAYPAL,
-//               status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-//               statusWithTime: [
-//                 {
-//                   status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-//                   time: new Date(),
-//                 },
-//               ],
-//             };
-//             order = await Order.create(orderData);
-//           }
-//           const transactionData = {
-//             user: userId,
-//             item: orderDetails?.item,
-//             paymentStatus: ENUM_PAYMENT_STATUS.PAID,
-//             paidAmount: orderDetails?.totalAmount,
-//             transactionId: payment?.cart,
-//             itemType: orderDetails?.itemType,
-//             paymentType: "Online Payment",
-//           };
-
-//           const transaction = await Transaction.create(transactionData);
-//           const userData = await User.findById(userId);
-//           if (orderDetails?.totalBid) {
-//             await User.findByIdAndUpdate(userId, {
-//               availableBid: userData?.availableBid + orderDetails?.totalBid,
-//             });
-//           }
-
-//           const notificationMessage = `Payment of $${orderDetails?.totalAmount} has been received for "${orderDetails?.item}" from ${userData?.name}`;
-//           const createNotificationInDB = await createNotification(
-//             notificationMessage
-//           );
-//           const unseenNotificationCount = await getUnseenNotificationCount();
-//           global.io.emit("notifications", unseenNotificationCount);
-
-//           resolve({
-//             message: "Payment execute successful",
-//             order,
-//             transaction,
-//           });
-//         }
-//       }
-//     );
-//   });
-// };
 const executePaymentWithPaypal = async (
   userId,
   paymentId,
@@ -332,29 +251,27 @@ const executePaymentWithPaypal = async (
       );
     }
 
-    // Create a notification for admin
-    // const notificationMessage = `Payment of $${orderDetails?.totalAmount} has been received for "${orderDetails?.item}" from ${userData?.name}`;
-    const adminNotificationData = {
-      title: "",
-      message: `Payment of $${orderDetails?.totalAmount} has been received for "${orderDetails?.item}" from ${userData?.name}`,
-      receiver: ENUM_USER_ROLE.ADMIN,
-    };
-    await createNotification(adminNotificationData, session);
+    const notificationData = [
+      {
+        title: "",
+        message: `Payment of $${orderDetails?.totalAmount} has been received for "${orderDetails?.item}" from ${userData?.name}`,
+        receiver: ENUM_USER_ROLE.ADMIN,
+      },
+      {
+        title: "Payment successfully completed",
+        message: `Your payment for order ${order?._id} is successful. Your product is ready for delivery, track your product for further details`,
+        receiver: userId,
+      },
+    ];
 
+    await Notification.insertMany(notificationData, { session });
+    // get admin notifications
     const adminUnseenNotificationCount = await getAdminNotificationCount();
     global.io.emit("admin-notifications", adminUnseenNotificationCount);
-
-    const userNotificationData = {
-      title: "Payment successfully completed",
-      message: `Your payment for order ${order?._id} is successful. Your product is ready for delivery, track your product for further details`,
-      receiver: userId,
-    };
-
-    await createNotification(userNotificationData);
+    // get user notifications
     const userNotificationCount = await getUnseenNotificationCount(userId);
     global.io.to(userId).emit("notifications", userNotificationCount);
 
-    // Commit the transaction
     await session.commitTransaction();
     session.endSession();
 

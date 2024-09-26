@@ -31,6 +31,10 @@ const ENUM_ITEM_TYPE = {
   PRODUCT: "PRODUCT",
   BID: "BID",
 };
+const ENUM_AUTH_TYPE = {
+  GOOGLE: "GOOGLE",
+  MANUAL: "MANUAL",
+};
 
 module.exports = {
   ENUM_USER_ROLE,
@@ -39,4 +43,5 @@ module.exports = {
   ENUM_DELIVERY_STATUS,
   ENUM_PAYMENT_STATUS,
   ENUM_ITEM_TYPE,
+  ENUM_AUTH_TYPE,
 };

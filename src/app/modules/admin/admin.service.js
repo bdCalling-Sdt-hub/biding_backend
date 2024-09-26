@@ -57,7 +57,7 @@ const updateAdminProfile = async (req) => {
   console.log(profile_image, userId, data);
 
   if (profile_image) {
-    const imageName = `${image?.originalname}`;
+    const imageName = `${profile_image?.filename.slice(0, -4)}`;
     // send image to cloudinary --------
     const { secure_url } = await sendImageToCloudinary(
       imageName,

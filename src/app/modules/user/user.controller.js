@@ -116,6 +116,16 @@ const changePassword = catchAsync(async (req, res) => {
   });
 });
 
+const myProfile = catchAsync(async (req, res) => {
+  const result = await UserService.myProfile(req.user);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successful!",
+    data: result,
+  });
+});
+
 const updateProfile = catchAsync(async (req, res) => {
   const result = await UserService.updateProfile(req);
   sendResponse(res, {
@@ -211,6 +221,7 @@ const UserController = {
   resendActivationCode,
   updateProfile,
   refreshToken,
+  myProfile,
 };
 
 module.exports = { UserController };

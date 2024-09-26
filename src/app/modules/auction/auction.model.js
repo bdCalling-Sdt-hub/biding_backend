@@ -127,6 +127,10 @@ const auctionSchema = new mongoose.Schema(
     activateTime: {
       type: Date,
     },
+    endedTime: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

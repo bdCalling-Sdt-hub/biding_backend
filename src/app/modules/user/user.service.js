@@ -15,6 +15,7 @@ const createActivationToken = require("../../../utils/createActivationToken");
 const {
   sendImageToCloudinary,
 } = require("../../../helpers/sendImageToCloudinary");
+const { ENUM_AUTH_TYPE } = require("../../../utils/enums");
 
 const registrationUser = async (payload) => {
   const { name, email, password, confirmPassword, phone_number } = payload;
@@ -289,6 +290,7 @@ const signUPWithGoogle = async (payload) => {
     password: "google",
     verified: true,
     isActive: true,
+    authType: ENUM_AUTH_TYPE.GOOGLE,
   });
   const userId = createUser?._id;
   const email = createUser?.email;
@@ -317,7 +319,10 @@ const getMyProfileFromDB = async (userId) => {
 };
 
 const updateProfile = async (req) => {
-  const profile_image = req?.files?.profile_image[0];
+  let profile_image = null;
+  if (req?.files?.profile_image) {
+    profile_image = req?.files?.profile_image[0];
+  }
   const userId = req?.user?.userId;
   const data = req?.body;
   console.log(profile_image, userId, data);
@@ -327,7 +332,7 @@ const updateProfile = async (req) => {
   }
 
   if (profile_image) {
-    const imageName = `${image?.originalname.slice(0, -4)}`;
+    const imageName = `${profile_image?.filename?.slice(0, -4)}`;
     // send image to cloudinary --------
     const { secure_url } = await sendImageToCloudinary(
       imageName,
@@ -369,6 +374,18 @@ const updateProfile = async (req) => {
   //   }
   // );
   // return result;
+};
+
+const myProfile = async (payload) => {
+  const { userId } = payload;
+
+  const result = await User.findById(userId);
+
+  if (!result) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Profile not found");
+  }
+
+  return result;
 };
 
 const deleteMyAccount = async (payload) => {
@@ -524,6 +541,7 @@ const UserService = {
   deleteMyAccount,
   resendActivationCode,
   refreshToken,
+  myProfile,
 };
 
 module.exports = { UserService };

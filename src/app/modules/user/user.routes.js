@@ -21,7 +21,11 @@ router.patch(
   UserController.changePassword
 );
 router.post("/auth/forgot-password", UserController.forgotPass);
-
+router.get(
+  "/auth/profile",
+  auth(ENUM_USER_ROLE.USER),
+  UserController.myProfile
+);
 router.patch(
   "/auth/verify-otp-forgot-password",
   UserController.verifyForgetPassOTP
@@ -36,6 +40,10 @@ router.patch(
   "/auth/update-profile",
   auth(ENUM_USER_ROLE.USER),
   uploadFile(),
+  (req, res, next) => {
+    req.body = JSON.parse(req.body.data);
+    next();
+  },
   UserController.updateProfile
 );
 router.get(
