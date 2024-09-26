@@ -6,6 +6,9 @@ const { Transaction } = require("../payment/payment.model");
 const { ENUM_PAYMENT_STATUS } = require("../../../utils/enums");
 const Auction = require("../auction/auction.model");
 const Banner = require("./banner.model");
+const {
+  sendImageToCloudinary,
+} = require("../../../helpers/sendImageToCloudinary");
 
 // --- user ---
 
@@ -101,6 +104,7 @@ const getDashboardMetaDataFromDB = async () => {
 
 const addBanner = async (req) => {
   const { files, body } = req || {};
+  console.log(body);
 
   if (!files.banner?.length || Object.keys(body).length === 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Image or body is not provided");
@@ -124,14 +128,14 @@ const addBanner = async (req) => {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Image upload failed");
   }
 
-  const existingUrl = await Banner.findOne({ url });
+  // const existingUrl = await Banner.findOne({ url });
 
-  if (existingUrl) {
-    throw new ApiError(
-      httpStatus.CONFLICT,
-      "You have already uploaded the image"
-    );
-  }
+  // if (existingUrl) {
+  //   throw new ApiError(
+  //     httpStatus.CONFLICT,
+  //     "You have already uploaded the image"
+  //   );
+  // }
 
   const newBanner = {
     url,
@@ -184,6 +188,10 @@ const deleteBanner = async (payload) => {
   return await Banner.findByIdAndDelete(id);
 };
 
+const getBanner = async () => {
+  return await Banner.find();
+};
+
 const DashboardServices = {
   getAllUsers,
   getSingleUser,
@@ -192,6 +200,7 @@ const DashboardServices = {
   addBanner,
   updateBannerIndex,
   deleteBanner,
+  getBanner,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,

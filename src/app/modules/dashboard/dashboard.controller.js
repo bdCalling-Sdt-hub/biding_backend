@@ -55,6 +55,15 @@ const addBanner = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getBanner = catchAsync(async (req, res) => {
+  const result = await DashboardServices.getBanner();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Banner retrieved successfully",
+    data: result,
+  });
+});
 
 const updateBannerIndex = catchAsync(async (req, res) => {
   const result = await DashboardServices.updateBannerIndex(req.body);
@@ -84,6 +93,7 @@ const DashboardController = {
   addBanner,
   updateBannerIndex,
   deleteBanner,
+  getBanner,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,

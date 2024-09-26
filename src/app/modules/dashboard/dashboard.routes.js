@@ -30,6 +30,8 @@ router.post(
   DashboardController.addBanner
 );
 
+router.get("/get-banner", DashboardController.getBanner);
+
 router.patch(
   "/auth/update-banner-index",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
