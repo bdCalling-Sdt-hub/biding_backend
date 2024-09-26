@@ -95,6 +95,24 @@ const UserSchema = new Schema(
       enum: Object.values(ENUM_AUTH_TYPE),
       default: ENUM_AUTH_TYPE.MANUAL,
     },
+    shippingAddress: {
+      streetAddress: {
+        type: String,
+        default: "",
+      },
+      city: {
+        type: String,
+        default: "",
+      },
+      state: {
+        type: String,
+        default: "",
+      },
+      zipCode: {
+        type: Number,
+        default: 0,
+      },
+    },
   },
   {
     timestamps: true,

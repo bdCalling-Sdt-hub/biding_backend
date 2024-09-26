@@ -53,9 +53,15 @@ router.get(
 );
 router.post(
   "/auth/refresh-token",
-  auth(ENUM_USER_ROLE.ADMIN),
+  auth(ENUM_USER_ROLE.USER),
   UserController.refreshToken
 );
+router.patch(
+  "/update-shipping-address",
+  auth(ENUM_USER_ROLE.USER),
+  UserController.updateShippingAddress
+);
+
 // =====
 router.get("/activate-user-2", UserController.activateUser2);
 

@@ -4,19 +4,14 @@ const User = require("../user/user.model");
 const Shipping = require("./shipping.model");
 const QueryBuilder = require("../../../builder/QueryBuilder");
 
-const createShipping = async (payload) => {
-  if (!payload) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Request body does not exist");
-  }
+const createShippingAddress = async (userId, payload) => {
+  const result = await Shipping.create({ ...payload, user_id: userId });
+  return result;
+};
 
-  const { user_id } = payload;
-
-  const existingUser = await User.findById(user_id);
-  if (!existingUser) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-  }
-
-  return await Shipping.create(payload);
+const getMyShippingAddress = async (userId) => {
+  const result = await Shipping.find({ user_id: userId });
+  return result;
 };
 
 const getAllShipping = async (query) => {
@@ -72,14 +67,35 @@ const getSpecificUserShipping = async (payload, query) => {
   }
 
   return { meta, result };
-  //   return myShipping;
+};
+
+const updateShippingAddress = async (payload, id) => {
+  if (!payload || !id) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Missing shipping id");
+  }
+
+  const existingShipping = await Shipping.findById(id);
+
+  if (!existingShipping) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No shippings found");
+  }
+
+  const updatedShipping = await Shipping.findByIdAndUpdate(
+    { _id: id },
+    { ...payload },
+    { new: true, runValidators: true }
+  );
+
+  return updatedShipping;
 };
 
 const ShippingService = {
-  createShipping,
+  createShippingAddress,
   getAllShipping,
+  getMyShippingAddress,
   getSingleShipping,
   getSpecificUserShipping,
+  updateShippingAddress,
 };
 
 module.exports = ShippingService;
