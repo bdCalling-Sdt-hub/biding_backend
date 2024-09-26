@@ -295,6 +295,18 @@ const updateProfile = async (req) => {
   return result;
 };
 
+const myProfile = async (payload) => {
+  const { userId } = payload;
+
+  const result = await User.findById(userId);
+
+  if (!result) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Profile not found");
+  }
+
+  return result;
+};
+
 const deleteMyAccount = async (payload) => {
   const { email, password } = payload;
 
@@ -446,6 +458,7 @@ const UserService = {
   deleteMyAccount,
   resendActivationCode,
   refreshToken,
+  myProfile,
 };
 
 module.exports = { UserService };

@@ -20,7 +20,11 @@ router.patch(
   UserController.changePassword
 );
 router.post("/auth/forgot-password", UserController.forgotPass);
-
+router.get(
+  "/auth/profile",
+  auth(ENUM_USER_ROLE.USER),
+  UserController.myProfile
+);
 router.patch(
   "/auth/verify-otp-forgot-password",
   UserController.verifyForgetPassOTP

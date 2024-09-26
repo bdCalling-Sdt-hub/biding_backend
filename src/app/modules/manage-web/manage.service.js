@@ -170,6 +170,10 @@ const getCustomerContact = async () => {
   return await Customer.findOne();
 };
 
+const deleteCustomerCare = async () => {
+  return await Customer.findByIdAndDelete(id);
+};
+
 // faq ---
 const addFaq = async (payload) => {
   return await FAQ.create(payload);
@@ -228,6 +232,7 @@ const ManageService = {
   deleteTermsConditions,
   addCustomerCare,
   getCustomerContact,
+  deleteCustomerCare,
   addFaq,
   getSingleFaq,
   updateSingleFaq,

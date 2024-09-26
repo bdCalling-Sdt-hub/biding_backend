@@ -171,6 +171,16 @@ const getCustomerContact = catchAsync(async (req, res) => {
   });
 });
 
+const deleteCustomerCare = catchAsync(async (req, res) => {
+  const result = await ManageService.deleteCustomerCare();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successful",
+    data: result,
+  });
+});
+
 // faq ---
 const addFaq = catchAsync(async (req, res) => {
   const result = await ManageService.addFaq(req.body);
@@ -228,6 +238,7 @@ const ManageController = {
   deleteTermsConditions,
   getCustomerContact,
   addCustomerCare,
+  deleteCustomerCare,
   addFaq,
   getSingleFaq,
   updateSingleFaq,
