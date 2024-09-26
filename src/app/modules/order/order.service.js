@@ -1,10 +1,27 @@
 const httpStatus = require("http-status");
 const ApiError = require("../../../errors/ApiError");
 const Order = require("./order.model");
+const QueryBuilder = require("../../../builder/QueryBuilder");
 
-const getAllOrderFromDB = async () => {
-  const result = await Order.find();
-  return result;
+const getAllOrderFromDB = async (query) => {
+  const orderQuery = new QueryBuilder(Order.find(), query)
+    .search(["name"])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+  orderQuery.modelQuery = orderQuery.modelQuery
+    .populate("user")
+    .populate("item")
+    .populate("shippingAddress");
+
+  const result = await orderQuery.modelQuery;
+  const meta = await orderQuery.countTotal();
+  // const result = await Order.find()
+  //   .populate("user")
+  //   .populate("item")
+  //   .populate("shippingAddress");
+  return { meta, result };
 };
 
 // get single order

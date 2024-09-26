@@ -87,7 +87,7 @@ const login = catchAsync(async (req, res) => {
 
 // google sign up
 const googleSignUp = catchAsync(async (req, res) => {
-  const result = await UserService.googleSignUp(req?.body);
+  const result = await UserService.signUPWithGoogle(req?.body);
 
   const { refreshToken } = result;
 

@@ -22,9 +22,14 @@ const orderSchema = new Schema({
     required: true,
     ref: "Shipping",
   },
+  // item: {
+  //   type: String,
+  //   required: true,
+  // },
   item: {
-    type: String,
+    type: Schema.Types.ObjectId,
     required: true,
+    ref: "Auction",
   },
   winingBid: {
     type: Number,

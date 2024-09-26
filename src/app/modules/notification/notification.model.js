@@ -2,6 +2,10 @@ const { Schema, default: mongoose } = require("mongoose");
 
 const notificationSchema = new Schema(
   {
+    title: {
+      type: String,
+      default: "",
+    },
     message: {
       type: String,
       required: true,
@@ -9,6 +13,10 @@ const notificationSchema = new Schema(
     seen: {
       type: Boolean,
       default: false,
+    },
+    receiver: {
+      type: String,
+      // required: true,
     },
   },
 

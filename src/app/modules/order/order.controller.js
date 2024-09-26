@@ -4,7 +4,7 @@ const orderService = require("./order.service");
 
 // get all order
 const getAllOrder = catchAsync(async (req, res) => {
-  const result = await orderService.getAllOrderFromDB();
+  const result = await orderService.getAllOrderFromDB(req?.query);
 
   sendResponse(res, {
     statusCode: 200,

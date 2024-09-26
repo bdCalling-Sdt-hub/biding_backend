@@ -10,10 +10,12 @@ const {
   ENUM_PAID_BY,
   ENUM_DELIVERY_STATUS,
   ENUM_PAYMENT_STATUS,
+  ENUM_USER_ROLE,
 } = require("../../../utils/enums");
 const createNotification = require("../../../helpers/createNotification");
 const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
 const { default: mongoose } = require("mongoose");
+const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
 
 // PayPal configuration
 paypal.configure({
@@ -269,9 +271,9 @@ const executePaymentWithPaypal = async (
       const orderData = {
         user: userId,
         shippingAddress: orderDetails?.shippingAddress,
-        item: orderDetails?.item,
         winingBid: orderDetails?.winingBid,
         paidBy: ENUM_PAID_BY.PAYPAL,
+        item: orderDetails?.item,
         status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
         statusWithTime: [
           {
@@ -330,12 +332,28 @@ const executePaymentWithPaypal = async (
       );
     }
 
-    // Create a notification
+    // Create a notification for admin
     const notificationMessage = `Payment of $${orderDetails?.totalAmount} has been received for "${orderDetails?.item}" from ${userData?.name}`;
-    await createNotification(notificationMessage, session);
+    await createNotification(
+      {
+        title: "",
+        message: notificationMessage,
+        receiver: ENUM_USER_ROLE.ADMIN,
+      },
+      session
+    );
 
-    const unseenNotificationCount = await getUnseenNotificationCount();
-    global.io.emit("notifications", unseenNotificationCount);
+    const adminUnseenNotificationCount = await getAdminNotificationCount();
+    global.io.emit("admin-notifications", adminUnseenNotificationCount);
+
+    const userNotificationData = {
+      title: "Payment successfully completed",
+      message:
+        "Your payment for order #233925834689 is successful. Your product is ready for delivery, track your product for further details",
+      receiver: userId,
+    };
+
+    await createNotification(userNotificationData);
 
     // Commit the transaction
     await session.commitTransaction();

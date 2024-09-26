@@ -6,6 +6,17 @@ const { ManageController } = require("./manage.controller");
 const router = express.Router();
 
 router.post(
+  "/create-help",
+  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+  ManageController.createHelp
+);
+router.get("/get-help", ManageController.getHelp);
+router.delete(
+  "/delete-help/:id",
+  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+  ManageController.deleteHelp
+);
+router.post(
   "/accessibility",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   ManageController.createAccessibility

@@ -8,7 +8,7 @@ const QueryBuilder = require("../../../builder/QueryBuilder");
 const createNotification = require("../../../helpers/createNotification");
 const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
 const { default: mongoose } = require("mongoose");
-const { ENUM_AUCTION_STATUS } = require("../../../utils/enums");
+const { ENUM_AUCTION_STATUS, ENUM_USER_ROLE } = require("../../../utils/enums");
 const Bookmark = require("../bookmark/bookmark.model");
 const handleCountdown = require("../../../socket/bidding/handleCountdown");
 
@@ -159,20 +159,13 @@ const handleCountdown = require("../../../socket/bidding/handleCountdown");
 // };
 
 const createAuctionIntoDB = async (images, data) => {
-  console.log("data", data);
+  const startingDate = new Date(data.startingDate);
+  const [hours, minutes] = data.startingTime.split(":");
 
-  // Combine startingDate and startingTime into a single Date object
-  const startingDate = new Date(data.startingDate); // Extract date
-  const [hours, minutes] = data.startingTime.split(":"); // Extract time
-
-  // Set the time part in startingDate
   startingDate.setHours(hours, minutes);
 
-  // Store the combined date and time in activateDateTime
   data.activateDateTime = startingDate;
 
-  console.log("Combined Date and Time:", startingDate);
-  // Start a new session for the transaction
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -197,7 +190,6 @@ const createAuctionIntoDB = async (images, data) => {
     if (startingDate <= new Date()) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
     }
-    // Check if the starting date-time is in the past
 
     const result = await Auction.create([data], { session });
     if (!result || result.length === 0) {
@@ -220,16 +212,11 @@ const createAuctionIntoDB = async (images, data) => {
       hour12: true,
     };
     const formattedDate = startingDate.toLocaleDateString("en-US", options);
-    console.log("formated data", formattedDate);
-    // const formattedTime = startingDate.toLocaleTimeString("en-US", {
-    //   hour: "numeric",
-    //   minute: "numeric",
-    //   hour12: true,
-    // });
-
     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
-
-    await createNotification(notificationMessage, session);
+    await createNotification(
+      { notificationMessage, receiver: ENUM_USER_ROLE.ADMIN },
+      session
+    );
 
     const unseenNotificationCount = await getUnseenNotificationCount();
     global.io.emit("notifications", unseenNotificationCount);
@@ -283,7 +270,6 @@ const getAllAuctionFromDB = async (query, userId) => {
   const result = await auctionQuery.modelQuery;
   const meta = await auctionQuery.countTotal();
 
-  // Fetch user's bookmarks
   const bookmarks = await Bookmark.find({ user: userId }).select("auction");
   const bookmarkedAuctionIds = new Set(
     bookmarks.map((b) => b.auction.toString())
@@ -308,11 +294,20 @@ const getSingleAuctionFromDB = async (id) => {
 
 // update auction into db
 const updateAuctionIntoDB = async (id, newImages, data) => {
+  const startingDate = new Date(data.startingDate);
+  const [hours, minutes] = data.startingTime.split(":");
+
+  startingDate.setHours(hours, minutes);
+
   const auction = await Auction.findById(id);
   if (!auction) {
     throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
   }
   let imageUrls = [...data?.images];
+  data.activateTime = startingDate;
+  if (startingDate <= new Date()) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
+  }
   if (newImages) {
     for (const image of newImages) {
       const imageName = image?.filename;

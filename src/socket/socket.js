@@ -1,6 +1,7 @@
 const getUserDetailsFromToken = require("../helpers/getUserDetailsFromToken");
 
 const handleBidding = require("./bidding/bidding");
+const handleNotification = require("./notification");
 
 // online user
 const onlineUser = new Set();
@@ -20,6 +21,9 @@ const socket = (io) => {
 
     // handle live bidding
     handleBidding(io, socket);
+
+    // handle notification
+    handleNotification(currentUserId, io, socket);
 
     // Disconnect user ---------------------
     socket.on("disconnect", () => {

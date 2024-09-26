@@ -257,10 +257,12 @@ const loginUser = async (payload) => {
   };
 };
 
-const SignUPWithGoogle = async (payload) => {
+const signUPWithGoogle = async (payload) => {
   const userExist = await User.findOne({ email: payload?.email });
   if (userExist) {
     const userId = userExist?._id;
+    const email = userExist?.email;
+    const role = userExist?.role;
     const accessToken = jwtHelpers.createToken(
       { userId, email, role },
       config.jwt.secret,
@@ -279,8 +281,15 @@ const SignUPWithGoogle = async (payload) => {
     };
   }
 
-  const createUser = await User.create({ ...payload, password: "google" });
+  const createUser = await User.create({
+    ...payload,
+    password: "google",
+    verified: true,
+    isActive: true,
+  });
   const userId = createUser?._id;
+  const email = createUser?.email;
+  const role = createUser?.role;
   const accessToken = jwtHelpers.createToken(
     { userId, email, role },
     config.jwt.secret,
@@ -305,42 +314,54 @@ const getMyProfileFromDB = async (userId) => {
 };
 
 const updateProfile = async (req) => {
-  const { files } = req;
-  const { userId } = req.user;
+  const profile_image = req?.files?.profile_image[0];
+  const userId = req?.user?.userId;
+  const data = req?.body;
+  console.log(profile_image, userId, data);
 
-  const checkValidUser = await User.findById(userId);
-
-  if (!checkValidUser) {
-    throw new ApiError(404, "You are not authorized");
+  if (profile_image) {
+    const imageName = `${image?.originalname}`;
+    // send image to cloudinary --------
+    const { secure_url } = await sendImageToCloudinary(
+      imageName,
+      profile_image?.path
+    );
+    data.profile_image = secure_url;
   }
 
-  let profile_image = undefined;
-
-  if (files && files.profile_image) {
-    profile_image = `/${files.profile_image[0].path.replace(/\\/g, "/")}`;
-  }
-
-  const data = req.body;
-  if (!data) {
-    throw new Error("Data is missing in the request body!");
-  }
-
-  const isExist = await User.findOne({ _id: userId });
-
-  if (!isExist) {
-    throw new ApiError(404, "User not found!");
-  }
-
-  const updatedUserData = { ...data };
-
-  const result = await User.findOneAndUpdate(
-    { _id: userId },
-    { profile_image, ...updatedUserData },
-    {
-      new: true,
-    }
-  );
+  const result = await Admin.findByIdAndUpdate(userId, data, {
+    runValidators: true,
+    new: true,
+  });
   return result;
+
+  // const { files } = req;
+  // const { userId } = req.user;
+  // const checkValidUser = await User.findById(userId);
+  // if (!checkValidUser) {
+  //   throw new ApiError(404, "You are not authorized");
+  // }
+  // let profile_image = undefined;
+  // if (files && files.profile_image) {
+  //   profile_image = `/${files.profile_image[0].path.replace(/\\/g, "/")}`;
+  // }
+  // const data = req.body;
+  // if (!data) {
+  //   throw new Error("Data is missing in the request body!");
+  // }
+  // const isExist = await User.findOne({ _id: userId });
+  // if (!isExist) {
+  //   throw new ApiError(404, "User not found!");
+  // }
+  // const updatedUserData = { ...data };
+  // const result = await User.findOneAndUpdate(
+  //   { _id: userId },
+  //   { profile_image, ...updatedUserData },
+  //   {
+  //     new: true,
+  //   }
+  // );
+  // return result;
 };
 
 const deleteMyAccount = async (payload) => {
@@ -484,7 +505,7 @@ const activateUser2 = async (query) => {
 const UserService = {
   registrationUser,
   loginUser,
-  SignUPWithGoogle,
+  signUPWithGoogle,
   getMyProfileFromDB,
   changePassword,
   updateProfile,

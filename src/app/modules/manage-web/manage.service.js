@@ -8,7 +8,35 @@ const {
   AboutUs,
   TipsAndTricks,
   Accessibility,
+  Help,
 } = require("./manage.model");
+
+const createHelp = async (payload) => {
+  const checkIsExist = await Help.findOne();
+
+  if (checkIsExist) {
+    return await Help.findOneAndUpdate({}, payload, {
+      new: true,
+      runValidators: true,
+    });
+  } else {
+    return await Help.create(payload);
+  }
+};
+
+const getHelp = async () => {
+  return await Help.findOne();
+};
+
+const deleteHelp = async (id) => {
+  const isExist = await Help.findById(id);
+
+  if (!isExist) {
+    throw new ApiError(404, "Help not found");
+  }
+
+  return await Help.findByIdAndDelete(id);
+};
 
 const createAccessibility = async (payload) => {
   const checkIsExist = await Accessibility.findOne();
@@ -176,6 +204,9 @@ const deleteSingleFaq = async (id) => {
 };
 
 const ManageService = {
+  createHelp,
+  getHelp,
+  deleteHelp,
   createAccessibility,
   getAccessibility,
   createTipsAndTricks,

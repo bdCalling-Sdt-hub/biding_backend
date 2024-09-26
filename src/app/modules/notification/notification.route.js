@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get(
   "/get-all-notification",
-  auth(ENUM_USER_ROLE.ADMIN),
+  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.USER),
   notificationController.getAllNotification
 );
 
