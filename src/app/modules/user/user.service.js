@@ -321,9 +321,13 @@ const updateProfile = async (req) => {
   const userId = req?.user?.userId;
   const data = req?.body;
   console.log(profile_image, userId, data);
+  const checkValidUser = await User.findById(userId);
+  if (!checkValidUser) {
+    throw new ApiError(404, "You are not authorized");
+  }
 
   if (profile_image) {
-    const imageName = `${image?.originalname}`;
+    const imageName = `${image?.originalname.slice(0, -4)}`;
     // send image to cloudinary --------
     const { secure_url } = await sendImageToCloudinary(
       imageName,

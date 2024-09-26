@@ -1,11 +1,12 @@
 const Notification = require("../app/modules/notification/notification.model");
 
 const getUnseenNotificationCount = async (receiver) => {
-  const result = await Notification.countDocuments({
+  const unseenCount = await Notification.countDocuments({
     seen: false,
     receiver: receiver,
   });
-  return result;
+  const notifications = await Notification.find({ receiver: receiver });
+  return { unseenCount, notifications: notifications };
 };
 
 module.exports = getUnseenNotificationCount;

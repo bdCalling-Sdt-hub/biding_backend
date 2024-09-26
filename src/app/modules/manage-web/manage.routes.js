@@ -46,7 +46,7 @@ router.delete(
   ManageController.deleteTermsConditions
 );
 router.post(
-  "/add-support-contact",
+  "/add-contact-us",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   ManageController.addCustomerCare
 );
@@ -56,7 +56,7 @@ router.post(
   ManageController.addPrivacyPolicy
 );
 router.get("/get-privacy-policy", ManageController.getPrivacyPolicy);
-router.get("/get-support-contact", ManageController.getCustomerContact);
+router.get("/get-contact-us", ManageController.getCustomerContact);
 router.delete(
   "/delete-privacy-policy/:id",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
