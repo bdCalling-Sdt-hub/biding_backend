@@ -176,6 +176,17 @@ const activateUser2 = catchAsync(async (req, res) => {
   // });
 });
 
+const updateShippingAddress = catchAsync(async (req, res) => {
+  console.log(req.user);
+  const result = await UserService.updateShippingAddress(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Account deleted!",
+    data: result,
+  });
+});
+
 const UserController = {
   registrationUser,
   activateUser,
@@ -190,6 +201,7 @@ const UserController = {
   updateProfile,
   refreshToken,
   myProfile,
+  updateShippingAddress,
 };
 
 module.exports = { UserController };

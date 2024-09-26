@@ -83,10 +83,28 @@ const UserSchema = new Schema(
       type: Number,
       default: 0,
     },
-    streetAddress: String,
-    city: String,
-    state: String,
-    zipCode: Number,
+    location: {
+      type: String,
+      default: "",
+    },
+    shippingAddress: {
+      streetAddress: {
+        type: String,
+        default: "",
+      },
+      city: {
+        type: String,
+        default: "",
+      },
+      state: {
+        type: String,
+        default: "",
+      },
+      zipCode: {
+        type: Number,
+        default: 0,
+      },
+    },
   },
   {
     timestamps: true,

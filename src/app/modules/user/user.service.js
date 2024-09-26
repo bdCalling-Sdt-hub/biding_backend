@@ -445,6 +445,26 @@ const activateUser2 = async (query) => {
   // const {email} = query+
 };
 
+const updateShippingAddress = async (payload) => {
+  const { userId } = payload;
+
+  if (!userId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "missing user id");
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Profile not found");
+  }
+
+  return await User.findByIdAndUpdate(
+    { _id: userId },
+    { $set: { shippingAddress: { ...user.shippingAddress, ...payload } } }, // Merge existing shippingAddress with payload
+    { new: true, runValidators: true }
+  ).select({ shippingAddress: 1 });
+};
+
 const UserService = {
   registrationUser,
   loginUser,
@@ -459,6 +479,7 @@ const UserService = {
   resendActivationCode,
   refreshToken,
   myProfile,
+  updateShippingAddress,
 };
 
 module.exports = { UserService };
