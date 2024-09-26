@@ -153,7 +153,14 @@ const addCustomerCare = async (payload) => {
   });
 
   if (isExist) {
-    throw new ApiError(400, "Already have a contact number");
+    await Customer.findOneAndUpdate({}, payload, {
+      new: true,
+      runValidators: true,
+    });
+
+    const message = { message: "customer care contact Number updated" };
+
+    return message;
   } else {
     return await Customer.create(payload);
   }
