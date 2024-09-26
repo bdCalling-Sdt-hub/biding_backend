@@ -45,25 +45,11 @@ const getSpecificUserShipping = catchAsync(async (req, res) => {
   });
 });
 
-const updateShippingAddress = catchAsync(async (req, res) => {
-  const result = await ShippingService.updateShippingAddress(
-    req.body,
-    req.params.id
-  );
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: "Shipping address updated successfully",
-    data: result,
-  });
-});
-
 const ShippingController = {
   createShipping,
   getAllShipping,
   getSingleShipping,
   getSpecificUserShipping,
-  updateShippingAddress,
 };
 
 module.exports = ShippingController;

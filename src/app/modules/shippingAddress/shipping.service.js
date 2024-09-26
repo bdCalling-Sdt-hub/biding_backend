@@ -74,32 +74,11 @@ const getSpecificUserShipping = async (payload, query) => {
   return { meta, result };
 };
 
-const updateShippingAddress = async (payload, id) => {
-  if (!payload || !id) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Missing shipping id");
-  }
-
-  const existingShipping = await Shipping.findById(id);
-
-  if (!existingShipping) {
-    throw new ApiError(httpStatus.NOT_FOUND, "No shippings found");
-  }
-
-  const updatedShipping = await Shipping.findByIdAndUpdate(
-    { _id: id },
-    { ...payload },
-    { new: true, runValidators: true }
-  );
-
-  return updatedShipping;
-};
-
 const ShippingService = {
   createShipping,
   getAllShipping,
   getSingleShipping,
   getSpecificUserShipping,
-  updateShippingAddress,
 };
 
 module.exports = ShippingService;
