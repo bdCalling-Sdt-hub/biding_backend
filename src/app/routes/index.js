@@ -11,7 +11,7 @@ const bookmarkRoutes = require("../modules/bookmark/bookmark.route");
 const orderRoutes = require("../modules/order/order.route");
 const transactionRoutes = require("../modules/transaction/transaction.route");
 const notificationRoutes = require("../modules/notification/notification.route");
-const ShippingRoutes = require("../modules/shippingAddress/shipping.routes");
+const shippingAddressRoutes = require("../modules/shippingAddress/shipping.routes");
 const moduleRoutes = [
   {
     path: "/user",
@@ -59,7 +59,7 @@ const moduleRoutes = [
   },
   {
     path: "/shipping",
-    route: ShippingRoutes,
+    route: shippingAddressRoutes,
   },
 ];
 

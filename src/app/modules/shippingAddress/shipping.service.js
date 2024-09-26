@@ -68,7 +68,6 @@ const getSpecificUserShipping = async (payload, query) => {
 
   return { meta, result };
 };
-
 const updateShippingAddress = async (payload, id) => {
   if (!payload || !id) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Missing shipping id");

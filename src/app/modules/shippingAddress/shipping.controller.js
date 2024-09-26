@@ -56,7 +56,6 @@ const getSpecificUserShipping = catchAsync(async (req, res) => {
     data: result,
   });
 });
-
 const updateShippingAddress = catchAsync(async (req, res) => {
   const result = await ShippingService.updateShippingAddress(
     req.body,
