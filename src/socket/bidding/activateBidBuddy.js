@@ -1,10 +1,14 @@
 const Auction = require("../../app/modules/auction/auction.model");
+const User = require("../../app/modules/user/user.model");
 
 const activateBidBuddy = async (io, socket) => {
   socket.on("activateBidBuddy", async ({ auctionId, userId, totalBids }) => {
     const auction = await Auction.findById(auctionId).select("bidBuddyUsers");
-    const existsUser = auction.bidBuddyUsers.find((user) => user === userId);
+    const existsUser = auction.bidBuddyUsers.find(
+      (user) => user?.user?.toString() === userId
+    );
 
+    console.log("is exists", existsUser);
     if (!existsUser) {
       await Auction.findByIdAndUpdate(
         auctionId,
@@ -39,6 +43,7 @@ const activateBidBuddy = async (io, socket) => {
       );
       // get user
       const userData = await User.findById(userId).select("availableBid");
+      console.log("userdata form avitivat", userData);
       // update user
       await User.findByIdAndUpdate(userId, {
         availableBid: userData?.availableBid - totalBids,
@@ -46,8 +51,8 @@ const activateBidBuddy = async (io, socket) => {
     }
 
     const updatedAuction = await Auction.findById(auctionId);
-    io.to(auctionId).emit("bidHistory", updatedAuction.bidBuddyUsers);
-    socket.broadcast.emit("updated-auction", updatedAuction);
+    io.to(auctionId).emit("bidHistory", { updatedAuction });
+    socket.broadcast.emit("updated-auction", { updatedAuction });
   });
 };
 
