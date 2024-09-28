@@ -105,6 +105,7 @@ const auctionSchema = new mongoose.Schema(
     },
     currentPrice: {
       type: Number,
+      default: 0,
     },
     bidBuddyUsers: {
       type: [bidBuddyUserSchema],

@@ -51,7 +51,7 @@ const transactionSchema = new Schema(
     },
     paymentStatus: {
       type: String,
-      default: ENUM_PAYMENT_STATUS.PAID,
+      default: ENUM_PAYMENT_STATUS.UNPAID,
       enum: Object.values(ENUM_PAYMENT_STATUS),
     },
     paidAmount: {
@@ -60,7 +60,8 @@ const transactionSchema = new Schema(
     },
     transactionId: {
       type: String,
-      required: true,
+      // required: true,
+      default: null,
     },
     paymentType: {
       type: String,
@@ -69,6 +70,10 @@ const transactionSchema = new Schema(
     itemType: {
       type: String,
       enum: Object.values(ENUM_ITEM_TYPE),
+    },
+    paymentId: {
+      type: String,
+      required: true,
     },
   },
   {

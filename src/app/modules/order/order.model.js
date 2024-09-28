@@ -35,6 +35,14 @@ const orderSchema = new Schema({
     type: Number,
     required: true,
   },
+  totalAmount: {
+    type: Number,
+    required: true,
+  },
+  paymentId: {
+    type: String,
+    required: true,
+  },
   paidBy: {
     type: String,
     required: true,

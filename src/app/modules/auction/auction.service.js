@@ -11,6 +11,7 @@ const { default: mongoose } = require("mongoose");
 const { ENUM_AUCTION_STATUS, ENUM_USER_ROLE } = require("../../../utils/enums");
 const Bookmark = require("../bookmark/bookmark.model");
 const handleCountdown = require("../../../socket/bidding/handleCountdown");
+const Notification = require("../notification/notification.model");
 
 const createAuctionIntoDB = async (images, data) => {
   const startingDate = new Date(data.startingDate);
@@ -67,10 +68,11 @@ const createAuctionIntoDB = async (images, data) => {
     };
     const formattedDate = startingDate.toLocaleDateString("en-US", options);
     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
-    await createNotification(
-      { notificationMessage, receiver: ENUM_USER_ROLE.ADMIN },
-      session
-    );
+    // await createNotification(
+    //   { notificationMessage, receiver: ENUM_USER_ROLE.ADMIN },
+    //   session
+    // );
+    await Notification.create({ message: notificationMessage });
 
     const unseenNotificationCount = await getUnseenNotificationCount();
     global.io.emit("notifications", unseenNotificationCount);
@@ -139,7 +141,19 @@ const getAllAuctionFromDB = async (query, userId) => {
 
 // get single auction
 const getSingleAuctionFromDB = async (id) => {
-  const result = await Auction.findById(id);
+  const result = await Auction.findById(id)
+    .populate({
+      path: "bidBuddyUsers.user",
+      select: "name profile_image location",
+    })
+    .populate({
+      path: "bidHistory.user",
+      select: "name profile_image location",
+    })
+    .populate({
+      path: "winingBidder.user",
+      select: "name profile_image location",
+    });
   if (!result) {
     throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
   }
@@ -209,7 +223,7 @@ const getMyBiddingHistoryFromDB = async (userId) => {
   //   .populate("winingBidder.user", "name");
   const auctions = await Auction.find()
     .select(
-      "name category reservedBid status images bidBuddyUsers currentPrice bidPlace bidHistory winingBidder"
+      "name category reservedBid status images bidBuddyUsers currentPrice bidPlace bidHistory winingBidder status"
     )
     .populate("winingBidder.user", "name")
     .populate({
@@ -262,18 +276,30 @@ const updateAuctionStatuses = async () => {
   try {
     const auctionsToActivate = await Auction.updateMany(
       {
-        activateTime: { $eq: nineSecondsAgo },
+        // activateTime: { $eq: nineSecondsAgo },
+        activateTime: { $lte: nineSecondsAgo },
         status: ENUM_AUCTION_STATUS.UPCOMING,
       },
       {
         $set: { status: ENUM_AUCTION_STATUS.ACTIVE },
       }
     );
+    console.log("auction auctions", auctionsToActivate);
 
     console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
+    // Find the auctions that were just activated
+    const activatedAuctions = await Auction.find({
+      status: ENUM_AUCTION_STATUS.ACTIVE,
+    });
+
+    // Join the auction rooms for each activated auction
+    activatedAuctions.forEach((auction) => {
+      global.io.sockets.sockets.forEach((socket) => {
+        socket.join(auction._id.toString());
+      });
+    });
 
     const allAuctions = await Auction.find();
-
     global.io.emit("allAuctions", allAuctions);
 
     // Start countdown for active auctions

@@ -1,6 +1,7 @@
 const getUserDetailsFromToken = require("../helpers/getUserDetailsFromToken");
 
 const handleBidding = require("./bidding/bidding");
+const handleManualBid = require("./bidding/handleManualBid");
 const handleNotification = require("./notification");
 
 // online user
@@ -21,6 +22,9 @@ const socket = (io) => {
 
     // handle live bidding
     handleBidding(io, socket);
+
+    //
+    handleManualBid(io, socket);
 
     // handle notification
     handleNotification(currentUserId, io, socket);
