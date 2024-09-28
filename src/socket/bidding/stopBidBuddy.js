@@ -14,9 +14,9 @@ const stopBidBuddy = async (io, socket) => {
         { new: true }
       ).select("bidBuddyUsers");
 
-      if (updatedAuction) {
-        io.to(auctionId).emit("bidBuddyUpdated", updatedAuction.bidBuddyUsers);
-      }
+      //   if (updatedAuction) {
+      //     io.to(auctionId).emit("bidBuddyUpdated", updatedAuction.bidBuddyUsers);
+      //   }
     } catch (error) {
       console.error("Error updating bidBuddy status:", error);
     }
