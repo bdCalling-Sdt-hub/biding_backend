@@ -12,6 +12,10 @@ const { ENUM_AUCTION_STATUS, ENUM_USER_ROLE } = require("../../../utils/enums");
 const Bookmark = require("../bookmark/bookmark.model");
 const handleCountdown = require("../../../socket/bidding/handleCountdown");
 const Notification = require("../notification/notification.model");
+const cron = require("node-cron");
+const getAuctionEmailTemplate = require("../../../helpers/getAuctionEmailTemplate");
+const { sendEmail } = require("../../../utils/sendEmail");
+const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
 
 const createAuctionIntoDB = async (images, data) => {
   const startingDate = new Date(data.startingDate);
@@ -41,7 +45,6 @@ const createAuctionIntoDB = async (images, data) => {
     data.images = imageUrls;
     // Format the starting date and time
     data.activateTime = startingDate;
-    console.log("starting date", startingDate);
     if (startingDate <= new Date()) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
     }
@@ -72,10 +75,14 @@ const createAuctionIntoDB = async (images, data) => {
     //   { notificationMessage, receiver: ENUM_USER_ROLE.ADMIN },
     //   session
     // );
-    await Notification.create({ message: notificationMessage });
+    await Notification.create({
+      message: notificationMessage,
+      receiver: "Admin",
+    });
 
-    const unseenNotificationCount = await getUnseenNotificationCount();
-    global.io.emit("notifications", unseenNotificationCount);
+    // send notifications to the admin
+    const adminUnseenNotificationCount = await getAdminNotificationCount();
+    global.io.emit("admin-notifications", adminUnseenNotificationCount);
 
     await session.commitTransaction();
     session.endSession();
@@ -102,7 +109,6 @@ const createAuctionIntoDB = async (images, data) => {
 };
 
 const getAllAuctionFromDB = async (query, userId) => {
-  console.log(userId);
   const auctionQuery = new QueryBuilder(Auction.find(), query)
     .search(["name"])
     .filter()
@@ -264,6 +270,65 @@ const getMyBiddingHistoryFromDB = async (userId) => {
 };
 
 // run function in every second for update the auction status----------------
+// let isRunning = false;
+
+// const updateAuctionStatuses = async () => {
+//   if (isRunning) return;
+
+//   isRunning = true;
+//   const currentTime = new Date();
+//   const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
+
+//   try {
+//     const auctionsToActivate = await Auction.updateMany(
+//       {
+//         // activateTime: { $eq: nineSecondsAgo },
+//         activateTime: { $lte: nineSecondsAgo },
+//         status: ENUM_AUCTION_STATUS.UPCOMING,
+//       },
+//       {
+//         $set: { status: ENUM_AUCTION_STATUS.ACTIVE },
+//       }
+//     );
+//     console.log("auction auctions", auctionsToActivate);
+
+//     console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
+//     // Find the auctions that were just activated
+//     const activatedAuctions = await Auction.find({
+//       status: ENUM_AUCTION_STATUS.ACTIVE,
+//     });
+
+//     // Join the auction rooms for each activated auction
+//     activatedAuctions.forEach((auction) => {
+//       global.io.sockets.sockets.forEach((socket) => {
+//         socket.join(auction._id.toString());
+//       });
+//     });
+
+//     const allAuctions = await Auction.find();
+//     global.io.emit("allAuctions", allAuctions);
+
+//     // Start countdown for active auctions
+//     // if (auctionsToActivate.modifiedCount > 0) {
+//     //   const activatedAuctions = await Auction.find({
+//     //     status: ENUM_AUCTION_STATUS.ACTIVE,
+//     //     countdownTime: 9,
+//     //   });
+
+//     //   activatedAuctions.forEach((auction) => {
+//     //     handleCountdown(auction._id);
+//     //   });
+//     // }
+//   } catch (error) {
+//     console.error("Error updating auctions:", error);
+//   } finally {
+//     isRunning = false;
+//   }
+// };
+
+// // Schedule to run the update function every second
+// setInterval(updateAuctionStatuses, 1000);
+
 let isRunning = false;
 
 const updateAuctionStatuses = async () => {
@@ -276,7 +341,6 @@ const updateAuctionStatuses = async () => {
   try {
     const auctionsToActivate = await Auction.updateMany(
       {
-        // activateTime: { $eq: nineSecondsAgo },
         activateTime: { $lte: nineSecondsAgo },
         status: ENUM_AUCTION_STATUS.UPCOMING,
       },
@@ -284,15 +348,12 @@ const updateAuctionStatuses = async () => {
         $set: { status: ENUM_AUCTION_STATUS.ACTIVE },
       }
     );
-    console.log("auction auctions", auctionsToActivate);
-
     console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
-    // Find the auctions that were just activated
+
     const activatedAuctions = await Auction.find({
       status: ENUM_AUCTION_STATUS.ACTIVE,
     });
 
-    // Join the auction rooms for each activated auction
     activatedAuctions.forEach((auction) => {
       global.io.sockets.sockets.forEach((socket) => {
         socket.join(auction._id.toString());
@@ -302,17 +363,34 @@ const updateAuctionStatuses = async () => {
     const allAuctions = await Auction.find();
     global.io.emit("allAuctions", allAuctions);
 
-    // Start countdown for active auctions
-    // if (auctionsToActivate.modifiedCount > 0) {
-    //   const activatedAuctions = await Auction.find({
-    //     status: ENUM_AUCTION_STATUS.ACTIVE,
-    //     countdownTime: 9,
-    //   });
+    // Mark auctions as completed if activateTime is less than or equal to the current time
+    const auctionsToComplete = await Auction.updateMany(
+      {
+        activateTime: { $lte: currentTime },
+        status: ENUM_AUCTION_STATUS.ACTIVE,
+      },
+      {
+        $set: { status: ENUM_AUCTION_STATUS.COMPLETED },
+      }
+    );
+    console.log(`Completed ${auctionsToComplete.modifiedCount} auctions.`);
 
-    //   activatedAuctions.forEach((auction) => {
-    //     handleCountdown(auction._id);
-    //   });
-    // }
+    // Find and broadcast the completed auctions
+    const completedAuctions = await Auction.find({
+      status: ENUM_AUCTION_STATUS.COMPLETED,
+    });
+
+    completedAuctions.forEach((completedAuction) => {
+      global.io.sockets.sockets.forEach((socket) => {
+        socket.broadcast.emit("updated-auction", {
+          updatedAuction: completedAuction,
+        });
+        console.log("completed id", completedAuction?._id);
+        global.io
+          .to(completedAuction?._id)
+          .emit("bidHistory", { updatedAuction });
+      });
+    });
   } catch (error) {
     console.error("Error updating auctions:", error);
   } finally {
@@ -322,6 +400,40 @@ const updateAuctionStatuses = async () => {
 
 // Schedule to run the update function every second
 // setInterval(updateAuctionStatuses, 1000);
+
+// Cron job to run every 5 minutes for notify by email -----------------------
+cron.schedule("*/5 * * * *", async () => {
+  try {
+    const now = new Date();
+    const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60 * 1000);
+    const twentyMinutesFromNow = new Date(now.getTime() + 20 * 60 * 1000);
+
+    const auctions = await Auction.find({
+      activateTime: { $gte: twentyMinutesFromNow, $lte: thirtyMinutesFromNow },
+    });
+
+    if (auctions.length === 0) return;
+
+    for (const auction of auctions) {
+      const bookmarks = await Bookmark.find({ auction: auction._id }).populate({
+        path: "user",
+        select: "email",
+      });
+
+      console.log("bookmark user email from crone", bookmarks);
+      const html = getAuctionEmailTemplate(auction);
+      const subject = `Reminder: Auction "${auction.name}" Starts Soon!`;
+
+      for (const bookmark of bookmarks) {
+        const email = bookmark.user.email;
+        const options = { email, subject, html };
+        sendEmail(options);
+      }
+    }
+  } catch (error) {
+    console.error("Error in auction reminder job:", error);
+  }
+});
 
 const auctionService = {
   createAuctionIntoDB,

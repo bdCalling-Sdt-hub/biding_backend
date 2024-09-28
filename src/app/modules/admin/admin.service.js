@@ -20,7 +20,6 @@ const {
 const registrationAdmin = async (payload) => {
   const { name, email, password, confirmPassword } = payload;
   const admin = { name, email, password };
-  console.log(admin);
 
   const isEmailExist = await Admin.findOne({ email });
 

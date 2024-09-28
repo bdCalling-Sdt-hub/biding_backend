@@ -37,7 +37,6 @@ const getMyOrderFromDB = async (userId) => {
 };
 
 const changeOrderStatusIntoDB = async (id, status) => {
-  console.log(status);
   const order = await Order.findById(id);
   if (!order) {
     throw new ApiError(httpStatus.NOT_FOUND, "This order does not exists");

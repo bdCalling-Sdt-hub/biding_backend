@@ -81,7 +81,6 @@ const activateUser = async (payload) => {
   if (!existUser) {
     throw new ApiError(400, "User not found");
   }
-  console.log(existUser.activationCode, activation_code);
   if (existUser.activationCode !== Number(activation_code)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Code didn't match");
   }

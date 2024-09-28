@@ -3,11 +3,11 @@ const { ENUM_AUCTION_STATUS } = require("../../utils/enums");
 
 const handleBidEnded = async (io, socket) => {
   socket.on("ended-auction", async (auctionId) => {
-    const auction = await Auction.findByIdAndUpdate(auctionId, {
+    const updatedAuction = await Auction.findByIdAndUpdate(auctionId, {
       status: ENUM_AUCTION_STATUS.COMPLETED,
     });
 
-    socket.broadcast.emit("updated-auction", auction);
+    socket.broadcast.emit("updated-auction", { updatedAuction });
   });
 };
 

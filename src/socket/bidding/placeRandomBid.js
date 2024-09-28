@@ -1,7 +1,6 @@
 const Auction = require("../../app/modules/auction/auction.model");
 const User = require("../../app/modules/user/user.model");
 
-// const placeRandomBid = async (auctionId) => {
 //   const auction = await Auction.findById(auctionId)
 //     .select(
 //       "bidBuddyUsers currentPrice incrementValue bidHistory countdownTime reservedBid totalBidPlace winingBidder"
@@ -61,14 +60,13 @@ const User = require("../../app/modules/user/user.model");
 // };
 const placeRandomBid = async (auctionId) => {
   try {
-    // Fetch the auction details
     const auction = await Auction.findById(auctionId)
       .select(
         "bidBuddyUsers currentPrice incrementValue bidHistory countdownTime reservedBid totalBidPlace winingBidder"
       )
       .populate({
         path: "bidHistory.user",
-        select: "name profile_image",
+        select: "name profile_image location _id",
       });
 
     if (!auction) {
@@ -88,7 +86,6 @@ const placeRandomBid = async (auctionId) => {
 
       const newBidAmount = auction.currentPrice + auction.incrementValue;
 
-      // Update the user data using findOneAndUpdate with $inc to decrement availableBid atomically
       const userUpdate = await User.findByIdAndUpdate(
         randomUser.user,
         {
@@ -126,16 +123,16 @@ const placeRandomBid = async (auctionId) => {
           },
           $inc: { totalBidPlace: 1 },
         },
-        { new: true } // This ensures the updated auction document is returned
-      ).populate({
-        path: "bidHistory.user",
-        select: "name profile_image",
-      });
+        { new: true }
+      )
+        .populate({
+          path: "bidHistory.user",
+        })
+        .populate({ path: "bidBuddyUsers.user" });
 
       // Get the updated bid history (last 10 bids)
       const updatedBidHistory = updatedAuction.bidHistory.slice(-10).reverse();
 
-      // Emit updates to clients with the updated data
       io.to(auctionId).emit("updateCountdown", {
         countdownTime: updatedAuction.countdownTime,
       });

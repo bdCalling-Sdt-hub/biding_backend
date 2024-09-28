@@ -16,6 +16,7 @@ const getUnseenNotificationCount = require("../../../helpers/getUnseenNotificati
 const { default: mongoose } = require("mongoose");
 const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
 const Notification = require("../notification/notification.model");
+const Auction = require("../auction/auction.model");
 
 // PayPal configuration
 paypal.configure({
@@ -260,7 +261,16 @@ const makePaymentWithCreditCard = async (
 //   }
 // };
 const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
-  console.log(amount, orderDetails);
+  const isValidProduct = await Auction.findOne({
+    "winingBidder.user": userId,
+  });
+
+  if (!isValidProduct) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You should win the bid for buy this product"
+    );
+  }
   const create_payment_json = {
     intent: "sale",
     payer: { payment_method: "paypal" },
@@ -320,7 +330,7 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
       ],
       paymentId: payment.paymentId,
     };
-    order = await Order.create(orderData); // Removed session parameter
+    order = await Order.create(orderData);
   }
 
   // Create the transaction with the paymentId
@@ -334,7 +344,7 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
     paymentId: payment.paymentId,
   };
 
-  const transaction = await Transaction.create(transactionData); // Removed session parameter
+  const transaction = await Transaction.create(transactionData);
 
   return {
     paymentId: payment.paymentId,
@@ -610,21 +620,17 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
     return {
       message: "Payment execution successful",
       order: updatedOrder,
-      transaction: updatedTransaction, // Changed to the actual updated transaction
+      transaction: updatedTransaction,
     };
   } catch (err) {
-    // Abort the transaction in case of an error
     await session.abortTransaction();
 
-    // End the session
     session.endSession();
 
-    // Handle and throw errors
     if (err instanceof ApiError) {
-      throw err; // Rethrow if it's already an ApiError
+      throw err;
     }
 
-    console.error("Mongoose error:", err);
     throw new ApiError(
       httpStatus.SERVICE_UNAVAILABLE,
       err.message || "Something went wrong. Try again later."
