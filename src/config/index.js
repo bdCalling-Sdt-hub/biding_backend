@@ -35,7 +35,7 @@ const config = {
     smtp_port: process.env.SMTP_PORT,
     smtp_service: process.env.SMTP_SERVICE,
     smtp_mail: process.env.SMTP_MAIL,
-    smtp_password: process.env.SMTP_PASSWORD,
+    smtp_pass: process.env.SMTP_PASS,
     NAME: process.env.SERVICE_NAME,
   },
   cloudinary: {
