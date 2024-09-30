@@ -16,8 +16,20 @@ const getAllNotification = catchAsync(async (req, res) => {
   });
 });
 
+const seeNotification = catchAsync(async (req, res) => {
+  const result = await notificationService.seeNotification(req?.user);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Notification seen successfully",
+    data: result,
+  });
+});
+
 const notificationController = {
   getAllNotification,
+  seeNotification,
 };
 
 module.exports = notificationController;

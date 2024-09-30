@@ -16,7 +16,7 @@ router.get(
   bookmarkController.getMyBookmark
 );
 router.delete(
-  "/delete-bookmark/:id",
+  "/delete-bookmark/:auctionId",
   auth(ENUM_USER_ROLE.USER),
   bookmarkController.deleteBookmark
 );

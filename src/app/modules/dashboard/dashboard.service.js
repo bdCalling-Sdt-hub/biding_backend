@@ -14,7 +14,7 @@ const {
 
 const getAllUsers = async (query) => {
   const usersQuery = new QueryBuilder(User.find(), query)
-    .search(["name"])
+    .search(["name", "email"])
     .filter()
     .sort()
     .paginate()
@@ -309,20 +309,21 @@ const getAreaChartDataForIncomeFromDB = async (year) => {
 };
 
 const addBanner = async (req) => {
-  const { files, body } = req || {};
-  console.log(body);
+  // const { files, body } = req || {};
+  const { files } = req || {};
+  // console.log(body);
 
-  if (!files.banner?.length || Object.keys(body).length === 0) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Image or body is not provided");
-  }
+  // if (!files.banner?.length || Object.keys(body).length === 0) {
+  //   throw new ApiError(httpStatus.BAD_REQUEST, "Image or body is not provided");
+  // }
 
-  const existingIndex = await Banner.findOne({ index: body.index });
-  if (existingIndex) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Index already exists. Please choose a different index."
-    );
-  }
+  // const existingIndex = await Banner.findOne({ index: body.index });
+  // if (existingIndex) {
+  //   throw new ApiError(
+  //     httpStatus.BAD_REQUEST,
+  //     "Index already exists. Please choose a different index."
+  //   );
+  // }
 
   const { banner } = files;
   const { originalname, path } = banner[0];
@@ -345,7 +346,7 @@ const addBanner = async (req) => {
 
   const newBanner = {
     url,
-    ...body,
+    // ...body,
   };
 
   return await Banner.create(newBanner);
@@ -380,8 +381,7 @@ const updateBannerIndex = async (payload) => {
   return await bannerToUpdate.save();
 };
 
-const deleteBanner = async (payload) => {
-  const { id } = payload;
+const deleteBanner = async (id) => {
   if (!id) {
     throw new ApiError(httpStatus.BAD_REQUEST, "No id provided");
   }
@@ -391,7 +391,11 @@ const deleteBanner = async (payload) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Banner does not exist");
   }
 
-  return await Banner.findByIdAndDelete(id);
+  const result = await Banner.findByIdAndDelete(id, {
+    runValidators: true,
+    new: true,
+  });
+  return result;
 };
 
 const getBanner = async () => {

@@ -2,10 +2,10 @@ const { Schema, model } = require("mongoose");
 
 const bannerSchema = new Schema(
   {
-    index: {
-      type: Number,
-      required: true,
-    },
+    // index: {
+    //   type: Number,
+    //   required: true,
+    // },
     url: {
       type: String,
       required: true,

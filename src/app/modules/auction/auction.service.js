@@ -16,6 +16,7 @@ const cron = require("node-cron");
 const getAuctionEmailTemplate = require("../../../helpers/getAuctionEmailTemplate");
 const { sendEmail } = require("../../../utils/sendEmail");
 const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
+const placeRandomBid = require("../../../socket/bidding/placeRandomBid");
 
 const createAuctionIntoDB = async (images, data) => {
   const startingDate = new Date(data.startingDate);
@@ -77,7 +78,7 @@ const createAuctionIntoDB = async (images, data) => {
     // );
     await Notification.create({
       message: notificationMessage,
-      receiver: "Admin",
+      receiver: ENUM_USER_ROLE.ADMIN,
     });
 
     // send notifications to the admin
@@ -337,6 +338,7 @@ const updateAuctionStatuses = async () => {
   isRunning = true;
   const currentTime = new Date();
   const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
+  const fiveSecondAgo = new Date(currentTime.getTime() - 5 * 1000);
 
   try {
     const auctionsToActivate = await Auction.updateMany(
@@ -363,6 +365,16 @@ const updateAuctionStatuses = async () => {
     const allAuctions = await Auction.find();
     global.io.emit("allAuctions", allAuctions);
 
+    // get auctions those are ready for bid with bidBuddy
+    const readyAuctionsForBidBuddyBid = await Auction.find({
+      activateTime: { $lte: fiveSecondAgo },
+      status: ENUM_AUCTION_STATUS.ACTIVE,
+    });
+
+    readyAuctionsForBidBuddyBid?.forEach((auction) => {
+      placeRandomBid(auction?._id);
+    });
+
     // Mark auctions as completed if activateTime is less than or equal to the current time
     const auctionsToComplete = await Auction.updateMany(
       {
@@ -376,21 +388,23 @@ const updateAuctionStatuses = async () => {
     console.log(`Completed ${auctionsToComplete.modifiedCount} auctions.`);
 
     // Find and broadcast the completed auctions
-    const completedAuctions = await Auction.find({
-      status: ENUM_AUCTION_STATUS.COMPLETED,
-    });
-
-    completedAuctions.forEach((completedAuction) => {
-      global.io.sockets.sockets.forEach((socket) => {
-        socket.broadcast.emit("updated-auction", {
-          updatedAuction: completedAuction,
-        });
-        console.log("completed id", completedAuction?._id);
-        global.io
-          .to(completedAuction?._id)
-          .emit("bidHistory", { updatedAuction });
+    if (auctionsToComplete.modifiedCount > 0) {
+      const completedAuctions = await Auction.find({
+        status: ENUM_AUCTION_STATUS.COMPLETED,
       });
-    });
+
+      completedAuctions.forEach((completedAuction) => {
+        global.io.sockets.sockets.forEach((socket) => {
+          socket.broadcast.emit("updated-auction", {
+            updatedAuction: completedAuction,
+          });
+          console.log("completed id", completedAuction?._id);
+          global.io
+            .to(completedAuction?._id)
+            .emit("bidHistory", { updatedAuction: completedAuction });
+        });
+      });
+    }
   } catch (error) {
     console.error("Error updating auctions:", error);
   } finally {

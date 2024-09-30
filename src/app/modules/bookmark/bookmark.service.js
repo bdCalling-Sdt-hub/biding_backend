@@ -8,7 +8,10 @@ const createBookmarkIntoDB = async (auctionId, user) => {
   if (!auctionExist) {
     throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
   }
-  const bookmark = await Bookmark.findOne({ auction: auctionId });
+  const bookmark = await Bookmark.findOne({
+    auction: auctionId,
+    user: user?.userId,
+  });
   if (bookmark) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -32,8 +35,11 @@ const getMyBookmarkFromDB = async (user) => {
 };
 
 // delete bookmark
-const deleteBookmarkFromDB = async (id, user) => {
-  const bookmark = await Bookmark.findById(id);
+const deleteBookmarkFromDB = async (auctionId, user) => {
+  const bookmark = await Bookmark.findOne({
+    auction: auctionId,
+    user: user?.userId,
+  });
 
   if (!bookmark) {
     throw new ApiError(httpStatus.NOT_FOUND, "This bookmark does not exists");
@@ -44,7 +50,10 @@ const deleteBookmarkFromDB = async (id, user) => {
       "You don't have access to delete this bookmark"
     );
   }
-  const result = await Bookmark.findByIdAndDelete(id);
+  const result = await Bookmark.findOneAndDelete({
+    auction: auctionId,
+    user: user?.userId,
+  });
   return result;
 };
 const bookmarkService = {

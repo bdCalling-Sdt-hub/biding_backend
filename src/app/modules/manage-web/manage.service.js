@@ -174,6 +174,11 @@ const deleteCustomerCare = async () => {
   return await Customer.findByIdAndDelete(id);
 };
 
+const getAllFaq = async () => {
+  const result = await FAQ.find();
+  return result;
+};
+
 // faq ---
 const addFaq = async (payload) => {
   return await FAQ.create(payload);
@@ -237,6 +242,7 @@ const ManageService = {
   getSingleFaq,
   updateSingleFaq,
   deleteSingleFaq,
+  getAllFaq,
 };
 
 module.exports = { ManageService };

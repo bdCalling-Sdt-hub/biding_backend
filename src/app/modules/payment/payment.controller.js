@@ -3,24 +3,29 @@ const sendResponse = require("../../../shared/sendResponse");
 const PaymentService = require("../payment/payment.service");
 
 const makePaymentWithCreditCard = catchAsync(async (req, res) => {
-  const { item, quantity, amount, token, type } = req?.body;
-  const user = req?.user;
+  // const { item, quantity, amount, token, type } = req?.body;
+  // const user = req?.user;
 
-  const { charge, customerId: newCustomerId } =
-    await PaymentService.makePaymentWithCreditCard(
-      user,
-      item,
-      quantity,
-      amount,
-      token,
-      type
-    );
+  // const { charge, customerId: newCustomerId } =
+  //   await PaymentService.makePaymentWithCreditCard(
+  //     user,
+  //     item,
+  //     quantity,
+  //     amount,
+  //     token,
+  //     type
+  //   );
 
+  const result = await PaymentService.makePaymentWithCreditCard(
+    req?.body,
+    req?.user?.userId
+  );
   sendResponse(res, {
     statusCode: 201,
     success: true,
     message: "Payment successfully",
-    data: charge,
+    // data: charge,
+    data: result,
   });
 });
 
@@ -74,17 +79,32 @@ const executePaymentWithPaypal = catchAsync(async (req, res) => {
   });
 });
 
-// const createPaymentIntent = catchAsync(async (req, res) => {
-//   console.log(req.user);
-//   const result = await PaymentService.createPaymentIntent(req.body);
+const executePaymentWithCreditCard = catchAsync(async (req, res) => {
+  const result = await PaymentService.executePaymentWithCreditCard(
+    req?.body?.paymentId
+  );
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Payment executed successfully",
+    data: result,
+  });
+});
 
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: "Payment intent created successfully",
-//     data: result,
-//   });
-// });
+const createPaymentIntent = catchAsync(async (req, res) => {
+  // console.log(req.user);
+  const result = await PaymentService.createPaymentIntent(
+    req?.body,
+    req?.user?.userId
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Payment intent created successfully",
+    data: result,
+  });
+});
 
 // const savePaymentUpdateSpending = catchAsync(async (req, res) => {
 //   const result = await PaymentService.savePaymentUpdateSpending(req.body);
@@ -127,6 +147,8 @@ const PaymentController = {
   makePaymentWithCreditCard,
   createPaymentWithPaypal,
   executePaymentWithPaypal,
+  createPaymentIntent,
+  executePaymentWithCreditCard,
 };
 
 module.exports = PaymentController;

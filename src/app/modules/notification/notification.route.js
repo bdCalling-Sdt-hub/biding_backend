@@ -10,5 +10,10 @@ router.get(
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.USER),
   notificationController.getAllNotification
 );
+router.patch(
+  "/see-notification",
+  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.USER),
+  notificationController.seeNotification
+);
 
 module.exports = router;

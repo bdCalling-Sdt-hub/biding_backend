@@ -68,19 +68,19 @@ const getSpecificUserShipping = async (payload, query) => {
 
   return { meta, result };
 };
-const updateShippingAddress = async (payload, id) => {
+const updateShippingAddress = async (payload, id, userId) => {
   if (!payload || !id) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Missing shipping id");
   }
 
-  const existingShipping = await Shipping.findById(id);
+  const existingShipping = await Shipping.findOne({ _id: id, user_id: userId });
 
   if (!existingShipping) {
-    throw new ApiError(httpStatus.NOT_FOUND, "No shippings found");
+    throw new ApiError(httpStatus.NOT_FOUND, "Shipping address not found");
   }
 
   const updatedShipping = await Shipping.findByIdAndUpdate(
-    { _id: id },
+    id,
     { ...payload },
     { new: true, runValidators: true }
   );

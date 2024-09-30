@@ -24,7 +24,7 @@ router.patch(
   DashboardController.blockUnblockUser
 );
 router.post(
-  "/add-banner",
+  "/create-banner",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   uploadFile(),
   DashboardController.addBanner
@@ -39,7 +39,7 @@ router.patch(
 );
 
 router.delete(
-  "/auth/banner",
+  "/delete-banner/:id",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   DashboardController.deleteBanner
 );

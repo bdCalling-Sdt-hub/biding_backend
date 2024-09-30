@@ -201,6 +201,15 @@ const getSingleFaq = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getAllFaq = catchAsync(async (req, res) => {
+  const result = await ManageService.getAllFaq();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Faq retrieved successfully",
+    data: result,
+  });
+});
 
 const updateSingleFaq = catchAsync(async (req, res) => {
   const result = await ManageService.updateSingleFaq(req.params.id, req.body);
@@ -245,6 +254,7 @@ const ManageController = {
   deleteSingleFaq,
   createAboutUs,
   getAboutUs,
+  getAllFaq,
 };
 
 module.exports = { ManageController };

@@ -77,6 +77,8 @@ router.post(
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   ManageController.addFaq
 );
+router.get("/all-faq", ManageController.getAllFaq);
+
 router.get("/get-single-faq/:id", ManageController.getSingleFaq);
 router.patch(
   "/update-single-faq/:id",

@@ -59,7 +59,8 @@ const getSpecificUserShipping = catchAsync(async (req, res) => {
 const updateShippingAddress = catchAsync(async (req, res) => {
   const result = await ShippingService.updateShippingAddress(
     req.body,
-    req.params.id
+    req.params.id,
+    req?.user?.userId
   );
   sendResponse(res, {
     statusCode: 200,

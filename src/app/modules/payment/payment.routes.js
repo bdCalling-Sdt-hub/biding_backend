@@ -24,6 +24,18 @@ router.post(
   PaymentController.executePaymentWithPaypal
 );
 
+router.post(
+  "/create-payment-intent",
+  auth(ENUM_USER_ROLE.USER),
+  PaymentController.createPaymentIntent
+);
+
+router.post(
+  "/execute-payment-with-credit",
+  auth(ENUM_USER_ROLE.USER),
+  PaymentController.executePaymentWithCreditCard
+);
+
 // router.post(
 //   "/create-payment-intent",
 //   auth(ENUM_USER_ROLE.USER),

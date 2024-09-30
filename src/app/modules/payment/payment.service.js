@@ -96,6 +96,150 @@ const makePaymentWithCreditCard = async (
   return { charge, customerId: customer.id };
 };
 
+// make payment with credit card --------------------------
+
+// const makePaymentWithCreditCard = async (payload, userId) => {
+//   console.log("this is from make paymetn with credit card");
+//   const { cardDetails, orderDetails } = payload;
+
+//   const { cardNumber, expMonth, expYear, cvc } = cardDetails;
+
+//   const { totalAmount, shippingAddress, item, itemType, winingBid, product } =
+//     orderDetails;
+//   console.log(cardDetails, orderDetails);
+
+//   // 1. Create a Stripe token using the card details provided
+//   const token = await stripe.tokens.create({
+//     card: {
+//       number: cardNumber,
+//       exp_month: expMonth,
+//       exp_year: expYear,
+//       cvc: cvc,
+//     },
+//   });
+
+//   // 2. Create a Stripe Payment Intent to charge the customer
+//   const paymentIntent = await stripe.paymentIntents.create({
+//     amount: totalAmount * 100,
+//     currency: "usd",
+//     payment_method_data: {
+//       type: "card",
+//       card: {
+//         token: token.id,
+//       },
+//     },
+//     confirm: true,
+//   });
+
+//   //  if the payment is successful, create the order and transaction
+//   if (paymentIntent.status === "succeeded") {
+//     let order;
+//     if (orderDetails?.shippingAddress) {
+//       const orderData = {
+//         user: userId,
+//         shippingAddress: shippingAddress,
+//         winingBid: winingBid,
+//         totalAmount: totalAmount,
+//         paidBy: ENUM_PAID_BY.CREDIT_CARD,
+//         item: product,
+//         status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+//         statusWithTime: [
+//           {
+//             status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+//             time: new Date(),
+//           },
+//         ],
+//         paymentId: paymentIntent.id,
+//       };
+//       order = await Order.create(orderData);
+//     }
+
+//     // 5. Create a new transaction
+//     const transactionData = {
+//       user: userId,
+//       item: item,
+//       paymentStatus: ENUM_PAYMENT_STATUS.PAID,
+//       paidAmount: totalAmount,
+//       itemType: itemType,
+//       paymentType: "Online Payment",
+//       paymentId: paymentIntent.id,
+//     };
+
+//     const transaction = await Transaction.create(transactionData);
+
+//     return { order, transaction };
+//   } else {
+//     throw new ApiError(
+//       httpStatus.BAD_REQUEST,
+//       "Payment failed. Please try again."
+//     );
+//   }
+// };
+
+const createPaymentIntent = async (orderDetails, userId) => {
+  const { totalAmount, shippingAddress, item, itemType, winingBid, product } =
+    orderDetails;
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: totalAmount * 100,
+    currency: "usd",
+    payment_method_types: ["card"],
+  });
+
+  let order;
+  if (orderDetails?.shippingAddress) {
+    const orderData = {
+      user: userId,
+      shippingAddress: shippingAddress,
+      winingBid: winingBid,
+      totalAmount: totalAmount,
+      paidBy: ENUM_PAID_BY.CREDIT_CARD,
+      item: product,
+      status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING,
+      statusWithTime: [
+        {
+          status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING,
+          time: new Date(),
+        },
+      ],
+      paymentId: paymentIntent.id,
+    };
+    order = await Order.create(orderData);
+  }
+
+  // 5. Create a new transaction
+  const transactionData = {
+    user: userId,
+    item: item,
+    paymentStatus: ENUM_PAYMENT_STATUS.UNPAID,
+    paidAmount: totalAmount,
+    itemType: itemType,
+    paymentType: "Online Payment",
+    paymentId: paymentIntent.id,
+    transactionId: paymentIntent.id,
+  };
+
+  await Transaction.create(transactionData);
+
+  return {
+    clientSecret: paymentIntent.client_secret,
+  };
+};
+
+// const createPaymentIntent = async (amount) => {
+//   // Create a PaymentIntent with the specified amount and currency
+//   const paymentIntent = await stripe.paymentIntents.create({
+//     amount: amount * 100,
+//     currency: "usd",
+//     payment_method_types: ["card"],
+//   });
+
+//   console.log(paymentIntent);
+
+//   return {
+//     clientSecret: paymentIntent.client_secret,
+//   };
+// };
+
 // Create PayPal payment
 // const createPaymentWithPaypal = async (amount, productName) => {
 //   console.log(amount, productName);
@@ -641,103 +785,53 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
   }
 };
 
-// const createPaymentIntent = async (payload) => {
-//   const { amount, email } = payload;
-//   console.log(payload);
-//   if (!amount) {
-//     throw new ApiError(httpStatus.BAD_REQUEST, "No amount found");
-//   }
+const executePaymentWithCreditCard = async (paymentId) => {
+  // Update the transaction status to PAID
+  const updatedTransaction = await Transaction.findOneAndUpdate(
+    { paymentId: paymentId },
+    {
+      paymentStatus: ENUM_PAYMENT_STATUS.PAID,
+      transactionId: paymentId,
+    },
+    { new: true }
+  );
 
-//   const paymentIntent = await stripe.paymentIntents.create({
-//     amount: parseInt(Math.trunc(amount) * 100),
-//     currency: "usd",
-//     payment_method_types: ["card"],
-//   });
+  if (!updatedTransaction) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Transaction not found.");
+  }
 
-//   const { id, client_secret, amount: deductedAmount } = paymentIntent;
+  // Update the order status and statusWithTime
+  const updatedOrder = await Order.findOneAndUpdate(
+    { paymentId: paymentId, status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING },
+    {
+      status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+      statusWithTime: [
+        {
+          status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+          time: new Date(),
+        },
+      ],
+    },
+    { new: true }
+  );
 
-//   const saveTransaction = { ...payload, transactionId: id };
+  if (!updatedOrder) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
+  }
 
-//   const transaction = await Transaction.create(saveTransaction);
-
-//   return {
-//     transactionId: id,
-//     client_secret,
-//     deductedAmount: deductedAmount / 100,
-//   };
-// };
-
-// const savePaymentUpdateSpending = async (payload) => {
-//   const { amount, email, transactionId } = payload;
-
-//   if (!amount || !email) {
-//     throw new ApiError(httpStatus.BAD_REQUEST, "Email or amount not sent");
-//   }
-
-//   const user = await User.findOne({ email: email });
-
-//   if (!user) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "No user found");
-//   }
-
-//   const existingTransaction = await Transaction.find({
-//     email: email,
-//     transactionId: transactionId,
-//   });
-
-//   if (!existingTransaction.length) {
-//     throw new ApiError(
-//       httpStatus.NOT_FOUND,
-//       "Please complete transaction first or your email or transactionId doesn't match."
-//     );
-//   }
-
-//   const result = await User.findOneAndUpdate(
-//     { email: email },
-//     { $inc: { amount: parseInt(amount) } },
-//     { new: true, runValidators: true }
-//   ).select("email amount");
-
-//   const payment = await Payment.create(payload);
-
-//   return { result, payment };
-// };
-
-// const updateTotalEarning = async (payload) => {
-//   const { amount, email } = payload;
-
-//   if (!amount || !email) {
-//     throw new ApiError(httpStatus.BAD_REQUEST, "Email or amount not sent");
-//   }
-
-//   const driver = await Driver.findOne({ email: email });
-
-//   if (!driver) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "No driver found");
-//   }
-
-//   return await Driver.findOneAndUpdate(
-//     { email: email },
-//     { $inc: { amount: parseInt(amount) } },
-//     { new: true, runValidators: true }
-//   ).select("email amount");
-// };
-
-// const allPayments = async (req, res) => {
-//   const payments = await Payment.find();
-//   const count = await Payment.countDocuments();
-
-//   return { count, payments };
-// };
+  return {
+    message: "Payment execute successfully",
+    order: updatedOrder,
+    transaction: updatedTransaction,
+  };
+};
 
 const PaymentService = {
-  // createPaymentIntent,
-  // savePaymentUpdateSpending,
-  // updateTotalEarning,
-  // allPayments,
   makePaymentWithCreditCard,
   createPaymentWithPaypal,
   executePaymentWithPaypal,
+  createPaymentIntent,
+  executePaymentWithCreditCard,
 };
 
 module.exports = PaymentService;
