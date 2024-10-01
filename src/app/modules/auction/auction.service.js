@@ -208,17 +208,6 @@ const deleteAuctionFromDB = async (id) => {
   return result;
 };
 
-// get my bidding history
-// const getMyBiddingHistoryFromDB = async (userId) => {
-//   const result = await Auction.find({
-//     bidBuddyUsers: {
-//       $elemMatch: { user: userId },
-//     },
-//   }).select("name category reservedBid status images currentPrice bidPlace");
-
-//   return result;
-// };
-
 const getMyBiddingHistoryFromDB = async (userId) => {
   console.log("userId", userId);
   // const auctions = await Auction.find({
@@ -413,7 +402,7 @@ const updateAuctionStatuses = async () => {
 };
 
 // Schedule to run the update function every second
-// setInterval(updateAuctionStatuses, 1000);
+setInterval(updateAuctionStatuses, 1000);
 
 // Cron job to run every 5 minutes for notify by email -----------------------
 cron.schedule("*/5 * * * *", async () => {

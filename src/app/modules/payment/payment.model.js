@@ -67,6 +67,10 @@ const transactionSchema = new Schema(
       type: String,
       default: "Online Payment",
     },
+    totalBid: {
+      type: Number,
+      default: 0,
+    },
     itemType: {
       type: String,
       enum: Object.values(ENUM_ITEM_TYPE),

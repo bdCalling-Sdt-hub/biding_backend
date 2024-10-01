@@ -81,7 +81,8 @@ const executePaymentWithPaypal = catchAsync(async (req, res) => {
 
 const executePaymentWithCreditCard = catchAsync(async (req, res) => {
   const result = await PaymentService.executePaymentWithCreditCard(
-    req?.body?.paymentId
+    req?.body?.paymentId,
+    req?.user?.userId
   );
   sendResponse(res, {
     statusCode: 200,

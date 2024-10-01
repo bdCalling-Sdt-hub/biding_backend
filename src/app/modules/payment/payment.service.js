@@ -36,17 +36,7 @@ const makePaymentWithCreditCard = async (
 
   const user = await User.findById(userData?.userId);
   const email = user?.email;
-  // if (existingCustomerId) {
-  //   // If customer already exists, reuse the customer
-  //   customer = await stripe.customers.retrieve(existingCustomerId);
-  // } else {
-  //   // Create a new customer if none exists
-  //   customer = await stripe.customers.create({
-  //     email,
-  //     source: token.id,
-  //     name: token.card.name,
-  //   });
-  // }
+
   if (user?.stripCustomerId) {
     customer = await stripe.customers.retrieve(stripCustomerId);
     const existingCards = customer.sources.data;
@@ -96,86 +86,6 @@ const makePaymentWithCreditCard = async (
   return { charge, customerId: customer.id };
 };
 
-// make payment with credit card --------------------------
-
-// const makePaymentWithCreditCard = async (payload, userId) => {
-//   console.log("this is from make paymetn with credit card");
-//   const { cardDetails, orderDetails } = payload;
-
-//   const { cardNumber, expMonth, expYear, cvc } = cardDetails;
-
-//   const { totalAmount, shippingAddress, item, itemType, winingBid, product } =
-//     orderDetails;
-//   console.log(cardDetails, orderDetails);
-
-//   // 1. Create a Stripe token using the card details provided
-//   const token = await stripe.tokens.create({
-//     card: {
-//       number: cardNumber,
-//       exp_month: expMonth,
-//       exp_year: expYear,
-//       cvc: cvc,
-//     },
-//   });
-
-//   // 2. Create a Stripe Payment Intent to charge the customer
-//   const paymentIntent = await stripe.paymentIntents.create({
-//     amount: totalAmount * 100,
-//     currency: "usd",
-//     payment_method_data: {
-//       type: "card",
-//       card: {
-//         token: token.id,
-//       },
-//     },
-//     confirm: true,
-//   });
-
-//   //  if the payment is successful, create the order and transaction
-//   if (paymentIntent.status === "succeeded") {
-//     let order;
-//     if (orderDetails?.shippingAddress) {
-//       const orderData = {
-//         user: userId,
-//         shippingAddress: shippingAddress,
-//         winingBid: winingBid,
-//         totalAmount: totalAmount,
-//         paidBy: ENUM_PAID_BY.CREDIT_CARD,
-//         item: product,
-//         status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-//         statusWithTime: [
-//           {
-//             status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-//             time: new Date(),
-//           },
-//         ],
-//         paymentId: paymentIntent.id,
-//       };
-//       order = await Order.create(orderData);
-//     }
-
-//     // 5. Create a new transaction
-//     const transactionData = {
-//       user: userId,
-//       item: item,
-//       paymentStatus: ENUM_PAYMENT_STATUS.PAID,
-//       paidAmount: totalAmount,
-//       itemType: itemType,
-//       paymentType: "Online Payment",
-//       paymentId: paymentIntent.id,
-//     };
-
-//     const transaction = await Transaction.create(transactionData);
-
-//     return { order, transaction };
-//   } else {
-//     throw new ApiError(
-//       httpStatus.BAD_REQUEST,
-//       "Payment failed. Please try again."
-//     );
-//   }
-// };
-
 const createPaymentIntent = async (orderDetails, userId) => {
   const { totalAmount, shippingAddress, item, itemType, winingBid, product } =
     orderDetails;
@@ -216,6 +126,7 @@ const createPaymentIntent = async (orderDetails, userId) => {
     paymentType: "Online Payment",
     paymentId: paymentIntent.id,
     transactionId: paymentIntent.id,
+    totalBid: orderDetails?.totalBid || 0,
   };
 
   await Transaction.create(transactionData);
@@ -225,185 +136,6 @@ const createPaymentIntent = async (orderDetails, userId) => {
   };
 };
 
-// const createPaymentIntent = async (amount) => {
-//   // Create a PaymentIntent with the specified amount and currency
-//   const paymentIntent = await stripe.paymentIntents.create({
-//     amount: amount * 100,
-//     currency: "usd",
-//     payment_method_types: ["card"],
-//   });
-
-//   console.log(paymentIntent);
-
-//   return {
-//     clientSecret: paymentIntent.client_secret,
-//   };
-// };
-
-// Create PayPal payment
-// const createPaymentWithPaypal = async (amount, productName) => {
-//   console.log(amount, productName);
-//   const create_payment_json = {
-//     intent: "sale",
-//     payer: { payment_method: "paypal" },
-//     redirect_urls: {
-//       return_url: process.env.PAYPAL_SUCCESS_URL,
-//       cancel_url: process.env.PAYPAL_CANCEL_URL,
-//     },
-//     transactions: [
-//       {
-//         item_list: {
-//           items: [
-//             {
-//               name: productName,
-//               // name: "Item",
-//               // sku: "item",
-//               price: amount,
-//               currency: "USD",
-//               quantity: 1,
-//             },
-//           ],
-//         },
-//         amount: { currency: "USD", total: amount },
-//         description: "Payment for your order.",
-//       },
-//     ],
-//   };
-
-//   return new Promise((resolve, reject) => {
-//     paypal.payment.create(create_payment_json, (error, payment) => {
-//       if (error) {
-//         reject(error);
-//       } else {
-//         const approvalUrl = payment.links.find(
-//           (link) => link.rel === "approval_url"
-//         ).href;
-//         resolve(approvalUrl);
-//       }
-//     });
-//   });
-// };
-
-// const createPaymentWithPaypal = async (
-//   userId,
-//   amount,
-//   productName,
-//   orderDetails
-// ) => {
-//   console.log(amount, orderDetails);
-//   const create_payment_json = {
-//     intent: "sale",
-//     payer: { payment_method: "paypal" },
-//     redirect_urls: {
-//       return_url: process.env.PAYPAL_SUCCESS_URL,
-//       cancel_url: process.env.PAYPAL_CANCEL_URL,
-//     },
-//     transactions: [
-//       {
-//         item_list: {
-//           items: [
-//             {
-//               name: orderDetails?.item,
-//               price: amount,
-//               currency: "USD",
-//               quantity: 1,
-//             },
-//           ],
-//         },
-//         amount: { currency: "USD", total: amount },
-//         description: "Payment for your order.",
-//       },
-//     ],
-//   };
-
-//   const session = await mongoose.startSession();
-//   session.startTransaction();
-
-//   try {
-//     // Create PayPal payment and get paymentId
-//     const payment = await new Promise((resolve, reject) => {
-//       paypal.payment.create(create_payment_json, (error, payment) => {
-//         if (error) {
-//           reject(error);
-//         } else {
-//           const approvalUrl = payment.links.find(
-//             (link) => link.rel === "approval_url"
-//           ).href;
-//           resolve({ approvalUrl, paymentId: payment.id });
-//         }
-//       });
-//     });
-
-//     let order = null;
-
-//     // Create the order with the paymentId
-//     if (orderDetails?.shippingAddress) {
-//       const orderData = {
-//         user: userId,
-//         shippingAddress: orderDetails?.shippingAddress,
-//         winingBid: orderDetails?.winingBid,
-//         paidBy: ENUM_PAID_BY.PAYPAL,
-//         item: orderDetails?.item,
-//         status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING,
-//         statusWithTime: [
-//           {
-//             status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING,
-//             time: new Date(),
-//           },
-//         ],
-//         paymentId: payment.paymentId,
-//       };
-//       order = await Order.create([orderData], { session });
-//       if (!order) {
-//         throw new ApiError(
-//           httpStatus.SERVICE_UNAVAILABLE,
-//           "Order not created successfully."
-//         );
-//       }
-//     }
-
-//     // Create the transaction with the paymentId
-//     const transactionData = {
-//       user: userId,
-//       item: orderDetails?.item,
-//       paymentStatus: ENUM_PAYMENT_STATUS.UNPAID,
-//       paidAmount: orderDetails?.totalAmount,
-//       itemType: orderDetails?.itemType,
-//       paymentType: "Online Payment",
-//       paymentId: payment.paymentId,
-//     };
-
-//     const transaction = await Transaction.create([transactionData], {
-//       session,
-//     });
-//     if (!transaction) {
-//       throw new ApiError(
-//         httpStatus.SERVICE_UNAVAILABLE,
-//         "Transaction not created successfully."
-//       );
-//     }
-
-//     await session.commitTransaction();
-//     session.endSession();
-
-//     return {
-//       paymentId: payment.paymentId,
-//       approvalUrl: payment.approvalUrl,
-//       order,
-//       transaction,
-//     };
-//   } catch (err) {
-//     await session.abortTransaction();
-//     session.endSession();
-//     if (err instanceof ApiError) {
-//       throw err;
-//     }
-//     throw new ApiError(
-//       httpStatus.SERVICE_UNAVAILABLE,
-//       "Something went wrong. Try again later."
-//     );
-//   }
-// };
 const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
   const isValidProduct = await Auction.findOne({
     "winingBidder.user": userId,
@@ -486,6 +218,7 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
     itemType: orderDetails?.itemType,
     paymentType: "Online Payment",
     paymentId: payment.paymentId,
+    totalBid: orderDetails?.totalBid || 0,
   };
 
   const transaction = await Transaction.create(transactionData);
@@ -712,6 +445,20 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
       { new: true, session }
     );
 
+    console.log(
+      "updated transaction from execute payment with paypal",
+      updatedOrder
+    );
+    if (updatedTransaction?.totalBid > 0) {
+      await User.findByIdAndUpdate(
+        userId,
+        {
+          $inc: { availableBid: updatedTransaction.totalBid },
+        },
+        { new: true }
+      );
+    }
+
     if (!updatedTransaction) {
       throw new ApiError(httpStatus.NOT_FOUND, "Transaction not found.");
     }
@@ -730,6 +477,7 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
       },
       { new: true, session }
     );
+    console.log("updated order from execute payment with paypal", updatedOrder);
 
     if (!updatedOrder) {
       throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
@@ -785,7 +533,7 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
   }
 };
 
-const executePaymentWithCreditCard = async (paymentId) => {
+const executePaymentWithCreditCard = async (paymentId, userId) => {
   // Update the transaction status to PAID
   const updatedTransaction = await Transaction.findOneAndUpdate(
     { paymentId: paymentId },
@@ -795,9 +543,18 @@ const executePaymentWithCreditCard = async (paymentId) => {
     },
     { new: true }
   );
-
   if (!updatedTransaction) {
     throw new ApiError(httpStatus.NOT_FOUND, "Transaction not found.");
+  }
+
+  if (updatedTransaction?.totalBid > 0) {
+    await User.findByIdAndUpdate(
+      userId,
+      {
+        $inc: { availableBid: updatedTransaction.totalBid },
+      },
+      { new: true }
+    );
   }
 
   // Update the order status and statusWithTime
@@ -820,7 +577,7 @@ const executePaymentWithCreditCard = async (paymentId) => {
   }
 
   return {
-    message: "Payment execute successfully",
+    message: "Order Confirmed",
     order: updatedOrder,
     transaction: updatedTransaction,
   };

@@ -28,7 +28,10 @@ const getSingleOrder = catchAsync(async (req, res) => {
 
 // get my orders
 const getMyOrder = catchAsync(async (req, res) => {
-  const result = await orderService.getMyOrderFromDB(req?.user?.userId);
+  const result = await orderService.getMyOrderFromDB(
+    req?.user?.userId,
+    req?.query
+  );
 
   sendResponse(res, {
     statusCode: 200,

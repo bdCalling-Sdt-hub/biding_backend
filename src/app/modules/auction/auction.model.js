@@ -132,6 +132,14 @@ const auctionSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    financeAvailable: {
+      type: Boolean,
+      default: false,
+    },
+    totalMonthForFinance: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

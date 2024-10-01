@@ -31,9 +31,27 @@ const getSingleOrder = async (id) => {
 };
 
 // get my orders
-const getMyOrderFromDB = async (userId) => {
-  const result = await Order.find({ user: userId });
-  return result;
+const getMyOrderFromDB = async (userId, query) => {
+  // const result = await Order.find({ user: userId });
+  // return result;
+  const orderQuery = new QueryBuilder(Order.find({ user: userId }), query)
+    .search(["name"])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+  orderQuery.modelQuery = orderQuery.modelQuery
+    .populate("user")
+    .populate("item")
+    .populate("shippingAddress");
+
+  const result = await orderQuery.modelQuery;
+  const meta = await orderQuery.countTotal();
+  // const result = await Order.find()
+  //   .populate("user")
+  //   .populate("item")
+  //   .populate("shippingAddress");
+  return { meta, result };
 };
 
 const changeOrderStatusIntoDB = async (id, status) => {
