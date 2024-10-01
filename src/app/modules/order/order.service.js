@@ -61,7 +61,10 @@ const changeOrderStatusIntoDB = async (id, status) => {
   }
   const result = await Order.findByIdAndUpdate(
     id,
-    { status: status },
+    {
+      status: status,
+      $push: { statusWithTime: { status, time: new Date() } },
+    },
     { runValidators: true, new: true }
   );
   return result;
