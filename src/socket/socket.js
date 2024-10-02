@@ -1,11 +1,15 @@
 const getUserDetailsFromToken = require("../helpers/getUserDetailsFromToken");
+const activateBidBuddy = require("./bidding/activateBidBuddy");
+const addBids = require("./bidding/addBids");
 
 const handleBidding = require("./bidding/bidding");
 const handleManualBid = require("./bidding/handleManualBid");
+const stopBidBuddy = require("./bidding/stopBidBuddy");
 const handleNotification = require("./notification");
 
 // online user
 const onlineUser = new Set();
+
 const socket = (io) => {
   io.on("connection", async (socket) => {
     console.log("A user connected");
@@ -26,8 +30,21 @@ const socket = (io) => {
     //
     handleManualBid(io, socket);
 
+    //
+    stopBidBuddy(io, socket);
+
+    //
+    activateBidBuddy(io, socket);
+
+    //
+    addBids(io, socket);
+
     // handle notification
     handleNotification(currentUserId, io, socket);
+
+    socket.on("nice", async (data) => {
+      console.log("data", data);
+    });
 
     // Disconnect user ---------------------
     socket.on("disconnect", () => {

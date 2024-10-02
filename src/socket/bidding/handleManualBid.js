@@ -3,6 +3,7 @@ const Auction = require("../../app/modules/auction/auction.model");
 const User = require("../../app/modules/user/user.model");
 const ApiError = require("../../errors/ApiError");
 const { ENUM_AUCTION_STATUS } = require("../../utils/enums");
+const getUpdatedAuction = require("../../helpers/getUpdatedAuctiion");
 
 const handleManualBid = async (io, socket) => {
   socket.on("place-manual-bid", async (data) => {
@@ -76,13 +77,13 @@ const handleManualBid = async (io, socket) => {
     //   countdownTime: auction.countdownTime,
     // });
 
-    const updatedAuction = await Auction.findById(auctionId)
-      .populate({
-        path: "bidHistory.user",
-      })
-      .populate({ path: "bidBuddyUsers.user" });
+    // const updatedAuction = await Auction.findById(auctionId)
+    //   .populate({
+    //     path: "bidHistory.user",
+    //   })
+    //   .populate({ path: "bidBuddyUsers.user" });
 
-    console.log("aucitonsldkjfd", updatedAuction);
+    const updatedAuction = await getUpdatedAuction(auctionId);
     io.to(auctionId).emit("bidHistory", { updatedAuction });
     // socket.broadcast.emit("updated-auction", { updatedAuction });
     socket.broadcast.emit("updated-auction", { updatedAuction });

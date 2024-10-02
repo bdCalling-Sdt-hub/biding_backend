@@ -11,6 +11,7 @@ const {
   ENUM_DELIVERY_STATUS,
   ENUM_PAYMENT_STATUS,
   ENUM_USER_ROLE,
+  ENUM_ORDER_TYPE,
 } = require("../../../utils/enums");
 const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
 const { default: mongoose } = require("mongoose");
@@ -97,6 +98,8 @@ const createPaymentIntent = async (orderDetails, userId) => {
 
   let order;
   if (orderDetails?.shippingAddress) {
+    const fiveDaysFromNow = new Date();
+    fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
     const orderData = {
       user: userId,
       shippingAddress: shippingAddress,
@@ -112,6 +115,7 @@ const createPaymentIntent = async (orderDetails, userId) => {
         },
       ],
       paymentId: paymentIntent.id,
+      expectedDeliveryData: fiveDaysFromNow,
     };
     order = await Order.create(orderData);
   }
@@ -137,15 +141,19 @@ const createPaymentIntent = async (orderDetails, userId) => {
 };
 
 const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
-  const isValidProduct = await Auction.findOne({
-    "winingBidder.user": userId,
-  });
+  if (orderDetails?.shippingAddress) {
+    const isValidProduct = await Auction.findOne({
+      "winingBidder.user": userId,
+    });
 
-  if (!isValidProduct) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "You should win the bid for buy this product"
-    );
+    console.log("valid product", isValidProduct);
+
+    if (!isValidProduct) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "You should win the bid for buy this product"
+      );
+    }
   }
   const create_payment_json = {
     intent: "sale",
@@ -190,12 +198,15 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
 
   // Create the order with the paymentId
   if (orderDetails?.shippingAddress) {
+    const fiveDaysFromNow = new Date();
+    fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
     const orderData = {
       user: userId,
       shippingAddress: orderDetails?.shippingAddress,
       winingBid: orderDetails?.winingBid,
       totalAmount: orderDetails?.totalAmount,
       paidBy: ENUM_PAID_BY.PAYPAL,
+      productName: orderDetails?.item,
       item: orderDetails?.product,
       status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING,
       statusWithTime: [
@@ -205,8 +216,21 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
         },
       ],
       paymentId: payment.paymentId,
+      // new features
+      expectedDeliveryData: fiveDaysFromNow,
+      monthlyAmount: orderDetails?.monthlyAmount,
+      totalMonth: orderDetails?.totalMonth,
+      orderType: orderDetails?.orderType,
+      dueAmount: orderDetails?.totalAmount - amount,
     };
     order = await Order.create(orderData);
+  }
+
+  // new features code
+  if (orderDetails?.orderId) {
+    await Order.findByIdAndUpdate(orderDetails?.orderId, {
+      paymentId: payment.paymentId,
+    });
   }
 
   // Create the transaction with the paymentId
@@ -216,7 +240,8 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
     paymentStatus: ENUM_PAYMENT_STATUS.UNPAID,
     paidAmount: orderDetails?.totalAmount,
     itemType: orderDetails?.itemType,
-    paymentType: "Online Payment",
+    // paymentType: "Online Payment",
+    paymentType: orderDetails?.paymentType,
     paymentId: payment.paymentId,
     totalBid: orderDetails?.totalBid || 0,
   };
@@ -226,8 +251,6 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
   return {
     paymentId: payment.paymentId,
     approvalUrl: payment.approvalUrl,
-    order,
-    transaction,
   };
 };
 
@@ -422,7 +445,7 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
 
     // Await the PayPal payment execution
     const payment = await executePaypalPayment(paymentId, execute_payment_json);
-    console.log("Payment executed:", payment);
+    // console.log("Payment executed:", payment);
 
     // Check if the transaction already exists
     const alreadyPay = await Transaction.findOne({
@@ -445,10 +468,6 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
       { new: true, session }
     );
 
-    console.log(
-      "updated transaction from execute payment with paypal",
-      updatedOrder
-    );
     if (updatedTransaction?.totalBid > 0) {
       await User.findByIdAndUpdate(
         userId,
@@ -464,19 +483,41 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
     }
 
     // Update the order status and statusWithTime
-    const updatedOrder = await Order.findOneAndUpdate(
-      { paymentId: paymentId, status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING },
-      {
-        status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-        statusWithTime: [
-          {
-            status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-            time: new Date(),
+    const isFinanceOrder = await Order.findOne({
+      paymentId: paymentId,
+      orderType: ENUM_ORDER_TYPE.FINANCE,
+    });
+    let updatedOrder;
+    if (isFinanceOrder) {
+      updatedOrder = await Order.findOneAndUpdate(
+        {
+          paymentId: paymentId,
+          orderType: ENUM_ORDER_TYPE.FINANCE,
+        },
+        {
+          $inc: {
+            paidInstallment: 1,
+            dueAmount: updatedTransaction?.paidAmount,
           },
-        ],
-      },
-      { new: true, session }
-    );
+          $set: { lastPayment: Date.now() },
+        }
+      );
+    } else {
+      updatedOrder = await Order.findOneAndUpdate(
+        { paymentId: paymentId, status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING },
+        {
+          status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+          statusWithTime: [
+            {
+              status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+              time: new Date(),
+            },
+          ],
+        },
+        { new: true, session }
+      );
+    }
+
     console.log("updated order from execute payment with paypal", updatedOrder);
 
     if (!updatedOrder) {
@@ -487,12 +528,16 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
     const notificationData = [
       {
         title: "",
-        message: `Payment of $${updatedOrder.totalAmount} has been received for "${updatedOrder.item}" from ${userData.name}.`,
+        message: `Payment of $${updatedTransaction?.paidAmount} has been received for "${updatedTransaction.item}" from ${userData.name}.`,
         receiver: ENUM_USER_ROLE.ADMIN,
       },
       {
         title: "Payment successfully completed",
-        message: `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`,
+        message: `${
+          isFinanceOrder
+            ? `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
+            : `Your payment for order ${updatedOrder._id} is successful`
+        }`,
         receiver: userId,
       },
     ];
@@ -572,9 +617,9 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
     { new: true }
   );
 
-  if (!updatedOrder) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
-  }
+  // if (!updatedOrder) {
+  //   throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
+  // }
 
   return {
     message: "Order Confirmed",

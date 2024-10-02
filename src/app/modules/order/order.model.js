@@ -43,6 +43,9 @@ const orderSchema = new Schema({
     type: String,
     required: true,
   },
+  productName: {
+    type: String,
+  },
   paidBy: {
     type: String,
     required: true,
@@ -69,6 +72,34 @@ const orderSchema = new Schema({
   expectedDeliveryData: {
     type: Date,
     default: null,
+  },
+  // more fields
+  monthlyAmount: {
+    type: Number,
+    default: 0,
+  },
+  totalMonth: {
+    type: Number,
+    default: 0,
+  },
+  paidInstallment: {
+    type: Number,
+    default: 0,
+  },
+  nextInstallmentDeadline: {
+    type: Date,
+  },
+  orderType: {
+    type: String,
+    default: "NORMAL",
+  },
+  lastPayment: {
+    type: Date,
+    default: null,
+  },
+  dueAmount: {
+    type: Number,
+    default: 0,
   },
 });
 

@@ -1,5 +1,6 @@
 const Auction = require("../../app/modules/auction/auction.model");
 const User = require("../../app/modules/user/user.model");
+const getUpdatedAuction = require("../../helpers/getUpdatedAuctiion");
 
 //   const auction = await Auction.findById(auctionId)
 //     .select(
@@ -59,6 +60,7 @@ const User = require("../../app/modules/user/user.model");
 //   }
 // };
 const placeRandomBid = async (auctionId) => {
+  console.log("acution id from random bit", auctionId);
   try {
     const auction = await Auction.findById(auctionId)
       .select(
@@ -68,6 +70,7 @@ const placeRandomBid = async (auctionId) => {
         path: "bidHistory.user",
         select: "name profile_image location _id",
       });
+    // console.log("acuiton form random", auction);
 
     if (!auction) {
       throw new Error("Auction not found");
@@ -77,6 +80,7 @@ const placeRandomBid = async (auctionId) => {
       (user) => user.isActive && user.availableBids > 0
     );
 
+    // console.log("activate bidbuddy", activeBidBuddyUsers);
     if (activeBidBuddyUsers.length > 0) {
       // Pick a random user
       const randomUser =
@@ -84,8 +88,9 @@ const placeRandomBid = async (auctionId) => {
           Math.floor(Math.random() * activeBidBuddyUsers.length)
         ];
 
+      // console.log("random user", randomUser);
       const newBidAmount = auction.currentPrice + auction.incrementValue;
-
+      console.log("new bid from random", newBidAmount);
       const userUpdate = await User.findByIdAndUpdate(
         randomUser.user,
         {
@@ -93,6 +98,8 @@ const placeRandomBid = async (auctionId) => {
         },
         { new: true, select: "availableBid" }
       );
+
+      // console.log("user updated", userUpdate);
 
       if (!userUpdate || userUpdate.availableBid < 0) {
         throw new Error("Insufficient available bids");
@@ -102,14 +109,16 @@ const placeRandomBid = async (auctionId) => {
       if (userUpdate.availableBid === 0) {
         randomUser.isActive = false;
       }
-
+      const currentTime = new Date();
+      const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
       // Update the auction details atomically
-      const updatedAuction = await Auction.findByIdAndUpdate(
+      const updateAuction = await Auction.findByIdAndUpdate(
         auctionId,
         {
           $set: {
             currentPrice: newBidAmount,
-            countdownTime: 9,
+            // countdownTime: 9,
+            activateTime: nineSecondsAgo,
             winingBidder: {
               user: randomUser?.user,
               bidAmount: newBidAmount,
@@ -130,19 +139,19 @@ const placeRandomBid = async (auctionId) => {
         })
         .populate({ path: "bidBuddyUsers.user" });
 
+      // const updatedAuction = await Auction.findById(auctionId)
+      //   .populate({
+      //     path: "bidHistory.user",
+      //   })
+      //   .populate({ path: "bidBuddyUsers.user" });
+      const updatedAuction = await getUpdatedAuction(auctionId);
+      global.io.to(auctionId).emit("bidHistory", { updatedAuction });
+      // socket.broadcast.emit("updated-auction", { updatedAuction });
+      global.io.emit("updated-auction", { updatedAuction });
+      // global.broadcast.emit("updated-auction", { updatedAuction });
+      // global.io.broadcast.emit("updated-auction", { updatedAuction });
       // Get the updated bid history (last 10 bids)
-      const updatedBidHistory = updatedAuction.bidHistory.slice(-10).reverse();
-
-      io.to(auctionId).emit("updateCountdown", {
-        countdownTime: updatedAuction.countdownTime,
-      });
-
-      io.to(auctionId).emit("bidHistory", updatedBidHistory);
-
-      io.to(auctionId).emit("bidPlaced", {
-        user: randomUser?.user,
-        bidAmount: newBidAmount,
-      });
+      // const updatedBidHistory = updatedAuction.bidHistory.slice(-10).reverse();
     } else {
       io.to(auctionId).emit("noActiveBidders", "No active bidders remaining.");
     }

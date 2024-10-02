@@ -2,9 +2,11 @@ const Auction = require("../../app/modules/auction/auction.model");
 const User = require("../../app/modules/user/user.model");
 const { ENUM_AUCTION_STATUS } = require("../../utils/enums");
 const activateBidBuddy = require("./activateBidBuddy");
+const addBids = require("./addBids");
 const handleBidEnded = require("./handleBidEnded");
 const handleCountdown = require("./handleCountdown");
 const handleManualBid = require("./handleManualBid");
+const stopBidBuddy = require("./stopBidBuddy");
 
 const handleBidding = async (io, socket) => {
   // join the auction
@@ -19,32 +21,34 @@ const handleBidding = async (io, socket) => {
   // await handleManualBid(io, socket);
 
   // handle ended bid
-  handleBidEnded(io, socket);
+  // handleBidEnded(io, socket);
 
   // activate bid buddy -----------
-  activateBidBuddy(io, socket);
+  // activateBidBuddy(io, socket);
+
+  // addBids(io, socket);
 
   // stop bid buddy-------------------
-  socket.on("stopBidBuddy", async (auctionId, userId) => {
-    try {
-      const updatedAuction = await Auction.findOneAndUpdate(
-        { _id: auctionId, "bidBuddyUsers.user._id": userId },
-        {
-          $set: {
-            "bidBuddyUsers.$.isActive": false,
-            "bidBuddyUsers.$.availableBids": 0,
-          },
-        },
-        { new: true }
-      ).select("bidBuddyUsers");
+  // socket.on("stopBidBuddy", async (auctionId, userId) => {
+  //   try {
+  //     const updatedAuction = await Auction.findOneAndUpdate(
+  //       { _id: auctionId, "bidBuddyUsers.user._id": userId },
+  //       {
+  //         $set: {
+  //           "bidBuddyUsers.$.isActive": false,
+  //           "bidBuddyUsers.$.availableBids": 0,
+  //         },
+  //       },
+  //       { new: true }
+  //     ).select("bidBuddyUsers");
 
-      if (updatedAuction) {
-        io.to(auctionId).emit("bidBuddyUpdated", updatedAuction.bidBuddyUsers);
-      }
-    } catch (error) {
-      console.error("Error updating bidBuddy status:", error);
-    }
-  });
+  //     if (updatedAuction) {
+  //       io.to(auctionId).emit("bidBuddyUpdated", updatedAuction.bidBuddyUsers);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error updating bidBuddy status:", error);
+  //   }
+  // });
 
   // start bidding
   socket.on("startBidding", async (auctionId) => {

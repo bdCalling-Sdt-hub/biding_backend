@@ -17,7 +17,7 @@ const getAuctionEmailTemplate = require("../../../helpers/getAuctionEmailTemplat
 const { sendEmail } = require("../../../utils/sendEmail");
 const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
 const placeRandomBid = require("../../../socket/bidding/placeRandomBid");
-
+// const mongoose = require("mongoose");
 const createAuctionIntoDB = async (images, data) => {
   const startingDate = new Date(data.startingDate);
   const [hours, minutes] = data.startingTime.split(":");
@@ -147,25 +147,482 @@ const getAllAuctionFromDB = async (query, userId) => {
 };
 
 // get single auction
-const getSingleAuctionFromDB = async (id) => {
-  const result = await Auction.findById(id)
-    .populate({
-      path: "bidBuddyUsers.user",
-      select: "name profile_image location",
-    })
-    .populate({
-      path: "bidHistory.user",
-      select: "name profile_image location",
-    })
-    .populate({
-      path: "winingBidder.user",
-      select: "name profile_image location",
-    });
-  if (!result) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
+// const getSingleAuctionFromDB = async (id) => {
+//   const result = await Auction.findById(id)
+//     .populate({
+//       path: "bidBuddyUsers",
+//       options: { limit: 10 },
+//       populate: {
+//         path: "user",
+//         model: "User",
+//       },
+//     })
+//     .populate({
+//       path: "bidHistory",
+//       populate: {
+//         path: "user",
+//         model: "User",
+//       },
+//     });
+
+//   if (!result) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
+//   }
+
+//   // Manually limit the bidHistory to the first 5 entries
+//   result.bidHistory = result.bidHistory.slice(0, 5);
+
+//   return result;
+// };
+// const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
+//   try {
+//     const auction = await Auction.findById(auctionId)
+//       .populate("bidBuddyUsers.user", "name email profile_image") // Populate user in bidBuddyUsers
+//       .populate("bidHistory.user", "name email profile_image"); // Populate user in bidHistory
+
+//     if (!auction) {
+//       throw new Error("Auction not found");
+//     }
+
+//     // Limit the bidHistory to the last specified limit
+//     auction.bidHistory = auction.bidHistory.slice(-bidHistoryLimit);
+
+//     return auction;
+//   } catch (error) {
+//     console.error("Error fetching auction:", error);
+//     throw error;
+//   }
+// };
+// const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
+//   try {
+//     const auction = await Auction.aggregate([
+//       {
+//         $match: { _id: new mongoose.Types.ObjectId(auctionId) }, // Match the auction by ID
+//       },
+//       {
+//         $lookup: {
+//           from: "users", // Ensure the collection name is correct
+//           localField: "bidBuddyUsers.user",
+//           foreignField: "_id",
+//           as: "bidBuddyUsers",
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "users", // Ensure the collection name is correct
+//           localField: "bidHistory.user",
+//           foreignField: "_id",
+//           as: "bidHistoryUsers",
+//         },
+//       },
+//       {
+//         $project: {
+//           name: 1,
+//           category: 1,
+//           reservedBid: 1,
+//           incrementValue: 1,
+//           startingDate: 1,
+//           startingTime: 1,
+//           description: 1,
+//           images: 1,
+//           status: 1,
+//           currentPrice: 1,
+//           totalBidPlace: 1,
+//           countdownTime: 1,
+//           activateTime: 1,
+//           endedTime: 1,
+//           financeAvailable: 1,
+//           totalMonthForFinance: 1,
+//           bidBuddyUsers: {
+//             $map: {
+//               input: "$bidBuddyUsers",
+//               as: "user",
+//               in: {
+//                 user: "$$user.user",
+//                 name: {
+//                   $arrayElemAt: [
+//                     {
+//                       $filter: {
+//                         input: "$bidHistoryUsers",
+//                         as: "historyUser",
+//                         cond: { $eq: ["$$historyUser._id", "$$user.user"] },
+//                       },
+//                     },
+//                     0,
+//                   ],
+//                 }.name,
+//                 email: {
+//                   $arrayElemAt: [
+//                     {
+//                       $filter: {
+//                         input: "$bidHistoryUsers",
+//                         as: "historyUser",
+//                         cond: { $eq: ["$$historyUser._id", "$$user.user"] },
+//                       },
+//                     },
+//                     0,
+//                   ],
+//                 }.email,
+//                 profile_image: {
+//                   $arrayElemAt: [
+//                     {
+//                       $filter: {
+//                         input: "$bidHistoryUsers",
+//                         as: "historyUser",
+//                         cond: { $eq: ["$$historyUser._id", "$$user.user"] },
+//                       },
+//                     },
+//                     0,
+//                   ],
+//                 }.profile_image,
+//               },
+//             },
+//           },
+//           bidHistory: { $slice: ["$bidHistory", -bidHistoryLimit] },
+//         },
+//       },
+//     ]);
+
+//     if (!auction || auction.length === 0) {
+//       throw new Error("Auction not found");
+//     }
+
+//     return auction[0]; // Return the first (and only) auction object
+//   } catch (error) {
+//     console.error("Error fetching auction:", error);
+//     throw error;
+//   }
+// };
+// const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
+//   try {
+//     const auction = await Auction.aggregate([
+//       {
+//         $match: { _id: new mongoose.Types.ObjectId(auctionId) }, // Match the auction by ID
+//       },
+//       {
+//         $lookup: {
+//           from: "users", // Ensure the collection name is correct
+//           localField: "bidBuddyUsers.user",
+//           foreignField: "_id",
+//           as: "bidBuddyUsersData",
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "users", // Ensure the collection name is correct
+//           localField: "bidHistory.user",
+//           foreignField: "_id",
+//           as: "bidHistoryUsers",
+//         },
+//       },
+//       {
+//         $project: {
+//           name: 1,
+//           category: 1,
+//           reservedBid: 1,
+//           incrementValue: 1,
+//           startingDate: 1,
+//           startingTime: 1,
+//           description: 1,
+//           images: 1,
+//           status: 1,
+//           currentPrice: 1,
+//           totalBidPlace: 1,
+//           countdownTime: 1,
+//           activateTime: 1,
+//           endedTime: 1,
+//           financeAvailable: 1,
+//           totalMonthForFinance: 1,
+//           bidBuddyUsers: {
+//             $map: {
+//               input: "$bidBuddyUsers",
+//               as: "bidBuddyUser",
+//               in: {
+//                 user: "$$bidBuddyUser.user",
+//                 availableBids: "$$bidBuddyUser.availableBids",
+//                 isActive: "$$bidBuddyUser.isActive",
+//                 userInfo: {
+//                   $arrayElemAt: [
+//                     {
+//                       $filter: {
+//                         input: "$bidBuddyUsersData",
+//                         as: "user",
+//                         cond: { $eq: ["$$user._id", "$$bidBuddyUser.user"] },
+//                       },
+//                     },
+//                     0,
+//                   ],
+//                 },
+//               },
+//             },
+//           },
+//           bidHistory: { $slice: ["$bidHistory", -bidHistoryLimit] },
+//         },
+//       },
+//       {
+//         $addFields: {
+//           bidBuddyUsers: {
+//             $map: {
+//               input: "$bidBuddyUsers",
+//               as: "bidBuddyUser",
+//               in: {
+//                 user: "$$bidBuddyUser.user",
+//                 availableBids: "$$bidBuddyUser.availableBids",
+//                 isActive: "$$bidBuddyUser.isActive",
+//                 name: { $ifNull: ["$$bidBuddyUser.userInfo.name", null] },
+//                 email: { $ifNull: ["$$bidBuddyUser.userInfo.email", null] },
+//                 profile_image: {
+//                   $ifNull: ["$$bidBuddyUser.userInfo.profile_image", null],
+//                 },
+//               },
+//             },
+//           },
+//         },
+//       },
+//     ]);
+
+//     if (!auction || auction.length === 0) {
+//       throw new Error("Auction not found");
+//     }
+
+//     return auction[0]; // Return the first (and only) auction object
+//   } catch (error) {
+//     console.error("Error fetching auction:", error);
+//     throw error;
+//   }
+// };
+// const getAllAuctionFromDB = async (query, userId, bidHistoryLimit = 5) => {
+//   try {
+//     // Query auctions based on filters, search, pagination, and sorting
+//     const auctionQuery = new QueryBuilder(Auction.find(), query)
+//       .search(["name"])
+//       .filter()
+//       .sort()
+//       .paginate()
+//       .fields();
+
+//     // Execute the query and populate related user data
+//     const auctions = await auctionQuery.modelQuery
+//       .populate({
+//         path: "bidBuddyUsers.user",
+//         select: "name email profile_image",
+//       })
+//       .populate({
+//         path: "bidHistory.user",
+//         select: "name email profile_image location",
+//       })
+//       .exec();
+
+//     if (!auctions || auctions.length === 0) {
+//       throw new Error("No auctions found");
+//     }
+
+//     // Retrieve bookmarks for the user
+//     const bookmarks = await Bookmark.find({ user: userId }).select("auction");
+//     const bookmarkedAuctionIds = new Set(
+//       bookmarks.map((b) => b.auction.toString())
+//     );
+
+//     // Process the auctions data to match the required structure
+//     const enrichedAuctions = auctions.map((auction) => {
+//       const bidBuddyUsers = auction.bidBuddyUsers.map((bidBuddy) => ({
+//         user: bidBuddy.user._id,
+//         availableBids: bidBuddy.availableBids,
+//         isActive: bidBuddy.isActive,
+//         name: bidBuddy.user.name,
+//         email: bidBuddy.user.email,
+//         profile_image: bidBuddy.user.profile_image,
+//       }));
+
+//       const bidHistory = auction.bidHistory
+//         .slice(-bidHistoryLimit) // Limit the bid history
+//         .map((bid) => ({
+//           user: bid.user._id,
+//           bidAmount: bid.bidAmount,
+//           time: bid.time,
+//           name: bid.user.name,
+//           email: bid.user.email,
+//           profile_image: bid.user.profile_image,
+//           location: bid.user.location,
+//         }));
+
+//       return {
+//         ...auction.toObject(),
+//         bidBuddyUsers,
+//         bidHistory,
+//         isBookmark: bookmarkedAuctionIds.has(auction._id.toString()),
+//       };
+//     });
+
+//     // Get total count for pagination meta data
+//     const meta = await auctionQuery.countTotal();
+
+//     return { meta, result: enrichedAuctions };
+//   } catch (error) {
+//     console.error("Error fetching auctions:", error);
+//     throw error;
+//   }
+// };
+
+const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
+  try {
+    const auction = await Auction.aggregate([
+      {
+        $match: { _id: new mongoose.Types.ObjectId(auctionId) }, // Match the auction by ID
+      },
+      {
+        $lookup: {
+          from: "users", // Ensure the collection name is correct
+          localField: "bidBuddyUsers.user",
+          foreignField: "_id",
+          as: "bidBuddyUsersData",
+        },
+      },
+      {
+        $lookup: {
+          from: "users", // Ensure the collection name is correct
+          localField: "bidHistory.user",
+          foreignField: "_id",
+          as: "bidHistoryUsers",
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          category: 1,
+          reservedBid: 1,
+          incrementValue: 1,
+          startingDate: 1,
+          startingTime: 1,
+          description: 1,
+          images: 1,
+          status: 1,
+          currentPrice: 1,
+          totalBidPlace: 1,
+          countdownTime: 1,
+          activateTime: 1,
+          endedTime: 1,
+          financeAvailable: 1,
+          totalMonthForFinance: 1,
+          bidBuddyUsers: {
+            $map: {
+              input: "$bidBuddyUsers",
+              as: "bidBuddyUser",
+              in: {
+                user: "$$bidBuddyUser.user",
+                availableBids: "$$bidBuddyUser.availableBids",
+                isActive: "$$bidBuddyUser.isActive",
+                userInfo: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: "$bidBuddyUsersData",
+                        as: "user",
+                        cond: { $eq: ["$$user._id", "$$bidBuddyUser.user"] },
+                      },
+                    },
+                    0,
+                  ],
+                },
+              },
+            },
+          },
+          bidHistory: {
+            $slice: [
+              {
+                $map: {
+                  input: "$bidHistory",
+                  as: "bid",
+                  in: {
+                    user: "$$bid.user",
+                    bidAmount: "$$bid.bidAmount",
+                    time: "$$bid.time",
+                    userInfo: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$bidHistoryUsers",
+                            as: "user",
+                            cond: { $eq: ["$$user._id", "$$bid.user"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                },
+              },
+              -bidHistoryLimit,
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          bidBuddyUsers: {
+            $map: {
+              input: "$bidBuddyUsers",
+              as: "bidBuddyUser",
+              in: {
+                user: "$$bidBuddyUser.user",
+                availableBids: "$$bidBuddyUser.availableBids",
+                isActive: "$$bidBuddyUser.isActive",
+                name: { $ifNull: ["$$bidBuddyUser.userInfo.name", null] },
+                email: { $ifNull: ["$$bidBuddyUser.userInfo.email", null] },
+                profile_image: {
+                  $ifNull: ["$$bidBuddyUser.userInfo.profile_image", null],
+                },
+              },
+            },
+          },
+          bidHistory: {
+            $map: {
+              input: "$bidHistory",
+              as: "bid",
+              in: {
+                user: "$$bid.user",
+                bidAmount: "$$bid.bidAmount",
+                time: "$$bid.time",
+                name: { $ifNull: ["$$bid.userInfo.name", null] },
+                email: { $ifNull: ["$$bid.userInfo.email", null] },
+                profile_image: {
+                  $ifNull: ["$$bid.userInfo.profile_image", null],
+                },
+                location: {
+                  $ifNull: ["$$bid.userInfo.location", null],
+                },
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    if (!auction || auction.length === 0) {
+      throw new Error("Auction not found");
+    }
+
+    return auction[0]; // Return the first (and only) auction object
+  } catch (error) {
+    console.error("Error fetching auction:", error);
+    throw error;
   }
-  return result;
 };
+
+// const getSingleAuctionFromDB = async (id) => {
+//   // Fetch the auction by ID and populate the bidBuddyUsers field with a limit of 10
+//   const result = await Auction.findById(id).populate({
+//     path: "bidBuddyUsers.userId",
+//     options: { limit: 10 },
+//   });
+
+//   // Check if the result is null or undefined
+//   if (!result) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
+//   }
+
+//   return result;
+// };
 
 // update auction into db
 const updateAuctionIntoDB = async (id, newImages, data) => {
@@ -209,29 +666,21 @@ const deleteAuctionFromDB = async (id) => {
 };
 
 const getMyBiddingHistoryFromDB = async (userId) => {
-  console.log("userId", userId);
-  // const auctions = await Auction.find({
-  //   bidBuddyUsers: { $elemMatch: { user: userId } },
-  // })
-  //   .select(
-  //     "name category reservedBid status images currentPrice bidPlace bidHistory winingBidder"
-  //   )
-  //   .populate("winingBidder.user", "name");
-  const auctions = await Auction.find()
-    .select(
-      "name category reservedBid status images bidBuddyUsers currentPrice bidPlace bidHistory winingBidder status"
-    )
+  const auctions = await Auction.find({ status: ENUM_AUCTION_STATUS.COMPLETED })
+    // .select(
+    //   "name category reservedBid status images bidBuddyUsers currentPrice bidPlace bidHistory winingBidder status"
+    // )
     .populate("winingBidder.user", "name")
     .populate({
       path: "bidBuddyUsers.user",
       select: "name",
-    });
-
-  console.log(auctions);
+    })
+    .populate({ path: "bidHistory.user" });
 
   const result = auctions.map((auction) => {
+    console.log("bid history", auction?.bidHistory?.slice(0, 2));
     const userBidHistory = auction.bidHistory.filter(
-      (bid) => bid.user.toString() === userId.toString()
+      (bid) => bid?.user?._id === userId
     );
 
     const finalBid = userBidHistory.length
@@ -258,63 +707,6 @@ const getMyBiddingHistoryFromDB = async (userId) => {
 
   return result;
 };
-
-// run function in every second for update the auction status----------------
-// let isRunning = false;
-
-// const updateAuctionStatuses = async () => {
-//   if (isRunning) return;
-
-//   isRunning = true;
-//   const currentTime = new Date();
-//   const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
-
-//   try {
-//     const auctionsToActivate = await Auction.updateMany(
-//       {
-//         // activateTime: { $eq: nineSecondsAgo },
-//         activateTime: { $lte: nineSecondsAgo },
-//         status: ENUM_AUCTION_STATUS.UPCOMING,
-//       },
-//       {
-//         $set: { status: ENUM_AUCTION_STATUS.ACTIVE },
-//       }
-//     );
-//     console.log("auction auctions", auctionsToActivate);
-
-//     console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
-//     // Find the auctions that were just activated
-//     const activatedAuctions = await Auction.find({
-//       status: ENUM_AUCTION_STATUS.ACTIVE,
-//     });
-
-//     // Join the auction rooms for each activated auction
-//     activatedAuctions.forEach((auction) => {
-//       global.io.sockets.sockets.forEach((socket) => {
-//         socket.join(auction._id.toString());
-//       });
-//     });
-
-//     const allAuctions = await Auction.find();
-//     global.io.emit("allAuctions", allAuctions);
-
-//     // Start countdown for active auctions
-//     // if (auctionsToActivate.modifiedCount > 0) {
-//     //   const activatedAuctions = await Auction.find({
-//     //     status: ENUM_AUCTION_STATUS.ACTIVE,
-//     //     countdownTime: 9,
-//     //   });
-
-//     //   activatedAuctions.forEach((auction) => {
-//     //     handleCountdown(auction._id);
-//     //   });
-//     // }
-//   } catch (error) {
-//     console.error("Error updating auctions:", error);
-//   } finally {
-//     isRunning = false;
-//   }
-// };
 
 // // Schedule to run the update function every second
 // setInterval(updateAuctionStatuses, 1000);
@@ -351,49 +743,50 @@ const updateAuctionStatuses = async () => {
       });
     });
 
-    const allAuctions = await Auction.find();
-    global.io.emit("allAuctions", allAuctions);
+    // const allAuctions = await Auction.find();
+    // global.io.emit("allAuctions", allAuctions);
 
     // get auctions those are ready for bid with bidBuddy
-    const readyAuctionsForBidBuddyBid = await Auction.find({
-      activateTime: { $lte: fiveSecondAgo },
-      status: ENUM_AUCTION_STATUS.ACTIVE,
-    });
+    // const readyAuctionsForBidBuddyBid = await Auction.find({
+    //   activateTime: { $lte: fiveSecondAgo },
+    //   status: ENUM_AUCTION_STATUS.ACTIVE,
+    // });
 
-    readyAuctionsForBidBuddyBid?.forEach((auction) => {
-      placeRandomBid(auction?._id);
-    });
+    // readyAuctionsForBidBuddyBid?.forEach((auction) => {
+    //   console.log("Nice to meet yo9u in random bit");
+    //   placeRandomBid(auction?._id);
+    // });
 
     // Mark auctions as completed if activateTime is less than or equal to the current time
-    const auctionsToComplete = await Auction.updateMany(
-      {
-        activateTime: { $lte: currentTime },
-        status: ENUM_AUCTION_STATUS.ACTIVE,
-      },
-      {
-        $set: { status: ENUM_AUCTION_STATUS.COMPLETED },
-      }
-    );
-    console.log(`Completed ${auctionsToComplete.modifiedCount} auctions.`);
+    // const auctionsToComplete = await Auction.updateMany(
+    //   {
+    //     activateTime: { $lte: currentTime },
+    //     status: ENUM_AUCTION_STATUS.ACTIVE,
+    //   },
+    //   {
+    //     $set: { status: ENUM_AUCTION_STATUS.COMPLETED },
+    //   }
+    // );
+    // console.log(`Completed ${auctionsToComplete.modifiedCount} auctions.`);
 
     // Find and broadcast the completed auctions
-    if (auctionsToComplete.modifiedCount > 0) {
-      const completedAuctions = await Auction.find({
-        status: ENUM_AUCTION_STATUS.COMPLETED,
-      });
+    // if (auctionsToComplete.modifiedCount > 0) {
+    //   const completedAuctions = await Auction.find({
+    //     status: ENUM_AUCTION_STATUS.COMPLETED,
+    //   });
 
-      completedAuctions.forEach((completedAuction) => {
-        global.io.sockets.sockets.forEach((socket) => {
-          socket.broadcast.emit("updated-auction", {
-            updatedAuction: completedAuction,
-          });
-          console.log("completed id", completedAuction?._id);
-          global.io
-            .to(completedAuction?._id)
-            .emit("bidHistory", { updatedAuction: completedAuction });
-        });
-      });
-    }
+    //   completedAuctions.forEach((completedAuction) => {
+    //     global.io.sockets.sockets.forEach((socket) => {
+    //       socket.broadcast.emit("updated-auction", {
+    //         updatedAuction: completedAuction,
+    //       });
+    //       console.log("completed id", completedAuction?._id);
+    //       global.io
+    //         .to(completedAuction?._id)
+    //         .emit("bidHistory", { updatedAuction: completedAuction });
+    //     });
+    //   });
+    // }
   } catch (error) {
     console.error("Error updating auctions:", error);
   } finally {

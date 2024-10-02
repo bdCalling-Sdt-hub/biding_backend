@@ -2,17 +2,27 @@ const httpStatus = require("http-status");
 const ApiError = require("../../../errors/ApiError");
 const Order = require("./order.model");
 const QueryBuilder = require("../../../builder/QueryBuilder");
+const { Transaction } = require("../payment/payment.model");
+const { ENUM_ITEM_TYPE, ENUM_PAYMENT_STATUS } = require("../../../utils/enums");
 
 const getAllOrderFromDB = async (query) => {
+  // let query = {};
+  // if (query?.searchTerm) {
+  //   query = {};
+  // }
   const orderQuery = new QueryBuilder(Order.find(), query)
-    .search(["name"])
+    .search(["name", "item.name"])
     .filter()
     .sort()
     .paginate()
     .fields();
   orderQuery.modelQuery = orderQuery.modelQuery
-    .populate("user")
-    .populate("item")
+    .populate("user", "name email profile_image")
+    .populate({
+      path: "item",
+      model: "Auction",
+      select: "name images currentPrice",
+    })
     .populate("shippingAddress");
 
   const result = await orderQuery.modelQuery;
@@ -26,7 +36,10 @@ const getAllOrderFromDB = async (query) => {
 
 // get single order
 const getSingleOrder = async (id) => {
-  const result = Order.findById(id);
+  const result = Order.findById(id)
+    .populate("user")
+    .populate("item")
+    .populate("shippingAddress");
   return result;
 };
 
@@ -80,12 +93,27 @@ const updateExpectedDeliveryDateIntoDB = async (id, date) => {
   return result;
 };
 
+const getMyBids = async (userId) => {
+  const bids = await Transaction.find({
+    user: userId,
+    itemType: ENUM_ITEM_TYPE.BID,
+    paymentStatus: ENUM_PAYMENT_STATUS.PAID,
+  });
+  const totalBid = bids.reduce((sum, bid) => sum + bid.totalBid, 0);
+
+  return {
+    bids,
+    totalBid,
+  };
+};
+
 const orderService = {
   getAllOrderFromDB,
   getMyOrderFromDB,
   getSingleOrder,
   changeOrderStatusIntoDB,
   updateExpectedDeliveryDateIntoDB,
+  getMyBids,
 };
 
 module.exports = orderService;

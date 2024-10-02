@@ -45,12 +45,14 @@ const registrationAdmin = async (payload) => {
   } catch (error) {
     logger.error("Failed to send email:", error);
   }
-  console.log("hit");
   return Admin.create(payload);
 };
 
 const updateAdminProfile = async (req) => {
-  const profile_image = req?.files?.profile_image[0];
+  let profile_image = null;
+  if (req?.files?.profile_image) {
+    profile_image = req?.files?.profile_image[0];
+  }
   const userId = req?.user?.userId;
   const data = req?.body;
   console.log(profile_image, userId, data);
@@ -212,6 +214,7 @@ const forgotPass = async (payload) => {
   admin.verified = false;
 
   await admin.save();
+  console.log("admin", admin);
 
   sendResetEmail(
     email,

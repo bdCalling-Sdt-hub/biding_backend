@@ -68,6 +68,15 @@ const updateExpectedDeliveryDate = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getMyBids = catchAsync(async (req, res) => {
+  const result = await orderService.getMyBids(req?.user?.userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Your bid retrieved successfully successfully",
+    data: result,
+  });
+});
 
 const orderController = {
   getAllOrder,
@@ -75,6 +84,7 @@ const orderController = {
   getSingleOrder,
   changeOrderStatus,
   updateExpectedDeliveryDate,
+  getMyBids,
 };
 
 module.exports = orderController;

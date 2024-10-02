@@ -15,6 +15,7 @@ router.get(
   orderController.getSingleOrder
 );
 router.get("/my-orders", auth(ENUM_USER_ROLE.USER), orderController.getMyOrder);
+router.get("/my-bids", auth(ENUM_USER_ROLE.USER), orderController.getMyBids);
 router.patch(
   "/change-order-status/:id",
   auth(ENUM_USER_ROLE.ADMIN),
