@@ -25,73 +25,107 @@ paypal.configure({
   client_id: process.env.PAYPAL_CLIENT_ID,
   client_secret: process.env.PAYPAL_CLIENT_SECRET,
 });
-const makePaymentWithCreditCard = async (
-  userData,
-  item,
-  quantity,
-  amount,
-  token,
-  type
-) => {
-  let customer;
+// const makePaymentWithCreditCard = async (
+//   userData,
+//   item,
+//   quantity,
+//   amount,
+//   token,
+//   type
+// ) => {
+//   let customer;
 
-  const user = await User.findById(userData?.userId);
-  const email = user?.email;
+//   const user = await User.findById(userData?.userId);
+//   const email = user?.email;
 
-  if (user?.stripCustomerId) {
-    customer = await stripe.customers.retrieve(stripCustomerId);
-    const existingCards = customer.sources.data;
+//   if (user?.stripCustomerId) {
+//     customer = await stripe.customers.retrieve(stripCustomerId);
+//     const existingCards = customer.sources.data;
 
-    const newCard = {
-      last4: token.card.last4,
-      brand: token.card.brand,
-      exp_month: token.card.exp_month,
-      exp_year: token.card.exp_year,
-    };
+//     const newCard = {
+//       last4: token.card.last4,
+//       brand: token.card.brand,
+//       exp_month: token.card.exp_month,
+//       exp_year: token.card.exp_year,
+//     };
 
-    const cardExists = existingCards.some(
-      (card) =>
-        card.last4 === newCard.last4 &&
-        card.brand === newCard.brand &&
-        card.exp_month === newCard.exp_month &&
-        card.exp_year === newCard.exp_year
-    );
+//     const cardExists = existingCards.some(
+//       (card) =>
+//         card.last4 === newCard.last4 &&
+//         card.brand === newCard.brand &&
+//         card.exp_month === newCard.exp_month &&
+//         card.exp_year === newCard.exp_year
+//     );
 
-    if (!cardExists) {
-      customer = await stripe.customers.create({
-        email,
-        source: token.id,
-        name: token.card.name,
-      });
-    }
-  } else {
-    // Create a new customer with the new card
-    customer = await stripe.customers.create({
-      email,
-      source: token.id,
-      name: token.card.name,
-    });
+//     if (!cardExists) {
+//       customer = await stripe.customers.create({
+//         email,
+//         source: token.id,
+//         name: token.card.name,
+//       });
+//     }
+//   } else {
+//     // Create a new customer with the new card
+//     customer = await stripe.customers.create({
+//       email,
+//       source: token.id,
+//       name: token.card.name,
+//     });
 
-    // saveCustomerId(customer.id);
-  }
-  // Make the charge to the customer
-  const charge = await stripe.charges.create({
-    amount: parseFloat(amount) * 100,
-    description: `Payment for USD ${amount}`,
-    currency: "USD",
-    customer: customer.id,
-  });
+//     // saveCustomerId(customer.id);
+//   }
+//   // Make the charge to the customer
+//   const charge = await stripe.charges.create({
+//     amount: parseFloat(amount) * 100,
+//     description: `Payment for USD ${amount}`,
+//     currency: "USD",
+//     customer: customer.id,
+//   });
 
-  await User.findByIdAndUpdate(user?.userId, { stripCustomerId: customer?.id });
+//   await User.findByIdAndUpdate(user?.userId, { stripCustomerId: customer?.id });
 
-  return { charge, customerId: customer.id };
-};
+//   return { charge, customerId: customer.id };
+// };
 
 const createPaymentIntent = async (orderDetails, userId) => {
+  if (orderDetails?.shippingAddress) {
+    const isValidProduct = await Auction.findOne({
+      "winingBidder.user": userId,
+      // currentPrice: orderDetails?.totalAmount,
+    });
+    if (!isValidProduct) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "You should win the bid for buy this product"
+      );
+    }
+
+    const isExistIntent = await Order.findOne({
+      item: orderDetails?.product,
+    });
+    if (isExistIntent) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "You already create intent for this product"
+      );
+    }
+  }
+
   const { totalAmount, shippingAddress, item, itemType, winingBid, product } =
     orderDetails;
+  const auction = await Auction.findById(orderDetails?.product).select(
+    "totalMonthForFinance currentPrice"
+  );
+  // console.log("auction", auction);
+  const totalMonth = auction?.totalMonthForFinance;
+  const monthlyAmount = (auction.currentPrice / totalMonth).toFixed(2);
+  const paymentAmount =
+    orderDetails?.orderType === ENUM_ORDER_TYPE.FINANCE
+      ? monthlyAmount
+      : auction.currentPrice.toFixed();
+
   const paymentIntent = await stripe.paymentIntents.create({
-    amount: totalAmount * 100,
+    amount: paymentAmount * 100,
     currency: "usd",
     payment_method_types: ["card"],
   });
@@ -104,7 +138,7 @@ const createPaymentIntent = async (orderDetails, userId) => {
       user: userId,
       shippingAddress: shippingAddress,
       winingBid: winingBid,
-      totalAmount: totalAmount,
+      totalAmount: auction?.currentPrice,
       paidBy: ENUM_PAID_BY.CREDIT_CARD,
       item: product,
       status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING,
@@ -115,9 +149,22 @@ const createPaymentIntent = async (orderDetails, userId) => {
         },
       ],
       paymentId: paymentIntent.id,
+      // new features
       expectedDeliveryData: fiveDaysFromNow,
+      monthlyAmount: monthlyAmount,
+      totalMonth: totalMonth,
+      orderType: orderDetails?.orderType,
+      dueAmount:
+        orderDetails?.orderType === ENUM_ORDER_TYPE.FINANCE
+          ? auction?.currentPrice
+          : 0,
     };
     order = await Order.create(orderData);
+  }
+  if (orderDetails?.orderId) {
+    await Order.findByIdAndUpdate(orderDetails?.orderId, {
+      paymentId: paymentIntent.id,
+    });
   }
 
   // 5. Create a new transaction
@@ -127,7 +174,9 @@ const createPaymentIntent = async (orderDetails, userId) => {
     paymentStatus: ENUM_PAYMENT_STATUS.UNPAID,
     paidAmount: totalAmount,
     itemType: itemType,
-    paymentType: "Online Payment",
+    // paymentType: "Online Payment",
+    // paymentType: "Online Payment",
+    paymentType: orderDetails?.paymentType,
     paymentId: paymentIntent.id,
     transactionId: paymentIntent.id,
     totalBid: orderDetails?.totalBid || 0,
@@ -144,6 +193,7 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
   if (orderDetails?.shippingAddress) {
     const isValidProduct = await Auction.findOne({
       "winingBidder.user": userId,
+      currentPrice: orderDetails.totalAmount,
     });
 
     console.log("valid product", isValidProduct);
@@ -154,7 +204,28 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
         "You should win the bid for buy this product"
       );
     }
+    const isExistIntent = await Order.findOne({
+      item: orderDetails?.product,
+    });
+    if (isExistIntent) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "You already create intent for this product"
+      );
+    }
   }
+
+  const auction = await Auction.findById(orderDetails?.product).select(
+    "totalMonthForFinance currentPrice"
+  );
+  console.log("auction", auction);
+  const totalMonth = auction.totalMonthForFinance;
+  const monthlyAmount = auction.currentPrice / totalMonth;
+  const paymentAmount =
+    orderDetails?.orderType === ENUM_ORDER_TYPE.FINANCE
+      ? monthlyAmount
+      : auction.currentPrice;
+
   const create_payment_json = {
     intent: "sale",
     payer: { payment_method: "paypal" },
@@ -168,13 +239,13 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
           items: [
             {
               name: orderDetails?.item,
-              price: amount,
+              price: paymentAmount,
               currency: "USD",
               quantity: 1,
             },
           ],
         },
-        amount: { currency: "USD", total: amount },
+        amount: { currency: "USD", total: paymentAmount },
         description: "Payment for your order.",
       },
     ],
@@ -218,10 +289,10 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
       paymentId: payment.paymentId,
       // new features
       expectedDeliveryData: fiveDaysFromNow,
-      monthlyAmount: orderDetails?.monthlyAmount,
-      totalMonth: orderDetails?.totalMonth,
+      monthlyAmount: monthlyAmount,
+      totalMonth: totalMonth,
       orderType: orderDetails?.orderType,
-      dueAmount: orderDetails?.totalAmount - amount,
+      dueAmount: orderDetails?.dueAmount || 0,
     };
     order = await Order.create(orderData);
   }
@@ -489,6 +560,26 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
     });
     let updatedOrder;
     if (isFinanceOrder) {
+      // updatedOrder = await Order.findOneAndUpdate(
+      //   {
+      //     paymentId: paymentId,
+      //     orderType: ENUM_ORDER_TYPE.FINANCE,
+      //   },
+      //   {
+      //     $inc: {
+      //       paidInstallment: 1,
+      //       dueAmount: -updatedTransaction?.paidAmount,
+      //     },
+      //     $set: { lastPayment: Date.now() },
+      //     status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+      //     statusWithTime: [
+      //       {
+      //         status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+      //         time: new Date(),
+      //       },
+      //     ],
+      //   }
+      // );
       updatedOrder = await Order.findOneAndUpdate(
         {
           paymentId: paymentId,
@@ -497,9 +588,31 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
         {
           $inc: {
             paidInstallment: 1,
-            dueAmount: updatedTransaction?.paidAmount,
+            dueAmount: -updatedTransaction?.paidAmount,
           },
-          $set: { lastPayment: Date.now() },
+          $set: {
+            lastPayment: Date.now(),
+            // Update status and statusWithTime only if current status is pending
+            ...((
+              await Order.findOne({
+                paymentId: paymentId,
+                orderType: ENUM_ORDER_TYPE.FINANCE,
+              })
+            ).status === ENUM_DELIVERY_STATUS.PENDING
+              ? {
+                  status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+                  statusWithTime: [
+                    {
+                      status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+                      time: new Date(),
+                    },
+                  ],
+                }
+              : {}),
+          },
+        },
+        {
+          new: true,
         }
       );
     } else {
@@ -579,6 +692,7 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
 };
 
 const executePaymentWithCreditCard = async (paymentId, userId) => {
+  const userData = await User.findById(userId);
   // Update the transaction status to PAID
   const updatedTransaction = await Transaction.findOneAndUpdate(
     { paymentId: paymentId },
@@ -603,19 +717,122 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
   }
 
   // Update the order status and statusWithTime
-  const updatedOrder = await Order.findOneAndUpdate(
-    { paymentId: paymentId, status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING },
-    {
-      status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-      statusWithTime: [
-        {
-          status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-          time: new Date(),
+  // const updatedOrder = await Order.findOneAndUpdate(
+  //   { paymentId: paymentId, status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING },
+  //   {
+  //     status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+  //     statusWithTime: [
+  //       {
+  //         status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+  //         time: new Date(),
+  //       },
+  //     ],
+  //   },
+  //   { new: true }
+  // );
+  // Update the order status and statusWithTime
+  const isFinanceOrder = await Order.findOne({
+    paymentId: paymentId,
+    orderType: ENUM_ORDER_TYPE.FINANCE,
+  });
+  let updatedOrder;
+  if (isFinanceOrder) {
+    // updatedOrder = await Order.findOneAndUpdate(
+    //   {
+    //     paymentId: paymentId,
+    //     orderType: ENUM_ORDER_TYPE.FINANCE,
+    //   },
+    //   {
+    //     $inc: {
+    //       paidInstallment: 1,
+    //       dueAmount: -updatedTransaction?.paidAmount,
+    //     },
+    //     $set: { lastPayment: Date.now() },
+    //     statusWithTime: [
+    //       {
+    //         status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+    //         time: new Date(),
+    //       },
+    //     ],
+    //   }
+    // );
+    updatedOrder = await Order.findOneAndUpdate(
+      {
+        paymentId: paymentId,
+        orderType: ENUM_ORDER_TYPE.FINANCE,
+      },
+      {
+        $inc: {
+          paidInstallment: 1,
+          dueAmount: -updatedTransaction?.paidAmount,
         },
-      ],
+        $set: {
+          lastPayment: Date.now(),
+          // Update status and statusWithTime only if current status is pending
+          ...((
+            await Order.findOne({
+              paymentId: paymentId,
+              orderType: ENUM_ORDER_TYPE.FINANCE,
+            })
+          ).status === ENUM_DELIVERY_STATUS.PENDING
+            ? {
+                status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+                statusWithTime: [
+                  {
+                    status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+                    time: new Date(),
+                  },
+                ],
+              }
+            : {}),
+        },
+      },
+      {
+        new: true,
+      }
+    );
+  } else {
+    updatedOrder = await Order.findOneAndUpdate(
+      { paymentId: paymentId, status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING },
+      {
+        status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+        statusWithTime: [
+          {
+            status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+            time: new Date(),
+          },
+        ],
+      },
+      { new: true }
+    );
+  }
+
+  console.log("updated order from execute payment with paypal", updatedOrder);
+
+  if (!updatedOrder) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
+  }
+
+  // Prepare notification data
+  const notificationData = [
+    {
+      title: "",
+      message: `Payment of $${updatedTransaction?.paidAmount} has been received for "${updatedTransaction.item}" from ${userData.name}.`,
+      receiver: ENUM_USER_ROLE.ADMIN,
     },
-    { new: true }
-  );
+    {
+      title: "Payment successfully completed",
+      message: `${
+        isFinanceOrder
+          ? `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
+          : `Your payment for order ${updatedOrder._id} is successful`
+      }`,
+      receiver: userId,
+    },
+  ];
+
+  // Insert notifications
+  await Notification.insertMany(notificationData);
 
   // if (!updatedOrder) {
   //   throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
@@ -629,7 +846,7 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
 };
 
 const PaymentService = {
-  makePaymentWithCreditCard,
+  // makePaymentWithCreditCard,
   createPaymentWithPaypal,
   executePaymentWithPaypal,
   createPaymentIntent,

@@ -28,6 +28,12 @@ const auth =
         req.user = verifyUser;
 
         const isExist = await User.findById(verifyUser?.userId);
+        if (isExist?.is_block) {
+          throw new ApiError(
+            httpStatus.UNAUTHORIZED,
+            "You are blocked by admin"
+          );
+        }
         const checkAdmin = await Admin.findById(verifyUser?.userId);
         if (verifyUser.role === ENUM_USER_ROLE.USER && !isExist) {
           throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized");

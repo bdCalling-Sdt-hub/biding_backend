@@ -29,6 +29,7 @@ async function main() {
           "http://192.168.10.103:3003",
           "http://localhost:3003",
           "http://localhost:3004",
+          "http://192.168.10.103:3004",
         ],
       },
     });

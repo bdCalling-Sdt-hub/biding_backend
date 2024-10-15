@@ -67,10 +67,7 @@ const handleManualBid = async (io, socket) => {
 
     //save auction
     await auction.save();
-
-    console.log("updatedAuction", auction);
-    // here send just last 10 history
-    const updatedBidHistory = auction.bidHistory.slice(-10).reverse();
+  
 
     // Emit the updates to all clients in the auction room
     // io.to(auctionId).emit("updateCountdown", {

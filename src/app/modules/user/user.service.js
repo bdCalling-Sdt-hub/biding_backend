@@ -16,6 +16,7 @@ const {
   sendImageToCloudinary,
 } = require("../../../helpers/sendImageToCloudinary");
 const { ENUM_AUTH_TYPE } = require("../../../utils/enums");
+const Shipping = require("../shippingAddress/shipping.model");
 
 const registrationUser = async (payload) => {
   const { name, email, password, confirmPassword, phone_number } = payload;
@@ -69,7 +70,19 @@ const registrationUser = async (payload) => {
 
   user.activationCode = activationCode;
 
-  return await User.create(user);
+  const createUser = await User.create(user);
+  await Shipping.create({
+    user_id: createUser._id,
+    user_name: "",
+    email: "",
+    phone_number: "",
+    streetAddress: "",
+    city: "",
+    state: "",
+    zipCode: null,
+  });
+
+  return createUser;
 };
 
 const activateUser = async (payload) => {

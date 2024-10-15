@@ -148,10 +148,6 @@ const placeRandomBid = async (auctionId) => {
       global.io.to(auctionId).emit("bidHistory", { updatedAuction });
       // socket.broadcast.emit("updated-auction", { updatedAuction });
       global.io.emit("updated-auction", { updatedAuction });
-      // global.broadcast.emit("updated-auction", { updatedAuction });
-      // global.io.broadcast.emit("updated-auction", { updatedAuction });
-      // Get the updated bid history (last 10 bids)
-      // const updatedBidHistory = updatedAuction.bidHistory.slice(-10).reverse();
     } else {
       io.to(auctionId).emit("noActiveBidders", "No active bidders remaining.");
     }
