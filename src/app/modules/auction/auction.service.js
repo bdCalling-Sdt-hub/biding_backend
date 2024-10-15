@@ -18,7 +18,7 @@ const { sendEmail } = require("../../../utils/sendEmail");
 const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
 const placeRandomBid = require("../../../socket/bidding/placeRandomBid");
 // const mongoose = require("mongoose");
-const createAuctionIntoDB = async (images, data) => {
+const createAuctionIntoDB = async (data) => {
   const startingDate = new Date(data.startingDate);
   const [hours, minutes] = data.startingTime.split(":");
 
@@ -30,20 +30,6 @@ const createAuctionIntoDB = async (images, data) => {
   session.startTransaction();
 
   try {
-    let imageUrls = [];
-
-    if (images) {
-      for (const image of images) {
-        const imageName = image?.filename.slice(0, -4);
-        const { secure_url } = await sendImageToCloudinary(
-          imageName,
-          image?.path
-        );
-        imageUrls.push(secure_url);
-      }
-    }
-
-    data.images = imageUrls;
     // Format the starting date and time
     data.activateTime = startingDate;
     if (startingDate <= new Date()) {
@@ -625,7 +611,7 @@ const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
 // };
 
 // update auction into db
-const updateAuctionIntoDB = async (id, newImages, data) => {
+const updateAuctionIntoDB = async (id, data) => {
   const startingDate = new Date(data.startingDate);
   const [hours, minutes] = data.startingTime.split(":");
 
@@ -635,23 +621,10 @@ const updateAuctionIntoDB = async (id, newImages, data) => {
   if (!auction) {
     throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
   }
-  let imageUrls = [...data?.images];
   data.activateTime = startingDate;
   if (startingDate <= new Date()) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
   }
-  if (newImages) {
-    for (const image of newImages) {
-      const imageName = image?.filename;
-      const { secure_url } = await sendImageToCloudinary(
-        imageName,
-        image?.path
-      );
-      imageUrls.push(secure_url);
-    }
-  }
-
-  data.images = imageUrls;
   const result = await Auction.findByIdAndUpdate(id, data, {
     runValidators: true,
     new: true,

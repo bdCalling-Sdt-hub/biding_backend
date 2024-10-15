@@ -1,8 +1,8 @@
 const auth = require("../../middlewares/auth");
 const express = require("express");
 const { ENUM_USER_ROLE } = require("../../../utils/enums");
-const { uploadFile } = require("../../middlewares/fileUploader");
 const DashboardController = require("./dashboard.controller");
+const uploadFile = require("../../middlewares/fileUploader");
 
 const router = express.Router();
 

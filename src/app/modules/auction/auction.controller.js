@@ -3,10 +3,15 @@ const sendResponse = require("../../../shared/sendResponse");
 const auctionService = require("./auction.service");
 
 const createAuction = catchAsync(async (req, res) => {
-  const result = await auctionService.createAuctionIntoDB(
-    req?.files?.image,
-    req?.body
-  );
+  const { files } = req;
+  // Check if files and store_image exist, and process multiple images
+  if (files && typeof files === "object" && "product_image" in files) {
+    req.body.images = files["product_image"].map((file) => file.path);
+  }
+
+  console.log("images", req?.body?.images);
+
+  const result = await auctionService.createAuctionIntoDB(req?.body);
 
   sendResponse(res, {
     statusCode: 201,
@@ -32,15 +37,18 @@ const getAllAuction = catchAsync(async (req, res) => {
 // update auction
 const updateAuction = catchAsync(async (req, res) => {
   const id = req.params?.id;
-  const data = req?.body;
-  const newImages = req?.files?.image;
-
-  const result = await auctionService.updateAuctionIntoDB(id, newImages, data);
+  const { files } = req;
+  // Check if files and store_image exist, and process multiple images
+  if (files && typeof files === "object" && "product_image" in files) {
+    const newImages = files["product_image"].map((file) => file.path);
+    req.body.images.push(...newImages);
+  }
+  const result = await auctionService.updateAuctionIntoDB(id, req?.body);
 
   sendResponse(res, {
     statusCode: 201,
     success: true,
-    message: "Auction retrieved successfully",
+    message: "Auction updated successfully",
     data: result,
   });
 });

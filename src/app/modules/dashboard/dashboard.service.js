@@ -309,47 +309,13 @@ const getAreaChartDataForIncomeFromDB = async (year) => {
 };
 
 const addBanner = async (req) => {
-  // const { files, body } = req || {};
-  const { files } = req || {};
-  // console.log(body);
-
-  // if (!files.banner?.length || Object.keys(body).length === 0) {
-  //   throw new ApiError(httpStatus.BAD_REQUEST, "Image or body is not provided");
-  // }
-
-  // const existingIndex = await Banner.findOne({ index: body.index });
-  // if (existingIndex) {
-  //   throw new ApiError(
-  //     httpStatus.BAD_REQUEST,
-  //     "Index already exists. Please choose a different index."
-  //   );
-  // }
-
-  const { banner } = files;
-  const { originalname, path } = banner[0];
-
-  const { secure_url: url } =
-    (await sendImageToCloudinary(originalname, path)) || {};
-
-  if (!url) {
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Image upload failed");
+  const { files } = req;
+  if (files && typeof files === "object" && "banner_image" in files) {
+    req.body.url = files["banner_image"][0].path;
   }
-
-  // const existingUrl = await Banner.findOne({ url });
-
-  // if (existingUrl) {
-  //   throw new ApiError(
-  //     httpStatus.CONFLICT,
-  //     "You have already uploaded the image"
-  //   );
-  // }
-
-  const newBanner = {
-    url,
-    // ...body,
-  };
-
-  return await Banner.create(newBanner);
+  console.log("banner image", req?.body?.url);
+  const result = await Banner.create(req?.body);
+  return result;
 };
 
 const updateBannerIndex = async (payload) => {

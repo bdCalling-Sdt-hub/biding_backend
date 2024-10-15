@@ -331,26 +331,15 @@ const getMyProfileFromDB = async (userId) => {
 };
 
 const updateProfile = async (req) => {
-  let profile_image = null;
-  if (req?.files?.profile_image) {
-    profile_image = req?.files?.profile_image[0];
+  const { files } = req;
+  if (files && typeof files === "object" && "profile_image" in files) {
+    req.body.profile_image = files["profile_image"][0].path;
   }
   const userId = req?.user?.userId;
   const data = req?.body;
-  console.log(profile_image, userId, data);
   const checkValidUser = await User.findById(userId);
   if (!checkValidUser) {
     throw new ApiError(404, "You are not authorized");
-  }
-
-  if (profile_image) {
-    const imageName = `${profile_image?.filename?.slice(0, -4)}`;
-    // send image to cloudinary --------
-    const { secure_url } = await sendImageToCloudinary(
-      imageName,
-      profile_image?.path
-    );
-    data.profile_image = secure_url;
   }
 
   const result = await User.findByIdAndUpdate(userId, data, {

@@ -3,7 +3,14 @@ const sendResponse = require("../../../shared/sendResponse");
 const categoryService = require("./category.service");
 
 const createCategory = catchAsync(async (req, res) => {
-  const result = await categoryService.createCategoryIntoDB(req.file, req.body);
+  const { files } = req;
+
+  // Check if files and store_image exist, and process multiple images
+  if (files && typeof files === "object" && "category_image" in files) {
+    req.body.image = files["category_image"][0].path;
+  }
+
+  const result = await categoryService.createCategoryIntoDB(req.body);
 
   sendResponse(res, {
     statusCode: 201,
@@ -26,12 +33,14 @@ const getAllCategory = catchAsync(async (req, res) => {
 
 // update category
 const updateCategory = catchAsync(async (req, res) => {
-  console.log("imageFile", req?.file);
-  const image = req?.files?.image?.[0] || null;
-  console.log("data", req.body);
+  const { files } = req;
+
+  // Check if files and store_image exist, and process multiple images
+  if (files && typeof files === "object" && "category_image" in files) {
+    req.body.image = files["category_image"][0].path;
+  }
   const result = await categoryService.updateCategoryIntoDB(
     req.params?.id,
-    image,
     req.body
   );
   sendResponse(res, {
