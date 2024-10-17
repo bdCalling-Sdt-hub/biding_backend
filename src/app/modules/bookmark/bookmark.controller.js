@@ -29,7 +29,7 @@ const getMyBookmark = catchAsync(async (req, res) => {
 // delete bookmark
 const deleteBookmark = catchAsync(async (req, res) => {
   const result = await bookmarkService.deleteBookmarkFromDB(
-    req?.params?.id,
+    req?.params?.auctionId,
     req?.user
   );
 

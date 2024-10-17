@@ -2,12 +2,24 @@ const catchAsync = require("../../../shared/catchasync");
 const sendResponse = require("../../../shared/sendResponse");
 const ShippingService = require("./shipping.service");
 
-const createShipping = catchAsync(async (req, res) => {
-  const result = await ShippingService.createShipping(req.body);
+const createShippingAddress = catchAsync(async (req, res) => {
+  const result = await ShippingService.createShippingAddress(
+    req?.user?.userId,
+    req.body
+  );
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "Shipment creation successful",
+    message: "Shipping  address created successfully",
+    data: result,
+  });
+});
+const getMyShippingAddress = catchAsync(async (req, res) => {
+  const result = await ShippingService.getMyShippingAddress(req?.user?.userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Shipping address retrieved successfully",
     data: result,
   });
 });
@@ -44,12 +56,27 @@ const getSpecificUserShipping = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const updateShippingAddress = catchAsync(async (req, res) => {
+  const result = await ShippingService.updateShippingAddress(
+    req.body,
+    req.params.id,
+    req?.user?.userId
+  );
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Shipping address updated successfully",
+    data: result,
+  });
+});
 
 const ShippingController = {
-  createShipping,
+  createShippingAddress,
   getAllShipping,
+  getMyShippingAddress,
   getSingleShipping,
   getSpecificUserShipping,
+  updateShippingAddress,
 };
 
 module.exports = ShippingController;

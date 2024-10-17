@@ -20,7 +20,6 @@ const {
 const registrationAdmin = async (payload) => {
   const { name, email, password, confirmPassword } = payload;
   const admin = { name, email, password };
-  console.log(admin);
 
   const isEmailExist = await Admin.findOne({ email });
 
@@ -46,25 +45,23 @@ const registrationAdmin = async (payload) => {
   } catch (error) {
     logger.error("Failed to send email:", error);
   }
-  console.log("hit");
   return Admin.create(payload);
 };
 
 const updateAdminProfile = async (req) => {
-  const profile_image = req?.files?.profile_image[0];
+  const { files } = req;
+  if (files && typeof files === "object" && "profile_image" in files) {
+    req.body.profile_image = `${config.image_url}${files["profile_image"][0].path}`;
+  }
   const userId = req?.user?.userId;
   const data = req?.body;
-  console.log(profile_image, userId, data);
+  console.log("profile body data", data);
 
-  if (profile_image) {
-    const imageName = `${image?.originalname}`;
-    // send image to cloudinary --------
-    const { secure_url } = await sendImageToCloudinary(
-      imageName,
-      profile_image?.path
-    );
-    data.profile_image = secure_url;
-  }
+  const result = await Admin.findByIdAndUpdate(userId, data, {
+    runValidators: true,
+    new: true,
+  });
+  return result;
   // let profile_image = undefined;
 
   // if (files && files.profile_image) {
@@ -207,6 +204,7 @@ const forgotPass = async (payload) => {
   admin.verified = false;
 
   await admin.save();
+  console.log("admin", admin);
 
   sendResetEmail(
     email,

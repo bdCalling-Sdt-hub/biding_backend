@@ -5,16 +5,27 @@ const config = require("../../../config");
 
 // checked
 const registrationUser = catchAsync(async (req, res) => {
-  await UserService.registrationUser(req.body);
+  const result = await UserService.registrationUser(req.body);
+
+  if (result?.message) {
+    return sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: result.message,
+      data: result.user[0],
+    });
+  }
+
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "Please check your email to activate your account",
+    data: result,
   });
 });
 
 const activateUser = catchAsync(async (req, res) => {
-  const result = await UserService.activateUser(req.body);
+  const result = await UserService.activateUser(req.body, req.query);
 
   const { refreshToken } = result;
 
@@ -30,6 +41,25 @@ const activateUser = catchAsync(async (req, res) => {
     success: true,
     message: "User activated successfully",
     data: result,
+  });
+});
+
+const verifyForgetPassOTP = catchAsync(async (req, res) => {
+  const result = await UserService.verifyForgetPassOTP(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Verification successful",
+    data: result,
+  });
+});
+
+const resetPassword = catchAsync(async (req, res) => {
+  await UserService.resetPassword(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Password has been reset",
   });
 });
 
@@ -55,6 +85,26 @@ const login = catchAsync(async (req, res) => {
   });
 });
 
+// google sign up
+const googleSignUp = catchAsync(async (req, res) => {
+  const result = await UserService.signUPWithGoogle(req?.body);
+
+  const { refreshToken } = result;
+
+  // set refresh token into cookie
+  const cookieOptions = {
+    secure: config.env === "production",
+    httpOnly: true,
+  };
+  res.cookie("refreshToken", refreshToken, cookieOptions);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User logged in successfully!",
+    data: result,
+  });
+});
 const changePassword = catchAsync(async (req, res) => {
   const passwordData = req.body;
   const userData = req.user;
@@ -66,12 +116,32 @@ const changePassword = catchAsync(async (req, res) => {
   });
 });
 
+const myProfile = catchAsync(async (req, res) => {
+  const result = await UserService.myProfile(req.user);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successful!",
+    data: result,
+  });
+});
+
 const updateProfile = catchAsync(async (req, res) => {
   const result = await UserService.updateProfile(req);
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "Profile updated successfully",
+    data: result,
+  });
+});
+
+const getMyProfile = catchAsync(async (req, res) => {
+  const result = await UserService.getMyProfileFromDB(req?.user?.userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Profile retrieved successfully",
     data: result,
   });
 });
@@ -124,9 +194,36 @@ const refreshToken = catchAsync(async (req, res) => {
   });
 });
 
+const activateUser2 = catchAsync(async (req, res) => {
+  await UserService.activateUser2(req.query);
+  res.json({
+    message: "hello",
+  });
+  // sendResponse(res, {
+  //   statusCode: 200,
+  //   success: true,
+  //   message: "Account activated",
+  // });
+});
+
+const updateShippingAddress = catchAsync(async (req, res) => {
+  const result = await UserService.updateShippingAddress(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Shipping address updated",
+    data: result,
+  });
+});
+
 const UserController = {
   registrationUser,
   activateUser,
+  googleSignUp,
+  verifyForgetPassOTP,
+  resetPassword,
+  getMyProfile,
+  activateUser2,
   login,
   deleteMyAccount,
   changePassword,
@@ -134,6 +231,8 @@ const UserController = {
   resendActivationCode,
   updateProfile,
   refreshToken,
+  myProfile,
+  updateShippingAddress,
 };
 
 module.exports = { UserController };

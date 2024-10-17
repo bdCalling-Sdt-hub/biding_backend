@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const config = require("../../../config");
 const validator = require("validator");
+const { ENUM_AUTH_TYPE } = require("../../../utils/enums");
 
 const { Schema, model } = mongoose;
 
@@ -22,7 +23,8 @@ const UserSchema = new Schema(
     },
     phone_number: {
       type: String,
-      required: true,
+      default: "",
+      // required: true,
     },
     password: {
       type: String,
@@ -41,6 +43,7 @@ const UserSchema = new Schema(
     },
     date_of_birth: {
       type: Date,
+      default: null,
     },
     activationCode: {
       type: Number,
@@ -48,6 +51,10 @@ const UserSchema = new Schema(
     expirationTime: {
       type: Date,
       default: () => Date.now() + 2 * 60 * 1000,
+    },
+    verified: {
+      type: Boolean,
+      default: false,
     },
     verifyCode: {
       type: Number,
@@ -79,10 +86,33 @@ const UserSchema = new Schema(
       type: Number,
       default: 0,
     },
-    streetAddress: String,
-    city: String,
-    state: String,
-    zipCode: Number,
+    location: {
+      type: String,
+      default: "",
+    },
+    authType: {
+      type: String,
+      enum: Object.values(ENUM_AUTH_TYPE),
+      default: ENUM_AUTH_TYPE.MANUAL,
+    },
+    shippingAddress: {
+      streetAddress: {
+        type: String,
+        default: "",
+      },
+      city: {
+        type: String,
+        default: "",
+      },
+      state: {
+        type: String,
+        default: "",
+      },
+      zipCode: {
+        type: Number,
+        default: 0,
+      },
+    },
   },
   {
     timestamps: true,

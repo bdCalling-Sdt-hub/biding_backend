@@ -6,6 +6,17 @@ const { ManageController } = require("./manage.controller");
 const router = express.Router();
 
 router.post(
+  "/create-help",
+  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+  ManageController.createHelp
+);
+router.get("/get-help", ManageController.getHelp);
+router.delete(
+  "/delete-help/:id",
+  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+  ManageController.deleteHelp
+);
+router.post(
   "/accessibility",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   ManageController.createAccessibility
@@ -16,6 +27,11 @@ router.post(
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   ManageController.createTipsAndTricks
 );
+// router.delete(
+//   "/tips-and-tricks",
+//   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+//   ManageController.deleteTipsAndTricks
+// );
 router.get("/tips-and-tricks", ManageController.getTipsAndTricks);
 router.post(
   "/about-us",
@@ -35,9 +51,14 @@ router.delete(
   ManageController.deleteTermsConditions
 );
 router.post(
-  "/add-support-contact",
+  "/add-contact-us",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   ManageController.addCustomerCare
+);
+router.post(
+  "/delete-contact-us",
+  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+  ManageController.deleteCustomerCare
 );
 router.post(
   "/add-privacy-policy",
@@ -45,7 +66,7 @@ router.post(
   ManageController.addPrivacyPolicy
 );
 router.get("/get-privacy-policy", ManageController.getPrivacyPolicy);
-router.get("/get-support-contact", ManageController.getCustomerContact);
+router.get("/get-contact-us", ManageController.getCustomerContact);
 router.delete(
   "/delete-privacy-policy/:id",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
@@ -56,6 +77,8 @@ router.post(
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   ManageController.addFaq
 );
+router.get("/all-faq", ManageController.getAllFaq);
+
 router.get("/get-single-faq/:id", ManageController.getSingleFaq);
 router.patch(
   "/update-single-faq/:id",

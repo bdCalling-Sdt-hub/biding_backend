@@ -4,7 +4,7 @@ const orderService = require("./order.service");
 
 // get all order
 const getAllOrder = catchAsync(async (req, res) => {
-  const result = await orderService.getAllOrderFromDB();
+  const result = await orderService.getAllOrderFromDB(req?.query);
 
   sendResponse(res, {
     statusCode: 200,
@@ -28,7 +28,10 @@ const getSingleOrder = catchAsync(async (req, res) => {
 
 // get my orders
 const getMyOrder = catchAsync(async (req, res) => {
-  const result = await orderService.getMyOrderFromDB(req?.user?.userId);
+  const result = await orderService.getMyOrderFromDB(
+    req?.user?.userId,
+    req?.query
+  );
 
   sendResponse(res, {
     statusCode: 200,
@@ -65,6 +68,49 @@ const updateExpectedDeliveryDate = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getMyBids = catchAsync(async (req, res) => {
+  const result = await orderService.getMyBids(req?.user?.userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Your bid retrieved successfully successfully",
+    data: result,
+  });
+});
+
+const createFinanceOrder = catchAsync(async (req, res) => {
+  const approvalUrl = await orderService.createFinanceOrder(
+    req?.user?.userId,
+    req?.body
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Order created successfully",
+    data: { approvalUrl },
+  });
+});
+const approveFinanceOrder = catchAsync(async (req, res) => {
+  const result = await orderService.approveFinanceOrder(req?.params?.id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Order approved successfully",
+    data: result,
+  });
+});
+const makePaid = catchAsync(async (req, res) => {
+  const result = await orderService.makePaid(req?.params?.id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successfully make paid",
+    data: result,
+  });
+});
 
 const orderController = {
   getAllOrder,
@@ -72,6 +118,10 @@ const orderController = {
   getSingleOrder,
   changeOrderStatus,
   updateExpectedDeliveryDate,
+  getMyBids,
+  createFinanceOrder,
+  approveFinanceOrder,
+  makePaid,
 };
 
 module.exports = orderController;

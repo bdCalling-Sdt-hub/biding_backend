@@ -69,6 +69,26 @@ const bidHistorySchema = {
   },
 };
 
+const uniqueBidderSchema = {
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
+};
+
+const winingBidderSchema = {
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
+  bidAmount: {
+    type: Number,
+    required: true,
+  },
+};
+
 const auctionSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -93,6 +113,7 @@ const auctionSchema = new mongoose.Schema(
     },
     currentPrice: {
       type: Number,
+      default: 0,
     },
     bidBuddyUsers: {
       type: [bidBuddyUserSchema],
@@ -100,9 +121,35 @@ const auctionSchema = new mongoose.Schema(
     bidHistory: {
       type: [bidHistorySchema],
     },
+    totalBidPlace: {
+      type: Number,
+      default: 0,
+    },
     countdownTime: {
       type: Number,
       default: null,
+    },
+    winingBidder: {
+      type: winingBidderSchema,
+      default: null,
+    },
+    activateTime: {
+      type: Date,
+    },
+    endedTime: {
+      type: Date,
+      default: null,
+    },
+    financeAvailable: {
+      type: Boolean,
+      default: false,
+    },
+    totalMonthForFinance: {
+      type: Number,
+    },
+    uniqueBidders: {
+      type: [uniqueBidderSchema],
+      default: [],
     },
   },
   {
@@ -110,7 +157,8 @@ const auctionSchema = new mongoose.Schema(
   }
 );
 
-
+auctionSchema.index({ "bidBuddyUsers.user": 1 }); // Index on bidBuddyUsers.user
+auctionSchema.index({ "bidHistory.user": 1 }); // Index on bidHistory.user
 
 const Auction = mongoose.model("Auction", auctionSchema);
 

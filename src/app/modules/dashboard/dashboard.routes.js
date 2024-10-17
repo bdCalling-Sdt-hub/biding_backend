@@ -1,8 +1,8 @@
 const auth = require("../../middlewares/auth");
 const express = require("express");
 const { ENUM_USER_ROLE } = require("../../../utils/enums");
-const { uploadFile } = require("../../middlewares/fileUploader");
 const DashboardController = require("./dashboard.controller");
+const uploadFile = require("../../middlewares/fileUploader");
 
 const router = express.Router();
 
@@ -24,11 +24,13 @@ router.patch(
   DashboardController.blockUnblockUser
 );
 router.post(
-  "/auth/banner",
+  "/create-banner",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   uploadFile(),
   DashboardController.addBanner
 );
+
+router.get("/get-banner", DashboardController.getBanner);
 
 router.patch(
   "/auth/update-banner-index",
@@ -37,7 +39,7 @@ router.patch(
 );
 
 router.delete(
-  "/auth/banner",
+  "/delete-banner/:id",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   DashboardController.deleteBanner
 );
@@ -46,6 +48,11 @@ router.get(
   "/get-dashboard-meta-data",
   auth(ENUM_USER_ROLE.ADMIN),
   DashboardController.getDashboardMetaData
+);
+router.get(
+  "/get-income-chart-data",
+  auth(ENUM_USER_ROLE.ADMIN),
+  DashboardController.getAreaChartDataForIncome
 );
 
 // --- driver ---

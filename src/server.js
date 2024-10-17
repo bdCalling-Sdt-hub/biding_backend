@@ -3,6 +3,7 @@ const app = require("./app");
 const connectDB = require("./connection/connectDB");
 const config = require("./config");
 const { Server } = require("socket.io");
+const socket = require("./socket/socket");
 async function main() {
   try {
     await connectDB();
@@ -26,9 +27,14 @@ async function main() {
           "http://192.168.10.103:3001",
           "http://192.168.10.103:3002",
           "http://192.168.10.103:3003",
+          "http://localhost:3003",
+          "http://localhost:3004",
+          "http://192.168.10.103:3004",
         ],
       },
     });
+
+    socket(socketIO);
     // Assign Socket.IO to global for potential use in other parts of the application
     global.io = socketIO;
     // handle unhandled promise rejections

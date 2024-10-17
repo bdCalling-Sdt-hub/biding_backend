@@ -7,8 +7,18 @@ const router = express.Router();
 
 router.get(
   "/get-all-notification",
-  auth(ENUM_USER_ROLE.ADMIN),
+  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.USER),
   notificationController.getAllNotification
+);
+router.patch(
+  "/see-notification",
+  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.USER),
+  notificationController.seeNotification
+);
+router.delete(
+  "/delete-notification/:id",
+  auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.USER),
+  notificationController.deleteNotification
 );
 
 module.exports = router;

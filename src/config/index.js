@@ -24,6 +24,8 @@ const config = {
   base_url: process.env.BASE_URL,
   database_url: process.env.MONGO_URL,
   database_password: process.env.DB_PASSWORD,
+  default_admin_password: process.env.DEFAULT_ADMIN_PASSWORD,
+  image_url: process.env.IMAGE_URL,
   jwt: {
     secret: process.env.JWT_SECRET,
     refresh_secret: process.env.JWT_REFRESH_SECRET,
@@ -35,7 +37,7 @@ const config = {
     smtp_port: process.env.SMTP_PORT,
     smtp_service: process.env.SMTP_SERVICE,
     smtp_mail: process.env.SMTP_MAIL,
-    smtp_password: process.env.SMTP_PASSWORD,
+    smtp_pass: process.env.SMTP_PASS,
     NAME: process.env.SERVICE_NAME,
   },
   cloudinary: {

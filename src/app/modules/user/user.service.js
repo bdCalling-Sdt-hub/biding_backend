@@ -12,6 +12,11 @@ const {
 const { sendResetEmail } = require("../../../utils/sendResetMails");
 const { logger } = require("../../../shared/logger");
 const createActivationToken = require("../../../utils/createActivationToken");
+const {
+  sendImageToCloudinary,
+} = require("../../../helpers/sendImageToCloudinary");
+const { ENUM_AUTH_TYPE } = require("../../../utils/enums");
+const Shipping = require("../shippingAddress/shipping.model");
 
 const registrationUser = async (payload) => {
   const { name, email, password, confirmPassword, phone_number } = payload;
@@ -22,14 +27,22 @@ const registrationUser = async (payload) => {
     password,
     confirmPassword,
     phone_number,
-    expirationTime: Date.now() + 5 * 60 * 1000,
+    expirationTime: Date.now() + 10 * 60 * 1000,
   };
 
-  const isEmailExist = await User.findOne({ email });
+  const existingUser = await User.findOne({ email });
 
-  if (isEmailExist) {
+  if (existingUser && !existingUser?.verified) {
+    const user = await User.find({ email });
+    return {
+      message: "You have already registered. Please verify",
+      user,
+    };
+  }
+  if (existingUser) {
     throw new ApiError(400, "Email already exists");
   }
+
   if (password !== confirmPassword) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -42,6 +55,7 @@ const registrationUser = async (payload) => {
   const data = {
     user: { name: name, email },
     activationCode,
+    email,
   };
 
   try {
@@ -56,28 +70,31 @@ const registrationUser = async (payload) => {
 
   user.activationCode = activationCode;
 
-  return await User.create(user);
+  const createUser = await User.create(user);
+
+  return createUser;
 };
 
 const activateUser = async (payload) => {
-  const { activation_code, email } = payload;
+  // console.log("paylaod", payload);
+  const { email, activation_code } = payload;
 
   const existUser = await User.findOne({ email: email });
 
   if (!existUser) {
     throw new ApiError(400, "User not found");
   }
-
-  if (existUser.activationCode !== activation_code) {
+  if (existUser.activationCode !== Number(activation_code)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Code didn't match");
   }
 
   const user = await User.findOneAndUpdate(
-    { email: email },
-    { isActive: true },
+    { email },
+    { $set: { isActive: true, verified: true } },
     {
       new: true,
       runValidators: true,
+      projection: { verified: 1 },
     }
   );
 
@@ -109,6 +126,86 @@ const activateUser = async (payload) => {
   };
 };
 
+const verifyForgetPassOTP = async (payload) => {
+  const { email, verifyCode } = payload;
+
+  if (!email || !verifyCode) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Missing email or code");
+  }
+
+  const user = await User.findOne(
+    { email },
+    { verifyCode: 1, verifyExpire: 1 }
+  );
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User does not exist!");
+  }
+  if (!user.verifyCode) {
+    throw new ApiError(httpStatus.NOT_FOUND, "You have no verification code");
+  }
+  if (user.verifyCode !== verifyCode) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid verification code!");
+  }
+  if (new Date() > user.verifyExpire) {
+    throw new ApiError(httpStatus.GONE, "Verification code has expired!");
+  }
+
+  return await User.findOneAndUpdate(
+    { email },
+    { $set: { verified: true } },
+    {
+      new: true,
+      runValidators: true,
+      projection: { verified: 1 },
+    }
+  );
+};
+
+const resetPassword = async (payload) => {
+  const { email, newPassword, confirmPassword } = payload;
+
+  if (!email || !newPassword || !confirmPassword) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Missing credentials");
+  }
+  if (newPassword !== confirmPassword) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "newPassword & confirmPassword doesn't match"
+    );
+  }
+
+  const worker = await Worker.findOne(
+    { email },
+    { _id: 1, verified: 1, verifyCode: 1 }
+  );
+
+  if (!worker) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Client not found!");
+  }
+  if (!worker.verifyCode) {
+    throw new ApiError(httpStatus.NOT_FOUND, "You have no verification code");
+  }
+  if (!worker.verified) {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      "You are not verified. Please verify the OTP"
+    );
+  }
+
+  const hashedPassword = await bcrypt.hash(
+    newPassword,
+    Number(config.bcrypt_salt_rounds)
+  );
+
+  await Worker.updateOne({ email }, { password: hashedPassword });
+
+  worker.verifyCode = null;
+  worker.verifyExpire = null;
+
+  await worker.save();
+};
+
 // Scheduled task to delete expired inactive users
 cron.schedule("* * * * *", async () => {
   try {
@@ -132,6 +229,9 @@ const loginUser = async (payload) => {
 
   if (!isUserExist) {
     throw new ApiError(404, "User does not exist");
+  }
+  if (isUserExist.is_block) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "You are blocked by admin");
   }
   if (
     isUserExist.password &&
@@ -166,42 +266,119 @@ const loginUser = async (payload) => {
   };
 };
 
+const signUPWithGoogle = async (payload) => {
+  const userExist = await User.findOne({ email: payload?.email });
+  if (userExist) {
+    const userId = userExist?._id;
+    const email = userExist?.email;
+    const role = userExist?.role;
+    const accessToken = jwtHelpers.createToken(
+      { userId, email, role },
+      config.jwt.secret,
+      config.jwt.expires_in
+    );
+    const refreshToken = jwtHelpers.createToken(
+      { userId, email, role },
+      config.jwt.refresh_secret,
+      config.jwt.refresh_expires_in
+    );
+
+    return {
+      accessToken,
+      refreshToken,
+      user: userExist,
+    };
+  }
+
+  const createUser = await User.create({
+    ...payload,
+    password: "google",
+    verified: true,
+    isActive: true,
+    authType: ENUM_AUTH_TYPE.GOOGLE,
+  });
+  const userId = createUser?._id;
+  const email = createUser?.email;
+  const role = createUser?.role;
+  const accessToken = jwtHelpers.createToken(
+    { userId, email, role },
+    config.jwt.secret,
+    config.jwt.expires_in
+  );
+  const refreshToken = jwtHelpers.createToken(
+    { userId, email, role },
+    config.jwt.refresh_secret,
+    config.jwt.refresh_expires_in
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+    user: userExist,
+  };
+};
+
+const getMyProfileFromDB = async (userId) => {
+  const result = await User.findById(userId);
+  return result;
+};
+
 const updateProfile = async (req) => {
   const { files } = req;
-  const { userId } = req.user;
-
+  if (files && typeof files === "object" && "profile_image" in files) {
+    req.body.profile_image = `${config.image_url}${files["profile_image"][0].path}`;
+  }
+  const userId = req?.user?.userId;
+  const data = req?.body;
   const checkValidUser = await User.findById(userId);
-
   if (!checkValidUser) {
     throw new ApiError(404, "You are not authorized");
   }
 
-  let profile_image = undefined;
+  const result = await User.findByIdAndUpdate(userId, data, {
+    runValidators: true,
+    new: true,
+  });
+  return result;
 
-  if (files && files.profile_image) {
-    profile_image = `/${files.profile_image[0].path.replace(/\\/g, "/")}`;
+  // const { files } = req;
+  // const { userId } = req.user;
+  // const checkValidUser = await User.findById(userId);
+  // if (!checkValidUser) {
+  //   throw new ApiError(404, "You are not authorized");
+  // }
+  // let profile_image = undefined;
+  // if (files && files.profile_image) {
+  //   profile_image = `/${files.profile_image[0].path.replace(/\\/g, "/")}`;
+  // }
+  // const data = req.body;
+  // if (!data) {
+  //   throw new Error("Data is missing in the request body!");
+  // }
+  // const isExist = await User.findOne({ _id: userId });
+  // if (!isExist) {
+  //   throw new ApiError(404, "User not found!");
+  // }
+  // const updatedUserData = { ...data };
+  // const result = await User.findOneAndUpdate(
+  //   { _id: userId },
+  //   { profile_image, ...updatedUserData },
+  //   {
+  //     new: true,
+  //   }
+  // );
+  // return result;
+};
+
+const myProfile = async (payload) => {
+  const { userId } = payload;
+
+  const result = await User.findById(userId);
+
+  if (!result) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Profile not found");
   }
 
-  const data = req.body;
-  if (!data) {
-    throw new Error("Data is missing in the request body!");
-  }
-
-  const isExist = await User.findOne({ _id: userId });
-
-  if (!isExist) {
-    throw new ApiError(404, "User not found!");
-  }
-
-  const updatedUserData = { ...data };
-
-  const result = await User.findOneAndUpdate(
-    { _id: userId },
-    { profile_image, ...updatedUserData },
-    {
-      new: true,
-    }
-  );
   return result;
 };
 
@@ -338,16 +515,48 @@ const refreshToken = async (token) => {
   };
 };
 
+const activateUser2 = async (query) => {
+  console.log(query);
+  // const {email} = query+
+};
+
+const updateShippingAddress = async (payload) => {
+  const { userId } = payload;
+
+  if (!userId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "missing user id");
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Profile not found");
+  }
+
+  return await User.findByIdAndUpdate(
+    { _id: userId },
+    { $set: { shippingAddress: { ...user.shippingAddress, ...payload } } }, // Merge existing shippingAddress with payload
+    { new: true, runValidators: true }
+  ).select({ shippingAddress: 1 });
+};
+
 const UserService = {
   registrationUser,
   loginUser,
+  signUPWithGoogle,
+  getMyProfileFromDB,
   changePassword,
   updateProfile,
   forgotPass,
+  resetPassword,
+  verifyForgetPassOTP,
   activateUser,
+  activateUser2,
   deleteMyAccount,
   resendActivationCode,
   refreshToken,
+  myProfile,
+  updateShippingAddress,
 };
 
 module.exports = { UserService };

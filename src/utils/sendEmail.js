@@ -11,11 +11,12 @@ const formattedDate = currentDate.toLocaleDateString("en-US", {
 
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
-    host: config.smtp.smtp_host,
+    // host: config.smtp.smtp_host,
+    host: "smtp.gmail.com",
     port: parseInt(config.smtp.smtp_port),
     auth: {
       user: config.smtp.smtp_mail,
-      pass: config.smtp.smtp_password,
+      pass: config.smtp.smtp_pass,
     },
   });
 
@@ -33,4 +34,4 @@ const sendEmail = async (options) => {
   await transporter.sendMail(mailOptions);
 };
 
-module.exports = {sendEmail};
+module.exports = { sendEmail };

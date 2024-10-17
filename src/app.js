@@ -11,14 +11,20 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://192.168.10.16:3000",
-      "http://192.168.30.250:3000",
-      "http://192.168.10.102:3000",
+      // "http://192.168.10.16:3000",
+      // "http://192.168.30.250:3000",
+      // "http://192.168.10.102:3000",
       "http://localhost:5173",
       "http://192.168.10.103:3000",
       "http://192.168.10.103:3001",
       "http://192.168.10.103:3002",
       "http://192.168.10.103:3003",
+      "http://192.168.10.103:3004",
+      "http://192.168.10.103:3005",
+      "http://localhost:3003",
+      "http://localhost:3004",
+      "http://103.161.9.133:3003",
+      "http://192.168.10.103:3004",
     ],
     credentials: true,
   })
@@ -32,7 +38,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(express.static("uploads"));
+app.use("/uploads", express.static("uploads"));
 
 // All Routes
 app.use("/", routes);

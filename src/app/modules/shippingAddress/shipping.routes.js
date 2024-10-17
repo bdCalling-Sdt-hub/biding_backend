@@ -6,11 +6,15 @@ const { ENUM_USER_ROLE } = require("../../../utils/enums");
 const router = express.Router();
 
 router.post(
-  "/shipping-address",
+  "/create-shipping-address",
   auth(ENUM_USER_ROLE.USER),
-  ShippingController.createShipping
+  ShippingController.createShippingAddress
 );
-
+router.get(
+  "/my-shipping-address",
+  auth(ENUM_USER_ROLE.USER),
+  ShippingController.getMyShippingAddress
+);
 router.get(
   "/all-shipping",
   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
@@ -27,6 +31,12 @@ router.get(
   "/specific-user-shipping",
   auth(ENUM_USER_ROLE.USER, ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   ShippingController.getSpecificUserShipping
+);
+
+router.patch(
+  "/update-shipping-address/:id",
+  auth(ENUM_USER_ROLE.USER),
+  ShippingController.updateShippingAddress
 );
 
 module.exports = router;

@@ -1,0 +1,47 @@
+const Auction = require("../../app/modules/auction/auction.model");
+const User = require("../../app/modules/user/user.model");
+const getUpdatedAuction = require("../../helpers/getUpdatedAuctiion");
+
+const stopBidBuddy = async (io, socket) => {
+  socket.on("stopBidBuddy", async ({ auctionId, userId, totalBids }) => {
+    console.log("stop bid buddy", auctionId, userId, totalBids);
+    try {
+      const updateAuction = await Auction.findOneAndUpdate(
+        { _id: auctionId, "bidBuddyUsers.user": userId },
+        {
+          $set: {
+            "bidBuddyUsers.$.isActive": false,
+            "bidBuddyUsers.$.availableBids": 0,
+          },
+        },
+        { new: true }
+      ).select("bidBuddyUsers");
+
+      await User.findByIdAndUpdate(userId, {
+        // availableBid: userData?.availableBid + totalBids,
+        $inc: { availableBid: totalBids },
+      });
+
+      //   if (updatedAuction) {
+      //     io.to(auctionId).emit("bidBuddyUpdated", updatedAuction.bidBuddyUsers);
+      //   }
+      // const updatedAuction = await Auction.findById(auctionId)
+      //   .populate({
+      //     path: "bidHistory.user",
+      //     options: { limit: 10 }, // Limit for bidHistory
+      //   })
+      //   .populate({
+      //     path: "bidBuddyUsers.user",
+      //     options: { limit: 10 }, // Limit for bidBuddyUsers
+      //   });
+      const updatedAuction = await getUpdatedAuction(auctionId);
+      io.to(auctionId).emit("bidHistory", { updatedAuction });
+      // socket.broadcast.emit("updated-auction", { updatedAuction });
+      socket.broadcast.emit("updated-auction", { updatedAuction });
+    } catch (error) {
+      console.error("Error updating bidBuddy status:", error);
+    }
+  });
+};
+
+module.exports = stopBidBuddy;

@@ -1,5 +1,9 @@
 const { Schema, model } = require("mongoose");
-const { ENUM_PAYMENT_STATUS, ENUM_ITEM_TYPE } = require("../../../utils/enums");
+const {
+  ENUM_PAYMENT_STATUS,
+  ENUM_ITEM_TYPE,
+  ENUM_PAYMENT_TYPE,
+} = require("../../../utils/enums");
 const ObjectId = Schema.Types.ObjectId;
 
 // const paymentSchema = new Schema(
@@ -51,7 +55,7 @@ const transactionSchema = new Schema(
     },
     paymentStatus: {
       type: String,
-      default: ENUM_PAYMENT_STATUS.PAID,
+      default: ENUM_PAYMENT_STATUS.UNPAID,
       enum: Object.values(ENUM_PAYMENT_STATUS),
     },
     paidAmount: {
@@ -60,15 +64,26 @@ const transactionSchema = new Schema(
     },
     transactionId: {
       type: String,
-      required: true,
+      // required: true,
+      default: null,
     },
     paymentType: {
       type: String,
-      default: "Online Payment",
+      // default: "Online Payment",
+      default: ENUM_PAYMENT_TYPE.FULL_PAYMENT,
+      required: true,
+    },
+    totalBid: {
+      type: Number,
+      default: 0,
     },
     itemType: {
       type: String,
       enum: Object.values(ENUM_ITEM_TYPE),
+    },
+    paymentId: {
+      type: String,
+      required: true,
     },
   },
   {

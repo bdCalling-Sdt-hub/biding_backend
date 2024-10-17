@@ -2,6 +2,36 @@ const { ManageService } = require("./manage.service");
 const sendResponse = require("../../../shared/sendResponse");
 const catchAsync = require("../../../shared/catchasync");
 
+const createHelp = catchAsync(async (req, res) => {
+  const result = await ManageService.createHelp(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successful",
+    data: result,
+  });
+});
+
+const getHelp = catchAsync(async (req, res) => {
+  const result = await ManageService.getHelp();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successful",
+    data: result,
+  });
+});
+
+const deleteHelp = catchAsync(async (req, res) => {
+  const result = await ManageService.deleteHelp(req.params.id);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successful",
+    data: result,
+  });
+});
+
 const createAccessibility = catchAsync(async (req, res) => {
   const result = await ManageService.createAccessibility(req.body);
   sendResponse(res, {
@@ -141,6 +171,16 @@ const getCustomerContact = catchAsync(async (req, res) => {
   });
 });
 
+const deleteCustomerCare = catchAsync(async (req, res) => {
+  const result = await ManageService.deleteCustomerCare();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successful",
+    data: result,
+  });
+});
+
 // faq ---
 const addFaq = catchAsync(async (req, res) => {
   const result = await ManageService.addFaq(req.body);
@@ -158,6 +198,15 @@ const getSingleFaq = catchAsync(async (req, res) => {
     statusCode: 200,
     success: true,
     message: "Successful",
+    data: result,
+  });
+});
+const getAllFaq = catchAsync(async (req, res) => {
+  const result = await ManageService.getAllFaq();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Faq retrieved successfully",
     data: result,
   });
 });
@@ -183,6 +232,9 @@ const deleteSingleFaq = catchAsync(async (req, res) => {
 });
 
 const ManageController = {
+  createHelp,
+  getHelp,
+  deleteHelp,
   createAccessibility,
   getAccessibility,
   createTipsAndTricks,
@@ -195,12 +247,14 @@ const ManageController = {
   deleteTermsConditions,
   getCustomerContact,
   addCustomerCare,
+  deleteCustomerCare,
   addFaq,
   getSingleFaq,
   updateSingleFaq,
   deleteSingleFaq,
   createAboutUs,
   getAboutUs,
+  getAllFaq,
 };
 
 module.exports = { ManageController };

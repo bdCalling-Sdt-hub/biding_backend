@@ -20,6 +20,7 @@ const globalErrorHandler = (error, req, res, next) => {
   let errorMessages = [];
 
   if (error?.name === "ValidationError") {
+    console.log("Validation error");
     const simplifiedError = handleValidationError(error);
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
@@ -78,6 +79,7 @@ const globalErrorHandler = (error, req, res, next) => {
       },
     ];
   } else if (error instanceof mongooseError) {
+    console.log("Mongoose error");
     message = error?.message;
     errorMessages = error?.message
       ? [

@@ -5,14 +5,7 @@ const {
 } = require("../../../helpers/sendImageToCloudinary");
 const Category = require("./category.model");
 
-const createCategoryIntoDB = async (file, categoryData) => {
-  console.log(categoryData);
-  if (file) {
-    const imageName = `${file?.originalname}`;
-    // send image to cloudinary --------
-    const { secure_url } = await sendImageToCloudinary(imageName, file?.path);
-    categoryData.image = secure_url;
-  }
+const createCategoryIntoDB = async (categoryData) => {
   const result = await Category.create(categoryData);
   return result;
 };
@@ -23,16 +16,10 @@ const getAllCategoryFromDB = async () => {
 };
 
 // update category into db
-const updateCategoryIntoDB = async (id, image, categoryData) => {
+const updateCategoryIntoDB = async (id, categoryData) => {
   const category = await Category.findById(id);
   if (!category) {
     throw new ApiError(httpStatus.NOT_FOUND, "Category does not exits");
-  }
-  if (image) {
-    const imageName = `${image?.originalname}`;
-    // send image to cloudinary --------
-    const { secure_url } = await sendImageToCloudinary(imageName, image?.path);
-    categoryData.image = secure_url;
   }
   const result = await Category.findByIdAndUpdate(id, categoryData, {
     runValidators: true,

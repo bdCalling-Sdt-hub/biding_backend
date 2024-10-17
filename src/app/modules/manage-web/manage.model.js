@@ -1,6 +1,19 @@
 const mongoose = require("mongoose");
 const { model } = require("mongoose");
 
+//! help
+const helpSchema = new mongoose.Schema(
+  {
+    description: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
 //! Privacy and policy
 const privacySchema = new mongoose.Schema(
   {
@@ -96,10 +109,9 @@ const sliderSchema = new mongoose.Schema(
 
 const customerSchema = new mongoose.Schema(
   {
-    contactNumber: {
+    contactUs: {
       type: String,
       trim: true,
-      unique: true,
       required: true,
     },
   },
@@ -133,6 +145,7 @@ const accessibilitySchema = new mongoose.Schema(
 );
 
 module.exports = {
+  Help: model("help", helpSchema),
   PrivacyPolicy: model("PrivacyPolicy", privacySchema),
   TermsConditions: model("TermsConditions", termsAndConditionsSchema),
   Customer: model("Customer", customerSchema),

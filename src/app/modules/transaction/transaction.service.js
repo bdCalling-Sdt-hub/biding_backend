@@ -2,7 +2,10 @@ const QueryBuilder = require("../../../builder/QueryBuilder");
 const { Transaction } = require("../payment/payment.model");
 
 const getAllTransactionFromDB = async (query) => {
-  const transactionQuery = new QueryBuilder(Transaction.find(), query)
+  const transactionQuery = new QueryBuilder(
+    Transaction.find().populate({ path: "user" }),
+    query
+  )
     .search(["item"])
     .filter()
     .sort()

@@ -8,7 +8,35 @@ const {
   AboutUs,
   TipsAndTricks,
   Accessibility,
+  Help,
 } = require("./manage.model");
+
+const createHelp = async (payload) => {
+  const checkIsExist = await Help.findOne();
+
+  if (checkIsExist) {
+    return await Help.findOneAndUpdate({}, payload, {
+      new: true,
+      runValidators: true,
+    });
+  } else {
+    return await Help.create(payload);
+  }
+};
+
+const getHelp = async () => {
+  return await Help.findOne();
+};
+
+const deleteHelp = async (id) => {
+  const isExist = await Help.findById(id);
+
+  if (!isExist) {
+    throw new ApiError(404, "Help not found");
+  }
+
+  return await Help.findByIdAndDelete(id);
+};
 
 const createAccessibility = async (payload) => {
   const checkIsExist = await Accessibility.findOne();
@@ -121,11 +149,18 @@ const deleteTermsConditions = async (id) => {
 
 const addCustomerCare = async (payload) => {
   const isExist = await Customer.findOne({
-    contactNumber: payload.contactNumber,
+    contactUs: payload.contactUs,
   });
 
   if (isExist) {
-    throw new ApiError(400, "Already have a contact number");
+    await Customer.findOneAndUpdate({}, payload, {
+      new: true,
+      runValidators: true,
+    });
+
+    const message = { message: "contact us updated" };
+
+    return message;
   } else {
     return await Customer.create(payload);
   }
@@ -133,6 +168,15 @@ const addCustomerCare = async (payload) => {
 
 const getCustomerContact = async () => {
   return await Customer.findOne();
+};
+
+const deleteCustomerCare = async () => {
+  return await Customer.findByIdAndDelete(id);
+};
+
+const getAllFaq = async () => {
+  const result = await FAQ.find();
+  return result;
 };
 
 // faq ---
@@ -176,6 +220,9 @@ const deleteSingleFaq = async (id) => {
 };
 
 const ManageService = {
+  createHelp,
+  getHelp,
+  deleteHelp,
   createAccessibility,
   getAccessibility,
   createTipsAndTricks,
@@ -190,10 +237,12 @@ const ManageService = {
   deleteTermsConditions,
   addCustomerCare,
   getCustomerContact,
+  deleteCustomerCare,
   addFaq,
   getSingleFaq,
   updateSingleFaq,
   deleteSingleFaq,
+  getAllFaq,
 };
 
 module.exports = { ManageService };

@@ -5,7 +5,6 @@ const DashboardServices = require("./dashboard.service");
 // --- user ---
 
 const getAllUsers = catchAsync(async (req, res) => {
-  console.log("get all user");
   const { result, meta } = await DashboardServices.getAllUsers(req.query);
 
   sendResponse(res, {
@@ -32,7 +31,7 @@ const blockUnblockUser = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "User retrieved successfully",
+    message: `User successfully ${result?.is_block ? "blocked" : "unblocked"}`,
     data: result,
   });
 });
@@ -42,7 +41,20 @@ const getDashboardMetaData = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "User retrieved successfully",
+    message: "Dashboard meta data successfully retrieved",
+    data: result,
+  });
+});
+
+const getAreaChartDataForIncome = catchAsync(async (req, res) => {
+  const result = await DashboardServices.getAreaChartDataForIncomeFromDB(
+    Number(req?.query?.year)
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Area chart data retrieved successfully",
     data: result,
   });
 });
@@ -52,6 +64,15 @@ const addBanner = catchAsync(async (req, res) => {
     statusCode: 200,
     success: true,
     message: "Banner added successfully",
+    data: result,
+  });
+});
+const getBanner = catchAsync(async (req, res) => {
+  const result = await DashboardServices.getBanner();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Banner retrieved successfully",
     data: result,
   });
 });
@@ -67,7 +88,7 @@ const updateBannerIndex = catchAsync(async (req, res) => {
 });
 
 const deleteBanner = catchAsync(async (req, res) => {
-  const result = await DashboardServices.deleteBanner(req.body);
+  const result = await DashboardServices.deleteBanner(req?.params?.id);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -81,9 +102,11 @@ const DashboardController = {
   getSingleUser,
   blockUnblockUser,
   getDashboardMetaData,
+  getAreaChartDataForIncome,
   addBanner,
   updateBannerIndex,
   deleteBanner,
+  getBanner,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,

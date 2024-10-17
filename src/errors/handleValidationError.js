@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 // Define a function to handle validation errors
 const handleValidationError = (err) => {
@@ -11,7 +11,7 @@ const handleValidationError = (err) => {
   });
 
   // Join all individual error messages into a single string
-  const combinedMessages = errors.map(e => e.message).join(', ');
+  const combinedMessages = errors.map((e) => e.message).join(", ");
 
   const statusCode = 400;
   return {
