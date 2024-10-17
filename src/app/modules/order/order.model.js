@@ -42,7 +42,7 @@ const orderSchema = new Schema(
     },
     paymentId: {
       type: String,
-      required: true,
+      // required: true,
     },
     productName: {
       type: String,
@@ -79,13 +79,21 @@ const orderSchema = new Schema(
       type: Number,
       default: 0,
     },
+    monthlyStatus: {
+      type: String,
+      default: null,
+    },
     totalMonth: {
       type: Number,
       default: 0,
     },
     paidInstallment: {
       type: Number,
-      default: 0,
+      default: null,
+    },
+    installmentLeft: {
+      type: Number,
+      default: null,
     },
     nextInstallmentDeadline: {
       type: Date,
@@ -94,6 +102,22 @@ const orderSchema = new Schema(
       type: String,
       default: "NORMAL",
     },
+    customerName: {
+      type: String,
+      default: null,
+    },
+    customerEmail: {
+      type: String,
+      default: null,
+    },
+    customerPhoneNum: {
+      type: String,
+      default: null,
+    },
+    customerAddress: {
+      type: String,
+      default: null,
+    },
     lastPayment: {
       type: Date,
       default: null,
@@ -101,6 +125,10 @@ const orderSchema = new Schema(
     dueAmount: {
       type: Number,
       default: 0,
+    },
+    isApproved: {
+      type: Boolean,
+      default: true,
     },
   },
   {

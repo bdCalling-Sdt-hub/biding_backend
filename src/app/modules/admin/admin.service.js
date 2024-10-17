@@ -51,10 +51,11 @@ const registrationAdmin = async (payload) => {
 const updateAdminProfile = async (req) => {
   const { files } = req;
   if (files && typeof files === "object" && "profile_image" in files) {
-    req.body.profile_image = files["profile_image"][0].path;
+    req.body.profile_image = `${config.image_url}${files["profile_image"][0].path}`;
   }
   const userId = req?.user?.userId;
   const data = req?.body;
+  console.log("profile body data", data);
 
   const result = await Admin.findByIdAndUpdate(userId, data, {
     runValidators: true,

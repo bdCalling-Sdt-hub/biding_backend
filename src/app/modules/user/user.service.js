@@ -240,6 +240,9 @@ const loginUser = async (payload) => {
   if (!isUserExist) {
     throw new ApiError(404, "User does not exist");
   }
+  if (isUserExist.is_block) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "You are blocked by admin");
+  }
   if (
     isUserExist.password &&
     !(await User.isPasswordMatched(password, isUserExist.password))
@@ -333,7 +336,7 @@ const getMyProfileFromDB = async (userId) => {
 const updateProfile = async (req) => {
   const { files } = req;
   if (files && typeof files === "object" && "profile_image" in files) {
-    req.body.profile_image = files["profile_image"][0].path;
+    req.body.profile_image = `${config.image_url}${files["profile_image"][0].path}`;
   }
   const userId = req?.user?.userId;
   const data = req?.body;

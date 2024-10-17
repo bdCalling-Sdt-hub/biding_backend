@@ -1,3 +1,4 @@
+const config = require("../../../config");
 const catchAsync = require("../../../shared/catchasync");
 const sendResponse = require("../../../shared/sendResponse");
 const categoryService = require("./category.service");
@@ -7,7 +8,7 @@ const createCategory = catchAsync(async (req, res) => {
 
   // Check if files and store_image exist, and process multiple images
   if (files && typeof files === "object" && "category_image" in files) {
-    req.body.image = files["category_image"][0].path;
+    req.body.image = `${config.image_url}${files["category_image"][0].path}`;
   }
 
   const result = await categoryService.createCategoryIntoDB(req.body);
@@ -37,7 +38,7 @@ const updateCategory = catchAsync(async (req, res) => {
 
   // Check if files and store_image exist, and process multiple images
   if (files && typeof files === "object" && "category_image" in files) {
-    req.body.image = files["category_image"][0].path;
+    req.body.image = `${config.image_url}${files["category_image"][0].path}`;
   }
   const result = await categoryService.updateCategoryIntoDB(
     req.params?.id,

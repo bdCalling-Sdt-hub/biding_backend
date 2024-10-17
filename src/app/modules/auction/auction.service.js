@@ -21,6 +21,7 @@ const placeRandomBid = require("../../../socket/bidding/placeRandomBid");
 const createAuctionIntoDB = async (data) => {
   const startingDate = new Date(data.startingDate);
   const [hours, minutes] = data.startingTime.split(":");
+  console.log("data is real", data);
 
   startingDate.setHours(hours, minutes);
 
@@ -617,10 +618,10 @@ const updateAuctionIntoDB = async (id, data) => {
 
   startingDate.setHours(hours, minutes);
 
-  const auction = await Auction.findById(id);
-  if (!auction) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
-  }
+  // const auction = await Auction.findById(id);
+  // if (!auction) {
+  //   throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
+  // }
   data.activateTime = startingDate;
   if (startingDate <= new Date()) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
@@ -629,11 +630,28 @@ const updateAuctionIntoDB = async (id, data) => {
     runValidators: true,
     new: true,
   });
+
   return result;
 };
 
 // delete auction from db
 const deleteAuctionFromDB = async (id) => {
+  const auction = await Auction.findById(id);
+  if (!auction) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
+  }
+  if (auction.status === ENUM_AUCTION_STATUS.ACTIVE) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You can not delete auction when the auction is active"
+    );
+  }
+  if (auction.status === ENUM_AUCTION_STATUS.COMPLETED) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You can not delete auction when the auction is completed"
+    );
+  }
   const result = await Auction.findByIdAndDelete(id);
   return result;
 };

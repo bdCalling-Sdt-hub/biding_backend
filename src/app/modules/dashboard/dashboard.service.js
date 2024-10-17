@@ -9,6 +9,7 @@ const Banner = require("./banner.model");
 const {
   sendImageToCloudinary,
 } = require("../../../helpers/sendImageToCloudinary");
+const config = require("../../../config");
 
 // --- user ---
 
@@ -311,9 +312,8 @@ const getAreaChartDataForIncomeFromDB = async (year) => {
 const addBanner = async (req) => {
   const { files } = req;
   if (files && typeof files === "object" && "banner_image" in files) {
-    req.body.url = files["banner_image"][0].path;
+    req.body.url = `${config.image_url}${files["banner_image"][0].path}`;
   }
-  console.log("banner image", req?.body?.url);
   const result = await Banner.create(req?.body);
   return result;
 };

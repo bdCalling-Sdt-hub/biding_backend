@@ -24,6 +24,8 @@ const config = {
   base_url: process.env.BASE_URL,
   database_url: process.env.MONGO_URL,
   database_password: process.env.DB_PASSWORD,
+  default_admin_password: process.env.DEFAULT_ADMIN_PASSWORD,
+  image_url: process.env.IMAGE_URL,
   jwt: {
     secret: process.env.JWT_SECRET,
     refresh_secret: process.env.JWT_REFRESH_SECRET,

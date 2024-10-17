@@ -1,3 +1,4 @@
+const config = require("../../../config");
 const catchAsync = require("../../../shared/catchasync");
 const sendResponse = require("../../../shared/sendResponse");
 const auctionService = require("./auction.service");
@@ -6,9 +7,10 @@ const createAuction = catchAsync(async (req, res) => {
   const { files } = req;
   // Check if files and store_image exist, and process multiple images
   if (files && typeof files === "object" && "product_image" in files) {
-    req.body.images = files["product_image"].map((file) => file.path);
+    req.body.images = files["product_image"].map(
+      (file) => `${config.image_url}${file.path}`
+    );
   }
-
   console.log("images", req?.body?.images);
 
   const result = await auctionService.createAuctionIntoDB(req?.body);
@@ -40,7 +42,9 @@ const updateAuction = catchAsync(async (req, res) => {
   const { files } = req;
   // Check if files and store_image exist, and process multiple images
   if (files && typeof files === "object" && "product_image" in files) {
-    const newImages = files["product_image"].map((file) => file.path);
+    const newImages = files["product_image"].map(
+      (file) => `${config.image_url}${file.path}`
+    );
     req.body.images.push(...newImages);
   }
   const result = await auctionService.updateAuctionIntoDB(id, req?.body);

@@ -67,7 +67,6 @@ const handleManualBid = async (io, socket) => {
 
     //save auction
     await auction.save();
-  
 
     // Emit the updates to all clients in the auction room
     // io.to(auctionId).emit("updateCountdown", {

@@ -78,6 +78,40 @@ const getMyBids = catchAsync(async (req, res) => {
   });
 });
 
+const createFinanceOrder = catchAsync(async (req, res) => {
+  const approvalUrl = await orderService.createFinanceOrder(
+    req?.user?.userId,
+    req?.body
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Order created successfully",
+    data: { approvalUrl },
+  });
+});
+const approveFinanceOrder = catchAsync(async (req, res) => {
+  const result = await orderService.approveFinanceOrder(req?.params?.id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Order approved successfully",
+    data: result,
+  });
+});
+const makePaid = catchAsync(async (req, res) => {
+  const result = await orderService.makePaid(req?.params?.id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successfully make paid",
+    data: result,
+  });
+});
+
 const orderController = {
   getAllOrder,
   getMyOrder,
@@ -85,6 +119,9 @@ const orderController = {
   changeOrderStatus,
   updateExpectedDeliveryDate,
   getMyBids,
+  createFinanceOrder,
+  approveFinanceOrder,
+  makePaid,
 };
 
 module.exports = orderController;

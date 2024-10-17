@@ -1,4 +1,6 @@
+const httpStatus = require("http-status");
 const QueryBuilder = require("../../../builder/QueryBuilder");
+const ApiError = require("../../../errors/ApiError");
 const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
 const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
 const { ENUM_USER_ROLE } = require("../../../utils/enums");
@@ -59,9 +61,34 @@ const seeNotification = async (user) => {
   return result;
 };
 
+const deleteNotification = async (user, id) => {
+  if (user.role === ENUM_USER_ROLE.ADMIN) {
+    const notification = await Notification.findOne({
+      _id: id,
+      receiver: ENUM_USER_ROLE.ADMIN,
+    });
+    if (!notification) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Notification not found");
+    }
+    const result = await Notification.findByIdAndDelete(id);
+    return result;
+  } else {
+    const notification = await Notification.findOne({
+      _id: id,
+      receiver: user?.userId,
+    });
+    if (!notification) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Notification not found");
+    }
+    const result = await Notification.findByIdAndDelete(id);
+    return result;
+  }
+};
+
 const notificationService = {
   getAllNotificationFromDB,
   seeNotification,
+  deleteNotification,
 };
 
 module.exports = notificationService;

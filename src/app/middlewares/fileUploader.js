@@ -2,7 +2,6 @@ const multer = require("multer");
 const fs = require("fs");
 const ApiError = require("../../errors/ApiError");
 const httpStatus = require("http-status");
-
 const uploadFile = () => {
   const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -31,7 +30,6 @@ const uploadFile = () => {
       if (!fs.existsSync(uploadPath)) {
         fs.mkdirSync(uploadPath, { recursive: true });
       }
-
       if (
         file.mimetype === "image/jpeg" ||
         file.mimetype === "image/png" ||
