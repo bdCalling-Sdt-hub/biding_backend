@@ -71,16 +71,6 @@ const registrationUser = async (payload) => {
   user.activationCode = activationCode;
 
   const createUser = await User.create(user);
-  await Shipping.create({
-    user_id: createUser._id,
-    user_name: "",
-    email: "",
-    phone_number: "",
-    streetAddress: "",
-    city: "",
-    state: "",
-    zipCode: null,
-  });
 
   return createUser;
 };

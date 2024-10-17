@@ -748,6 +748,26 @@ const updateAuctionStatuses = async () => {
     //   placeRandomBid(auction?._id);
     // });
 
+    // for complete auction
+    // const auctionsToComplete = await Auction.find(
+    //   {
+    //     activateTime: { $lte: currentTime },
+    //     status: ENUM_AUCTION_STATUS.ACTIVE,
+    //   },
+    //   { _id: 1 }
+    // );
+
+    // const auctionIds = auctionsToComplete.map((auction) => auction._id);
+
+    // await Auction.updateMany(
+    //   {
+    //     _id: { $in: auctionIds },
+    //   },
+    //   {
+    //     $set: { status: ENUM_AUCTION_STATUS.COMPLETED },
+    //   }
+    // );
+
     // Mark auctions as completed if activateTime is less than or equal to the current time
     // const auctionsToComplete = await Auction.updateMany(
     //   {
@@ -759,11 +779,12 @@ const updateAuctionStatuses = async () => {
     //   }
     // );
     // console.log(`Completed ${auctionsToComplete.modifiedCount} auctions.`);
-
-    // Find and broadcast the completed auctions
+    // const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
+    // // Find and broadcast the completed auctions
     // if (auctionsToComplete.modifiedCount > 0) {
     //   const completedAuctions = await Auction.find({
     //     status: ENUM_AUCTION_STATUS.COMPLETED,
+    //     updatedAt: { $gte: oneMinuteAgo },
     //   });
 
     //   completedAuctions.forEach((completedAuction) => {

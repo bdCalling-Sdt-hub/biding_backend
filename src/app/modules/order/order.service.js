@@ -9,6 +9,7 @@ const {
   ENUM_PAYMENT_STATUS,
   ENUM_ORDER_TYPE,
   ENUM_PAID_BY,
+  ENUM_DELIVERY_STATUS,
 } = require("../../../utils/enums");
 const Auction = require("../auction/auction.model");
 
@@ -116,6 +117,15 @@ const getMyBids = async (userId) => {
 
 // create finance order ----------------------------
 const createFinanceOrder = async (userId, orderDetails) => {
+  const isExistFinanceOrder = await Order.findOne({
+    item: orderDetails?.product,
+  });
+  if (isExistFinanceOrder) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You already make finance order for this product , please wait for response"
+    );
+  }
   if (!orderDetails?.shippingAddress) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Please add shipping address");
   }

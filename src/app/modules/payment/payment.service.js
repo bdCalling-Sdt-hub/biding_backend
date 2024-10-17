@@ -100,14 +100,22 @@ const createPaymentIntent = async (orderDetails, userId) => {
       );
     }
 
-    const isExistIntent = await Order.findOne({
+    const isExistOrder = await Order.findOne({
       item: orderDetails?.product,
     });
-    if (isExistIntent) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        "You already create intent for this product"
-      );
+    if (isExistOrder) {
+      if (isExistOrder.paidBy === ENUM_PAID_BY.OTHER) {
+        throw new ApiError(
+          httpStatus.BAD_REQUEST,
+          "You already order this product with finance , wait for response"
+        );
+      }
+      if (isExistOrder.status !== ENUM_DELIVERY_STATUS.PAYMENT_PENDING) {
+        throw new ApiError(
+          httpStatus.BAD_REQUEST,
+          "You already order this product"
+        );
+      }
     }
   }
 
@@ -116,13 +124,18 @@ const createPaymentIntent = async (orderDetails, userId) => {
   const auction = await Auction.findById(orderDetails?.product).select(
     "totalMonthForFinance currentPrice"
   );
-  // console.log("auction", auction);
+  console.log("auction", auction);
   const totalMonth = auction?.totalMonthForFinance;
-  const monthlyAmount = (auction.currentPrice / totalMonth).toFixed(2);
-  const paymentAmount =
-    orderDetails?.orderType === ENUM_ORDER_TYPE.FINANCE
-      ? monthlyAmount
-      : auction.currentPrice.toFixed();
+  const monthlyAmount = (auction?.currentPrice / totalMonth).toFixed(2);
+  let paymentAmount;
+  if (orderDetails?.shippingAddress) {
+    paymentAmount =
+      orderDetails?.orderType === ENUM_ORDER_TYPE.FINANCE
+        ? monthlyAmount
+        : auction?.currentPrice.toFixed();
+  } else {
+    paymentAmount = totalAmount;
+  }
 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: paymentAmount * 100,
@@ -132,57 +145,95 @@ const createPaymentIntent = async (orderDetails, userId) => {
 
   let order;
   if (orderDetails?.shippingAddress) {
+    console.log("Nice");
     const fiveDaysFromNow = new Date();
     fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
-    const orderData = {
-      user: userId,
-      shippingAddress: shippingAddress,
-      winingBid: winingBid,
-      totalAmount: auction?.currentPrice,
-      paidBy: ENUM_PAID_BY.CREDIT_CARD,
-      item: product,
-      status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING,
-      statusWithTime: [
+
+    const isExistIntent = await Order.findOne({
+      item: orderDetails?.product,
+    });
+    console.log("product id", orderDetails.product);
+    if (isExistIntent) {
+      await Order.findOneAndUpdate(
+        { item: orderDetails?.product },
+        { paymentId: paymentIntent.id }
+      );
+      const existingTransaction = await Transaction.findOne({
+        item: orderDetails.item,
+      });
+      console.log("exsitirtjrtj transcation", existingTransaction);
+      await Transaction.findOneAndUpdate(
+        { item: orderDetails?.item },
         {
-          status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING,
-          time: new Date(),
-        },
-      ],
-      paymentId: paymentIntent.id,
-      // new features
-      expectedDeliveryData: fiveDaysFromNow,
-      monthlyAmount: monthlyAmount,
-      totalMonth: totalMonth,
-      orderType: orderDetails?.orderType,
-      dueAmount:
-        orderDetails?.orderType === ENUM_ORDER_TYPE.FINANCE
-          ? auction?.currentPrice
-          : 0,
-    };
-    order = await Order.create(orderData);
+          paymentId: paymentIntent.id,
+          transactionId: paymentIntent.id,
+        }
+      );
+    } else {
+      const orderData = {
+        user: userId,
+        shippingAddress: shippingAddress,
+        winingBid: winingBid,
+        totalAmount: auction?.currentPrice,
+        paidBy: ENUM_PAID_BY.CREDIT_CARD,
+        item: product,
+        status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING,
+        statusWithTime: [
+          {
+            status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING,
+            time: new Date(),
+          },
+        ],
+        paymentId: paymentIntent.id,
+        // new features
+        expectedDeliveryData: fiveDaysFromNow,
+        monthlyAmount: monthlyAmount,
+        totalMonth: totalMonth,
+        orderType: orderDetails?.orderType,
+        dueAmount:
+          orderDetails?.orderType === ENUM_ORDER_TYPE.FINANCE
+            ? auction?.currentPrice
+            : 0,
+      };
+      order = await Order.create(orderData);
+      // 5. Create a new transaction
+      const transactionData = {
+        user: userId,
+        item: item,
+        paymentStatus: ENUM_PAYMENT_STATUS.UNPAID,
+        paidAmount: totalAmount,
+        itemType: itemType,
+        // paymentType: "Online Payment",
+        // paymentType: "Online Payment",
+        paymentType: orderDetails?.paymentType,
+        paymentId: paymentIntent.id,
+        transactionId: paymentIntent.id,
+        totalBid: orderDetails?.totalBid || 0,
+      };
+
+      await Transaction.create(transactionData);
+    }
   }
   if (orderDetails?.orderId) {
     await Order.findByIdAndUpdate(orderDetails?.orderId, {
       paymentId: paymentIntent.id,
     });
+    const transactionData = {
+      user: userId,
+      item: item,
+      paymentStatus: ENUM_PAYMENT_STATUS.UNPAID,
+      paidAmount: totalAmount,
+      itemType: itemType,
+      // paymentType: "Online Payment",
+      // paymentType: "Online Payment",
+      paymentType: orderDetails?.paymentType,
+      paymentId: paymentIntent.id,
+      transactionId: paymentIntent.id,
+      totalBid: orderDetails?.totalBid || 0,
+    };
+
+    await Transaction.create(transactionData);
   }
-
-  // 5. Create a new transaction
-  const transactionData = {
-    user: userId,
-    item: item,
-    paymentStatus: ENUM_PAYMENT_STATUS.UNPAID,
-    paidAmount: totalAmount,
-    itemType: itemType,
-    // paymentType: "Online Payment",
-    // paymentType: "Online Payment",
-    paymentType: orderDetails?.paymentType,
-    paymentId: paymentIntent.id,
-    transactionId: paymentIntent.id,
-    totalBid: orderDetails?.totalBid || 0,
-  };
-
-  await Transaction.create(transactionData);
 
   return {
     clientSecret: paymentIntent.client_secret,
@@ -219,12 +270,17 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
     "totalMonthForFinance currentPrice"
   );
   console.log("auction", auction);
-  const totalMonth = auction.totalMonthForFinance;
-  const monthlyAmount = auction.currentPrice / totalMonth;
-  const paymentAmount =
-    orderDetails?.orderType === ENUM_ORDER_TYPE.FINANCE
-      ? monthlyAmount
-      : auction.currentPrice;
+  const totalMonth = auction?.totalMonthForFinance;
+  const monthlyAmount = auction?.currentPrice / totalMonth;
+  let paymentAmount;
+  if (orderDetails?.shippingAddress) {
+    paymentAmount =
+      orderDetails?.orderType === ENUM_ORDER_TYPE.FINANCE
+        ? monthlyAmount
+        : auction?.currentPrice.toFixed();
+  } else {
+    paymentAmount = amount;
+  }
 
   const create_payment_json = {
     intent: "sale",
@@ -694,6 +750,7 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
 const executePaymentWithCreditCard = async (paymentId, userId) => {
   const userData = await User.findById(userId);
   // Update the transaction status to PAID
+  console.log("paymentid", paymentId);
   const updatedTransaction = await Transaction.findOneAndUpdate(
     { paymentId: paymentId },
     {
