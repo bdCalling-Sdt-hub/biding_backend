@@ -26,6 +26,9 @@ const handleManualBid = async (io, socket) => {
       });
 
     if (!auction) {
+      io.to(userId).emit("socket-error", {
+        errorMessage: "This auction is not active right now",
+      });
       throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
     }
 
@@ -59,7 +62,6 @@ const handleManualBid = async (io, socket) => {
     auction.currentPrice = newBidAmount;
     auction.totalBidPlace += 1;
     auction.winingBidder = newBid;
-    //auction.countdownTime = 9;
 
     // Set activateTime to 9 seconds ago
     const currentTime = new Date();

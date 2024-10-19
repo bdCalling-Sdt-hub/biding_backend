@@ -5,9 +5,8 @@ const simpleAuth = async (req, res, next) => {
   try {
     const tokenWithBearer = req.headers.authorization;
 
-    // Check if the token exists
     if (!tokenWithBearer) {
-      return next(); // Do nothing if no token is present
+      return next();
     }
 
     if (tokenWithBearer.startsWith("Bearer")) {
@@ -16,13 +15,13 @@ const simpleAuth = async (req, res, next) => {
       // Verify token
       const verifyUser = jwtHelpers.verifyToken(token, config.jwt.secret);
 
-      req.user = verifyUser; // Set the user in the request object
+      req.user = verifyUser;
     }
 
-    next(); // Proceed to the next middleware or route handler
+    next();
   } catch (error) {
     console.log(error);
-    next(error); // Pass any errors to the error handling middleware
+    next(error);
   }
 };
 

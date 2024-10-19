@@ -30,6 +30,7 @@ async function main() {
           "http://localhost:3003",
           "http://localhost:3004",
           "http://192.168.10.103:3004",
+          "https://splendorous-scone-a04956.netlify.app",
         ],
       },
     });
