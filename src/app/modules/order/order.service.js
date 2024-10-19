@@ -225,7 +225,7 @@ const makePaid = async (id) => {
 
 // crone jobs
 
-// Schedule a cron job to run at midnight on the second day of every month
+// Schedule a cron job to run at midnight on the second day of every month--------------
 cron.schedule("0 0 2 * *", async () => {
   try {
     console.log("Running monthly due check...");
