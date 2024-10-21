@@ -12,9 +12,6 @@ const {
 const { sendResetEmail } = require("../../../utils/sendResetMails");
 const { logger } = require("../../../shared/logger");
 const createActivationToken = require("../../../utils/createActivationToken");
-const {
-  sendImageToCloudinary,
-} = require("../../../helpers/sendImageToCloudinary");
 const { ENUM_AUTH_TYPE } = require("../../../utils/enums");
 const Shipping = require("../shippingAddress/shipping.model");
 
@@ -72,11 +69,22 @@ const registrationUser = async (payload) => {
 
   const createUser = await User.create(user);
 
+  const shippingAddress = {
+    user_id: createUser._id,
+    user_name: "",
+    email: "",
+    phone_number: "",
+    streetAddress: "",
+    city: "",
+    state: "",
+    zipCode: "",
+  };
+  await Shipping.create(shippingAddress);
+
   return createUser;
 };
 
 const activateUser = async (payload) => {
-  // console.log("paylaod", payload);
   const { email, activation_code } = payload;
 
   const existUser = await User.findOne({ email: email });
@@ -206,7 +214,7 @@ const resetPassword = async (payload) => {
   await user.save();
 };
 
-// Scheduled task to delete expired inactive users
+// Scheduled task to delete expired inactive users------------------------------
 cron.schedule("* * * * *", async () => {
   try {
     const now = new Date();
@@ -340,34 +348,6 @@ const updateProfile = async (req) => {
     new: true,
   });
   return result;
-
-  // const { files } = req;
-  // const { userId } = req.user;
-  // const checkValidUser = await User.findById(userId);
-  // if (!checkValidUser) {
-  //   throw new ApiError(404, "You are not authorized");
-  // }
-  // let profile_image = undefined;
-  // if (files && files.profile_image) {
-  //   profile_image = `/${files.profile_image[0].path.replace(/\\/g, "/")}`;
-  // }
-  // const data = req.body;
-  // if (!data) {
-  //   throw new Error("Data is missing in the request body!");
-  // }
-  // const isExist = await User.findOne({ _id: userId });
-  // if (!isExist) {
-  //   throw new ApiError(404, "User not found!");
-  // }
-  // const updatedUserData = { ...data };
-  // const result = await User.findOneAndUpdate(
-  //   { _id: userId },
-  //   { profile_image, ...updatedUserData },
-  //   {
-  //     new: true,
-  //   }
-  // );
-  // return result;
 };
 
 const myProfile = async (payload) => {
@@ -517,7 +497,6 @@ const refreshToken = async (token) => {
 
 const activateUser2 = async (query) => {
   console.log(query);
-  // const {email} = query+
 };
 
 const updateShippingAddress = async (payload) => {

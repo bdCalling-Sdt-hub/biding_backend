@@ -1,27 +1,20 @@
 const httpStatus = require("http-status");
 const ApiError = require("../../../errors/ApiError");
-const {
-  sendImageToCloudinary,
-} = require("../../../helpers/sendImageToCloudinary");
 const Auction = require("./auction.model");
-const QueryBuilder = require("../../../builder/QueryBuilder");
-const createNotification = require("../../../helpers/createNotification");
-const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
+
 const { default: mongoose } = require("mongoose");
 const { ENUM_AUCTION_STATUS, ENUM_USER_ROLE } = require("../../../utils/enums");
 const Bookmark = require("../bookmark/bookmark.model");
-const handleCountdown = require("../../../socket/bidding/handleCountdown");
 const Notification = require("../notification/notification.model");
 const cron = require("node-cron");
 const getAuctionEmailTemplate = require("../../../helpers/getAuctionEmailTemplate");
 const { sendEmail } = require("../../../utils/sendEmail");
 const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
 const placeRandomBid = require("../../../socket/bidding/placeRandomBid");
-// const mongoose = require("mongoose");
+const QueryBuilder = require("../../../builder/queryBuilder");
 const createAuctionIntoDB = async (data) => {
   const startingDate = new Date(data.startingDate);
   const [hours, minutes] = data.startingTime.split(":");
-  console.log("data is real", data);
 
   startingDate.setHours(hours, minutes);
 
@@ -59,10 +52,6 @@ const createAuctionIntoDB = async (data) => {
     };
     const formattedDate = startingDate.toLocaleDateString("en-US", options);
     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
-    // await createNotification(
-    //   { notificationMessage, receiver: ENUM_USER_ROLE.ADMIN },
-    //   session
-    // );
     await Notification.create({
       message: notificationMessage,
       receiver: ENUM_USER_ROLE.ADMIN,
@@ -84,7 +73,6 @@ const createAuctionIntoDB = async (data) => {
       throw err;
     }
     if (err instanceof mongoose.Error.ValidationError) {
-      // Handle Mongoose validation error
       const messages = Object.values(err.errors).map((error) => error.message);
       throw new ApiError(httpStatus.BAD_REQUEST, messages.join(", "));
     }
@@ -160,125 +148,6 @@ const getAllAuctionFromDB = async (query, userId) => {
 //   result.bidHistory = result.bidHistory.slice(0, 5);
 
 //   return result;
-// };
-// const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
-//   try {
-//     const auction = await Auction.findById(auctionId)
-//       .populate("bidBuddyUsers.user", "name email profile_image") // Populate user in bidBuddyUsers
-//       .populate("bidHistory.user", "name email profile_image"); // Populate user in bidHistory
-
-//     if (!auction) {
-//       throw new Error("Auction not found");
-//     }
-
-//     // Limit the bidHistory to the last specified limit
-//     auction.bidHistory = auction.bidHistory.slice(-bidHistoryLimit);
-
-//     return auction;
-//   } catch (error) {
-//     console.error("Error fetching auction:", error);
-//     throw error;
-//   }
-// };
-// const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
-//   try {
-//     const auction = await Auction.aggregate([
-//       {
-//         $match: { _id: new mongoose.Types.ObjectId(auctionId) }, // Match the auction by ID
-//       },
-//       {
-//         $lookup: {
-//           from: "users", // Ensure the collection name is correct
-//           localField: "bidBuddyUsers.user",
-//           foreignField: "_id",
-//           as: "bidBuddyUsers",
-//         },
-//       },
-//       {
-//         $lookup: {
-//           from: "users", // Ensure the collection name is correct
-//           localField: "bidHistory.user",
-//           foreignField: "_id",
-//           as: "bidHistoryUsers",
-//         },
-//       },
-//       {
-//         $project: {
-//           name: 1,
-//           category: 1,
-//           reservedBid: 1,
-//           incrementValue: 1,
-//           startingDate: 1,
-//           startingTime: 1,
-//           description: 1,
-//           images: 1,
-//           status: 1,
-//           currentPrice: 1,
-//           totalBidPlace: 1,
-//           countdownTime: 1,
-//           activateTime: 1,
-//           endedTime: 1,
-//           financeAvailable: 1,
-//           totalMonthForFinance: 1,
-//           bidBuddyUsers: {
-//             $map: {
-//               input: "$bidBuddyUsers",
-//               as: "user",
-//               in: {
-//                 user: "$$user.user",
-//                 name: {
-//                   $arrayElemAt: [
-//                     {
-//                       $filter: {
-//                         input: "$bidHistoryUsers",
-//                         as: "historyUser",
-//                         cond: { $eq: ["$$historyUser._id", "$$user.user"] },
-//                       },
-//                     },
-//                     0,
-//                   ],
-//                 }.name,
-//                 email: {
-//                   $arrayElemAt: [
-//                     {
-//                       $filter: {
-//                         input: "$bidHistoryUsers",
-//                         as: "historyUser",
-//                         cond: { $eq: ["$$historyUser._id", "$$user.user"] },
-//                       },
-//                     },
-//                     0,
-//                   ],
-//                 }.email,
-//                 profile_image: {
-//                   $arrayElemAt: [
-//                     {
-//                       $filter: {
-//                         input: "$bidHistoryUsers",
-//                         as: "historyUser",
-//                         cond: { $eq: ["$$historyUser._id", "$$user.user"] },
-//                       },
-//                     },
-//                     0,
-//                   ],
-//                 }.profile_image,
-//               },
-//             },
-//           },
-//           bidHistory: { $slice: ["$bidHistory", -bidHistoryLimit] },
-//         },
-//       },
-//     ]);
-
-//     if (!auction || auction.length === 0) {
-//       throw new Error("Auction not found");
-//     }
-
-//     return auction[0]; // Return the first (and only) auction object
-//   } catch (error) {
-//     console.error("Error fetching auction:", error);
-//     throw error;
-//   }
 // };
 // const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
 //   try {
@@ -595,21 +464,6 @@ const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
     throw error;
   }
 };
-
-// const getSingleAuctionFromDB = async (id) => {
-//   // Fetch the auction by ID and populate the bidBuddyUsers field with a limit of 10
-//   const result = await Auction.findById(id).populate({
-//     path: "bidBuddyUsers.userId",
-//     options: { limit: 10 },
-//   });
-
-//   // Check if the result is null or undefined
-//   if (!result) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
-//   }
-
-//   return result;
-// };
 
 // update auction into db
 const updateAuctionIntoDB = async (id, data) => {

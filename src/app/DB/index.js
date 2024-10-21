@@ -2,7 +2,7 @@ const config = require("../../config");
 const Admin = require("../modules/admin/admin.model");
 
 const adminUser = {
-  name: "Admin Name",
+  name: "Manik Sarker",
   email: "maniksarker265@gmail.com",
   phone_number: "1234567890",
   password: config.default_admin_password,

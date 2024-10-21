@@ -2,7 +2,7 @@ const httpStatus = require("http-status");
 const ApiError = require("../../../errors/ApiError");
 const User = require("../user/user.model");
 const Shipping = require("./shipping.model");
-const QueryBuilder = require("../../../builder/QueryBuilder");
+const QueryBuilder = require("../../../builder/queryBuilder");
 
 const createShippingAddress = async (userId, payload) => {
   const result = await Shipping.create({ ...payload, user_id: userId });

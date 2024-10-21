@@ -4,11 +4,12 @@ const connectDB = require("./connection/connectDB");
 const config = require("./config");
 const { Server } = require("socket.io");
 const socket = require("./socket/socket");
+const seedAdmin = require("./app/DB");
 async function main() {
   try {
     await connectDB();
     logger.info(`DB Connected Successfully at ${new Date().toLocaleString()}`);
-
+    seedAdmin();
     const port =
       typeof config.port === "number" ? config.port : Number(config.port);
 
