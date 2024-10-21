@@ -1,10 +1,10 @@
 const httpStatus = require("http-status");
-const QueryBuilder = require("../../../builder/QueryBuilder");
 const ApiError = require("../../../errors/ApiError");
 const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
 const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
 const { ENUM_USER_ROLE } = require("../../../utils/enums");
 const Notification = require("./notification.model");
+const QueryBuilder = require("../../../builder/queryBuilder");
 
 const getAllNotificationFromDB = async (query, user) => {
   if (user?.role === ENUM_USER_ROLE.ADMIN) {

@@ -1,8 +1,5 @@
 const httpStatus = require("http-status");
 const ApiError = require("../../../errors/ApiError");
-const {
-  sendImageToCloudinary,
-} = require("../../../helpers/sendImageToCloudinary");
 const Category = require("./category.model");
 
 const createCategoryIntoDB = async (categoryData) => {

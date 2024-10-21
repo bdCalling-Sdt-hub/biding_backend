@@ -1,7 +1,6 @@
 const httpStatus = require("http-status");
 const ApiError = require("../../../errors/ApiError");
 const Order = require("./order.model");
-const QueryBuilder = require("../../../builder/QueryBuilder");
 const { Transaction } = require("../payment/payment.model");
 const cron = require("node-cron");
 const {
@@ -14,12 +13,9 @@ const {
 const Auction = require("../auction/auction.model");
 const Notification = require("../notification/notification.model");
 const isStatusTransitionValid = require("./order.utils");
+const QueryBuilder = require("../../../builder/queryBuilder");
 
 const getAllOrderFromDB = async (query) => {
-  // let query = {};
-  // if (query?.searchTerm) {
-  //   query = {};
-  // }
   const orderQuery = new QueryBuilder(Order.find(), query)
     .search(["name", "item.name"])
     .filter()
@@ -37,10 +33,6 @@ const getAllOrderFromDB = async (query) => {
 
   const result = await orderQuery.modelQuery;
   const meta = await orderQuery.countTotal();
-  // const result = await Order.find()
-  //   .populate("user")
-  //   .populate("item")
-  //   .populate("shippingAddress");
   return { meta, result };
 };
 
@@ -55,8 +47,6 @@ const getSingleOrder = async (id) => {
 
 // get my orders
 const getMyOrderFromDB = async (userId, query) => {
-  // const result = await Order.find({ user: userId });
-  // return result;
   const orderQuery = new QueryBuilder(Order.find({ user: userId }), query)
     .search(["name"])
     .filter()
@@ -70,10 +60,6 @@ const getMyOrderFromDB = async (userId, query) => {
 
   const result = await orderQuery.modelQuery;
   const meta = await orderQuery.countTotal();
-  // const result = await Order.find()
-  //   .populate("user")
-  //   .populate("item")
-  //   .populate("shippingAddress");
   return { meta, result };
 };
 
@@ -143,7 +129,6 @@ const createFinanceOrder = async (userId, orderDetails) => {
   }
   const isValidProduct = await Auction.findOne({
     "winingBidder.user": userId,
-    // currentPrice: orderDetails.totalAmount,
   });
 
   if (!isValidProduct) {
@@ -176,7 +161,6 @@ const createFinanceOrder = async (userId, orderDetails) => {
         time: new Date(),
       },
     ],
-    // new features
     expectedDeliveryData: fiveDaysFromNow,
     monthlyAmount: monthlyAmount,
     totalMonth: totalMonth,
@@ -185,7 +169,6 @@ const createFinanceOrder = async (userId, orderDetails) => {
     paidInstallment: 0,
     installmentLeft: totalMonth,
     monthlyStatus: "due",
-    //
     customerName: orderDetails.customerName,
     customerEmail: orderDetails.customerEmail,
     customerPhoneNum: orderDetails.customerPhoneNum,
@@ -256,7 +239,6 @@ const makePaid = async (id) => {
   return result;
 };
 
-//
 const sendPaymentLink = async (id, paymentLink) => {
   const order = await Order.findById(id);
   if (!order.isApproved) {
@@ -276,26 +258,18 @@ const sendPaymentLink = async (id, paymentLink) => {
   return result;
 };
 
-// crone jobs
-
 // Schedule a cron job to run at midnight on the second day of every month--------------
 cron.schedule("0 0 2 * *", async () => {
   try {
     console.log("Running monthly due check...");
 
-    // Get the current month start and end
     const startOfMonth = moment().startOf("month").toDate();
     const endOfMonth = moment().endOf("month").toDate();
-
-    // Find all orders where:
-    // 1. `installmentLeft` is not 0
-    // 2. `lastPayment` is not in this month
     const orders = await Order.find({
       installmentLeft: { $ne: 0 },
       lastPayment: { $not: { $gte: startOfMonth, $lte: endOfMonth } },
     });
 
-    // Update each order's `monthlyStatus` to "due"
     await Promise.all(
       orders.map(async (order) => {
         order.monthlyStatus = "due";
@@ -307,13 +281,10 @@ cron.schedule("0 0 2 * *", async () => {
   }
 });
 
-// This cron job runs every hour
+// This cron job runs every 5 mins
 cron.schedule("*/5 * * * *", async () => {
   try {
-    // Get the time that is 10 minutes ago from now
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-
-    // Query to delete orders that match the criteria
     const result = await Order.deleteMany({
       status: "pending",
       createdAt: { $lte: tenMinutesAgo },

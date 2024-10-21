@@ -36,7 +36,6 @@ const stopBidBuddy = async (io, socket) => {
       //   });
       const updatedAuction = await getUpdatedAuction(auctionId);
       io.to(auctionId).emit("bidHistory", { updatedAuction });
-      // socket.broadcast.emit("updated-auction", { updatedAuction });
       socket.broadcast.emit("updated-auction", { updatedAuction });
     } catch (error) {
       console.error("Error updating bidBuddy status:", error);

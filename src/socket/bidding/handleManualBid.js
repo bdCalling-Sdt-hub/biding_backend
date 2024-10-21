@@ -7,9 +7,6 @@ const getUpdatedAuction = require("../../helpers/getUpdatedAuctiion");
 
 const handleManualBid = async (io, socket) => {
   socket.on("place-manual-bid", async (data) => {
-    // console.log("emited", auctionId);
-    // console.log("userid", userId);
-    console.log("dat", data);
     const auctionId = data?.auction_id;
     const userId = data?.user_id;
 
@@ -20,18 +17,12 @@ const handleManualBid = async (io, socket) => {
       });
     }
 
-    // try {
     const auction = await Auction.findOne({
       _id: auctionId,
       status: ENUM_AUCTION_STATUS.ACTIVE,
-    })
-      //   .select(
-      //     "bidBuddyUsers currentPrice incrementValue bidHistory countdownTime reservedBid totalBidPlace winingBidder"
-      //   )
-      .populate({
-        path: "bidHistory.user",
-        // select: "name profile_image",
-      });
+    }).populate({
+      path: "bidHistory.user",
+    });
 
     if (!auction) {
       io.to(userId).emit("socket-error", {
@@ -39,8 +30,6 @@ const handleManualBid = async (io, socket) => {
       });
       throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
     }
-
-    console.log("auction", auction);
 
     const user = await User.findById(userId).select("availableBid");
     if (!user) {
@@ -78,27 +67,10 @@ const handleManualBid = async (io, socket) => {
     //save auction
     await auction.save();
 
-    // Emit the updates to all clients in the auction room
-    // io.to(auctionId).emit("updateCountdown", {
-    //   countdownTime: auction.countdownTime,
-    // });
-
-    // const updatedAuction = await Auction.findById(auctionId)
-    //   .populate({
-    //     path: "bidHistory.user",
-    //   })
-    //   .populate({ path: "bidBuddyUsers.user" });
-
     const updatedAuction = await getUpdatedAuction(auctionId);
     io.to(auctionId).emit("bidHistory", { updatedAuction });
-    // socket.broadcast.emit("updated-auction", { updatedAuction });
     socket.broadcast.emit("updated-auction", { updatedAuction });
     io.to(auctionId).emit("bidPlaced", newBid);
-    // }
-    // catch (error) {
-    //   console.error("Error handling manual bid:", error);
-    //   io.to(socket.id).emit("error", "Error placing manual bid");
-    // }
   });
 };
 

@@ -39,11 +39,9 @@ const activateBidBuddy = async (io, socket) => {
             "bidBuddyUsers.$.availableBids": totalBids,
           },
         }
-        // { new: true }
       );
       // get user
       const userData = await User.findById(userId).select("availableBid");
-      // console.log("userdata form avitivat", userData);
       // update user
       await User.findByIdAndUpdate(userId, {
         availableBid: userData?.availableBid - totalBids,
@@ -61,7 +59,6 @@ const activateBidBuddy = async (io, socket) => {
     //     options: { limit: 10 }, // Limit for bidBuddyUsers
     //   });
     const updatedAuction = await getUpdatedAuction(auctionId);
-    console.log("Update dkfjd", updatedAuction);
     io.to(auctionId).emit("bidHistory", { updatedAuction });
     socket.broadcast.emit("updated-auction", { updatedAuction });
   });

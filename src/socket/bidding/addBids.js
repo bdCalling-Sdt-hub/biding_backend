@@ -17,11 +17,9 @@ const addBids = async (io, socket) => {
       {
         $set: {
           "bidBuddyUsers.$.isActive": true,
-          //   "bidBuddyUsers.&.availableBids": bids,
         },
         $inc: { "bidBuddyUsers.$.availableBids": bids },
       }
-      //   { new: true }
     );
 
     // const updatedAuction = await Auction.findById(auctionId)
@@ -33,7 +31,6 @@ const addBids = async (io, socket) => {
     const updatedAuction = await getUpdatedAuction(auctionId);
 
     io.to(auctionId).emit("bidHistory", { updatedAuction });
-    // socket.broadcast.emit("updated-auction", { updatedAuction });
     socket.broadcast.emit("updated-auction", { updatedAuction });
   });
 };

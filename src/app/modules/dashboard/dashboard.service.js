@@ -1,17 +1,12 @@
 const httpStatus = require("http-status");
 const ApiError = require("../../../errors/ApiError");
 const User = require("../user/user.model");
-const QueryBuilder = require("../../../builder/QueryBuilder");
 const { Transaction } = require("../payment/payment.model");
 const { ENUM_PAYMENT_STATUS } = require("../../../utils/enums");
 const Auction = require("../auction/auction.model");
 const Banner = require("./banner.model");
-const {
-  sendImageToCloudinary,
-} = require("../../../helpers/sendImageToCloudinary");
 const config = require("../../../config");
-
-// --- user ---
+const QueryBuilder = require("../../../builder/queryBuilder");
 
 const getAllUsers = async (query) => {
   const usersQuery = new QueryBuilder(User.find(), query)
@@ -103,61 +98,6 @@ const getDashboardMetaDataFromDB = async () => {
   };
 };
 
-// get area chart data
-// const getAreaChartDataForIncomeFromDB = async (year) => {
-//   // Create date objects for the start and end of the year
-//   const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
-//   const endDate = new Date(`${year + 1}-01-01T00:00:00.000Z`);
-
-//   const incomeData = await Transaction.aggregate([
-//     {
-//       $match: {
-//         createdAt: {
-//           $gte: startDate,
-//           $lt: endDate,
-//         },
-//       },
-//     },
-//     {
-//       $group: {
-//         _id: { $month: "$createdAt" }, // Group by month
-//         totalIncome: { $sum: "$paidAmount" }, // Sum the paid amounts
-//       },
-//     },
-//     {
-//       $sort: { _id: 1 }, // Sort by month
-//     },
-//   ]);
-
-//   console.log("Aggregated Income Data:", incomeData); // Log the aggregated data
-
-//   // Create an array for all months with default income of 0
-//   const months = [
-//     { month: "January", totalIncome: 0 },
-//     { month: "February", totalIncome: 0 },
-//     { month: "March", totalIncome: 0 },
-//     { month: "April", totalIncome: 0 },
-//     { month: "May", totalIncome: 0 },
-//     { month: "June", totalIncome: 0 },
-//     { month: "July", totalIncome: 0 },
-//     { month: "August", totalIncome: 0 },
-//     { month: "September", totalIncome: 0 },
-//     { month: "October", totalIncome: 0 },
-//     { month: "November", totalIncome: 0 },
-//     { month: "December", totalIncome: 0 },
-//   ];
-
-//   // Map the aggregated data to the corresponding months
-//   incomeData.forEach((data) => {
-//     const monthIndex = data._id - 1; // Convert month (1-12) to index (0-11)
-//     if (months[monthIndex]) {
-//       months[monthIndex].totalIncome = data.totalIncome;
-//     }
-//   });
-
-//   return months;
-// };
-
 const getAreaChartDataForIncomeFromDB = async (year) => {
   // Create date objects for the start and end of the year
   const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
@@ -231,7 +171,7 @@ const getAreaChartDataForIncomeFromDB = async (year) => {
           previousYearTotalIncome) *
         100
       : currentYearTotalIncome > 0
-      ? 100 // If previous year was 0 and current year is > 0
+      ? currentYearTotalIncome // If previous year was 0 and current year is > 0
       : 0;
 
   // Calculate Monthly Growth Percentages
@@ -246,7 +186,7 @@ const getAreaChartDataForIncomeFromDB = async (year) => {
           previousMonthIncome) *
         100
       : months[currentMonthIndex].totalIncome > 0
-      ? 100 // If previous month was 0 and current month is > 0
+      ? months[currentMonthIndex].totalIncome // If previous month was 0 and current month is > 0
       : 0;
 
   // Calculate Daily Growth
@@ -297,7 +237,7 @@ const getAreaChartDataForIncomeFromDB = async (year) => {
     yesterdayIncome > 0
       ? ((todayIncome - yesterdayIncome) / yesterdayIncome) * 100
       : todayIncome > 0
-      ? 100 // If yesterday was 0 and today is > 0
+      ? todayIncome // If yesterday was 0 and today is > 0
       : 0;
 
   // Return the detailed monthly data along with growth percentages

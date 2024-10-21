@@ -9,15 +9,12 @@ const shippingSchema = new Schema(
     },
     user_name: {
       type: String,
-      required: true,
     },
     email: {
       type: String,
-      required: true,
     },
     phone_number: {
       type: String,
-      required: true,
     },
     streetAddress: { type: String },
     city: { type: String },
