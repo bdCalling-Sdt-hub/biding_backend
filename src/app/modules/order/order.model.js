@@ -130,6 +130,10 @@ const orderSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    paymentLink: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

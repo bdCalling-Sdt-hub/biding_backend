@@ -31,13 +31,23 @@ router.post(
   orderController.createFinanceOrder
 );
 router.patch(
-  "/approve-finance-order",
+  "/approve-finance-order/:id",
   auth(ENUM_USER_ROLE.ADMIN),
   orderController.approveFinanceOrder
 );
 router.patch(
-  "/make-paid",
+  "/decline-finance-order/:id",
+  auth(ENUM_USER_ROLE.ADMIN),
+  orderController.declineFinanceOrder
+);
+router.patch(
+  "/make-paid/:id",
   auth(ENUM_USER_ROLE.ADMIN),
   orderController.makePaid
+);
+router.patch(
+  "/send-payment-link/:id",
+  auth(ENUM_USER_ROLE.ADMIN),
+  orderController.sendPaymentLink
 );
 module.exports = router;
