@@ -1,6 +1,6 @@
 const cron = require("node-cron");
 const httpStatus = require("http-status");
-
+const bcrypt = require("bcrypt");
 const ApiError = require("../../../errors/ApiError");
 const User = require("./user.model");
 const config = require("../../../config");
@@ -175,18 +175,18 @@ const resetPassword = async (payload) => {
     );
   }
 
-  const worker = await Worker.findOne(
+  const user = await User.findOne(
     { email },
     { _id: 1, verified: 1, verifyCode: 1 }
   );
 
-  if (!worker) {
+  if (!user) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Client not found!");
   }
-  if (!worker.verifyCode) {
+  if (!user.verifyCode) {
     throw new ApiError(httpStatus.NOT_FOUND, "You have no verification code");
   }
-  if (!worker.verified) {
+  if (!user.verified) {
     throw new ApiError(
       httpStatus.FORBIDDEN,
       "You are not verified. Please verify the OTP"
@@ -198,12 +198,12 @@ const resetPassword = async (payload) => {
     Number(config.bcrypt_salt_rounds)
   );
 
-  await Worker.updateOne({ email }, { password: hashedPassword });
+  await User.updateOne({ email }, { password: hashedPassword });
 
-  worker.verifyCode = null;
-  worker.verifyExpire = null;
+  user.verifyCode = null;
+  user.verifyExpire = null;
 
-  await worker.save();
+  await user.save();
 };
 
 // Scheduled task to delete expired inactive users

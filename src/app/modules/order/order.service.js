@@ -13,6 +13,7 @@ const {
 } = require("../../../utils/enums");
 const Auction = require("../auction/auction.model");
 const Notification = require("../notification/notification.model");
+const isStatusTransitionValid = require("./order.utils");
 
 const getAllOrderFromDB = async (query) => {
   // let query = {};
@@ -80,6 +81,16 @@ const changeOrderStatusIntoDB = async (id, status) => {
   const order = await Order.findById(id);
   if (!order) {
     throw new ApiError(httpStatus.NOT_FOUND, "This order does not exists");
+  }
+
+  const currentStatus = order.status;
+
+  // Validate if the status transition is allowed
+  if (!isStatusTransitionValid(currentStatus, status)) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Cannot change status from ${currentStatus} to ${status}`
+    );
   }
   const result = await Order.findByIdAndUpdate(
     id,
@@ -247,7 +258,6 @@ const makePaid = async (id) => {
 
 //
 const sendPaymentLink = async (id, paymentLink) => {
-  console.log("payment link", paymentLink);
   const order = await Order.findById(id);
   if (!order.isApproved) {
     throw new ApiError(
@@ -263,7 +273,6 @@ const sendPaymentLink = async (id, paymentLink) => {
       runValidators: true,
     }
   );
-  console.log(result);
   return result;
 };
 
