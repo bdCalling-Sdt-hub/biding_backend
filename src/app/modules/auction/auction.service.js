@@ -12,34 +12,99 @@ const { sendEmail } = require("../../../utils/sendEmail");
 const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
 const placeRandomBid = require("../../../socket/bidding/placeRandomBid");
 const QueryBuilder = require("../../../builder/queryBuilder");
+// const createAuctionIntoDB = async (data) => {
+//   const startingDate = new Date(data.startingDate);
+//   const [hours, minutes] = data.startingTime.split(":");
+
+//   startingDate.setHours(hours, minutes);
+
+//   data.activateDateTime = startingDate;
+
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+
+//   try {
+//     // Format the starting date and time
+//     data.activateTime = startingDate;
+//     if (startingDate <= new Date()) {
+//       throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
+//     }
+
+//     const result = await Auction.create([data], { session });
+//     if (!result || result.length === 0) {
+//       throw new ApiError(
+//         httpStatus.INTERNAL_SERVER_ERROR,
+//         "Auction not created, try again"
+//       );
+//     }
+
+//     const [hours, minutes] = data.startingTime.split(":");
+//     startingDate.setHours(hours, minutes);
+
+//     // Format the date and time to a readable format
+//     const options = {
+//       year: "numeric",
+//       month: "long",
+//       day: "numeric",
+//       hour: "numeric",
+//       minute: "numeric",
+//       hour12: true,
+//     };
+//     const formattedDate = startingDate.toLocaleDateString("en-US", options);
+//     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
+//     await Notification.create({
+//       message: notificationMessage,
+//       receiver: ENUM_USER_ROLE.ADMIN,
+//     });
+
+//     // send notifications to the admin
+//     const adminUnseenNotificationCount = await getAdminNotificationCount();
+//     global.io.emit("admin-notifications", adminUnseenNotificationCount);
+
+//     await session.commitTransaction();
+//     session.endSession();
+
+//     return result;
+//   } catch (err) {
+//     await session.abortTransaction();
+//     session.endSession();
+
+//     if (err instanceof ApiError) {
+//       throw err;
+//     }
+//     if (err instanceof mongoose.Error.ValidationError) {
+//       const messages = Object.values(err.errors).map((error) => error.message);
+//       throw new ApiError(httpStatus.BAD_REQUEST, messages.join(", "));
+//     }
+
+//     throw new ApiError(
+//       httpStatus.SERVICE_UNAVAILABLE,
+//       "Something went wrong. Try again later."
+//     );
+//   }
+// };
 const createAuctionIntoDB = async (data) => {
   const startingDate = new Date(data.startingDate);
   const [hours, minutes] = data.startingTime.split(":");
 
   startingDate.setHours(hours, minutes);
-
   data.activateDateTime = startingDate;
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
-    // Format the starting date and time
+    // Check if starting date is in the future
     data.activateTime = startingDate;
     if (startingDate <= new Date()) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
     }
 
-    const result = await Auction.create([data], { session });
-    if (!result || result.length === 0) {
+    // Create auction in the database
+    const result = await Auction.create(data);
+    if (!result) {
       throw new ApiError(
         httpStatus.INTERNAL_SERVER_ERROR,
         "Auction not created, try again"
       );
     }
-
-    const [hours, minutes] = data.startingTime.split(":");
-    startingDate.setHours(hours, minutes);
 
     // Format the date and time to a readable format
     const options = {
@@ -52,23 +117,19 @@ const createAuctionIntoDB = async (data) => {
     };
     const formattedDate = startingDate.toLocaleDateString("en-US", options);
     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
+
+    // Create a notification for the admin
     await Notification.create({
       message: notificationMessage,
       receiver: ENUM_USER_ROLE.ADMIN,
     });
 
-    // send notifications to the admin
+    // Send notifications to the admin
     const adminUnseenNotificationCount = await getAdminNotificationCount();
     global.io.emit("admin-notifications", adminUnseenNotificationCount);
 
-    await session.commitTransaction();
-    session.endSession();
-
     return result;
   } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
-
     if (err instanceof ApiError) {
       throw err;
     }
@@ -120,205 +181,6 @@ const getAllAuctionFromDB = async (query, userId) => {
 
   return { meta, result: enrichedResult };
 };
-
-// get single auction
-// const getSingleAuctionFromDB = async (id) => {
-//   const result = await Auction.findById(id)
-//     .populate({
-//       path: "bidBuddyUsers",
-//       options: { limit: 10 },
-//       populate: {
-//         path: "user",
-//         model: "User",
-//       },
-//     })
-//     .populate({
-//       path: "bidHistory",
-//       populate: {
-//         path: "user",
-//         model: "User",
-//       },
-//     });
-
-//   if (!result) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
-//   }
-
-//   // Manually limit the bidHistory to the first 5 entries
-//   result.bidHistory = result.bidHistory.slice(0, 5);
-
-//   return result;
-// };
-// const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
-//   try {
-//     const auction = await Auction.aggregate([
-//       {
-//         $match: { _id: new mongoose.Types.ObjectId(auctionId) }, // Match the auction by ID
-//       },
-//       {
-//         $lookup: {
-//           from: "users", // Ensure the collection name is correct
-//           localField: "bidBuddyUsers.user",
-//           foreignField: "_id",
-//           as: "bidBuddyUsersData",
-//         },
-//       },
-//       {
-//         $lookup: {
-//           from: "users", // Ensure the collection name is correct
-//           localField: "bidHistory.user",
-//           foreignField: "_id",
-//           as: "bidHistoryUsers",
-//         },
-//       },
-//       {
-//         $project: {
-//           name: 1,
-//           category: 1,
-//           reservedBid: 1,
-//           incrementValue: 1,
-//           startingDate: 1,
-//           startingTime: 1,
-//           description: 1,
-//           images: 1,
-//           status: 1,
-//           currentPrice: 1,
-//           totalBidPlace: 1,
-//           countdownTime: 1,
-//           activateTime: 1,
-//           endedTime: 1,
-//           financeAvailable: 1,
-//           totalMonthForFinance: 1,
-//           bidBuddyUsers: {
-//             $map: {
-//               input: "$bidBuddyUsers",
-//               as: "bidBuddyUser",
-//               in: {
-//                 user: "$$bidBuddyUser.user",
-//                 availableBids: "$$bidBuddyUser.availableBids",
-//                 isActive: "$$bidBuddyUser.isActive",
-//                 userInfo: {
-//                   $arrayElemAt: [
-//                     {
-//                       $filter: {
-//                         input: "$bidBuddyUsersData",
-//                         as: "user",
-//                         cond: { $eq: ["$$user._id", "$$bidBuddyUser.user"] },
-//                       },
-//                     },
-//                     0,
-//                   ],
-//                 },
-//               },
-//             },
-//           },
-//           bidHistory: { $slice: ["$bidHistory", -bidHistoryLimit] },
-//         },
-//       },
-//       {
-//         $addFields: {
-//           bidBuddyUsers: {
-//             $map: {
-//               input: "$bidBuddyUsers",
-//               as: "bidBuddyUser",
-//               in: {
-//                 user: "$$bidBuddyUser.user",
-//                 availableBids: "$$bidBuddyUser.availableBids",
-//                 isActive: "$$bidBuddyUser.isActive",
-//                 name: { $ifNull: ["$$bidBuddyUser.userInfo.name", null] },
-//                 email: { $ifNull: ["$$bidBuddyUser.userInfo.email", null] },
-//                 profile_image: {
-//                   $ifNull: ["$$bidBuddyUser.userInfo.profile_image", null],
-//                 },
-//               },
-//             },
-//           },
-//         },
-//       },
-//     ]);
-
-//     if (!auction || auction.length === 0) {
-//       throw new Error("Auction not found");
-//     }
-
-//     return auction[0]; // Return the first (and only) auction object
-//   } catch (error) {
-//     console.error("Error fetching auction:", error);
-//     throw error;
-//   }
-// };
-// const getAllAuctionFromDB = async (query, userId, bidHistoryLimit = 5) => {
-//   try {
-//     // Query auctions based on filters, search, pagination, and sorting
-//     const auctionQuery = new QueryBuilder(Auction.find(), query)
-//       .search(["name"])
-//       .filter()
-//       .sort()
-//       .paginate()
-//       .fields();
-
-//     // Execute the query and populate related user data
-//     const auctions = await auctionQuery.modelQuery
-//       .populate({
-//         path: "bidBuddyUsers.user",
-//         select: "name email profile_image",
-//       })
-//       .populate({
-//         path: "bidHistory.user",
-//         select: "name email profile_image location",
-//       })
-//       .exec();
-
-//     if (!auctions || auctions.length === 0) {
-//       throw new Error("No auctions found");
-//     }
-
-//     // Retrieve bookmarks for the user
-//     const bookmarks = await Bookmark.find({ user: userId }).select("auction");
-//     const bookmarkedAuctionIds = new Set(
-//       bookmarks.map((b) => b.auction.toString())
-//     );
-
-//     // Process the auctions data to match the required structure
-//     const enrichedAuctions = auctions.map((auction) => {
-//       const bidBuddyUsers = auction.bidBuddyUsers.map((bidBuddy) => ({
-//         user: bidBuddy.user._id,
-//         availableBids: bidBuddy.availableBids,
-//         isActive: bidBuddy.isActive,
-//         name: bidBuddy.user.name,
-//         email: bidBuddy.user.email,
-//         profile_image: bidBuddy.user.profile_image,
-//       }));
-
-//       const bidHistory = auction.bidHistory
-//         .slice(-bidHistoryLimit) // Limit the bid history
-//         .map((bid) => ({
-//           user: bid.user._id,
-//           bidAmount: bid.bidAmount,
-//           time: bid.time,
-//           name: bid.user.name,
-//           email: bid.user.email,
-//           profile_image: bid.user.profile_image,
-//           location: bid.user.location,
-//         }));
-
-//       return {
-//         ...auction.toObject(),
-//         bidBuddyUsers,
-//         bidHistory,
-//         isBookmark: bookmarkedAuctionIds.has(auction._id.toString()),
-//       };
-//     });
-
-//     // Get total count for pagination meta data
-//     const meta = await auctionQuery.countTotal();
-
-//     return { meta, result: enrichedAuctions };
-//   } catch (error) {
-//     console.error("Error fetching auctions:", error);
-//     throw error;
-//   }
-// };
 
 const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
   try {
@@ -571,13 +433,14 @@ const updateAuctionStatuses = async () => {
 
   isRunning = true;
   const currentTime = new Date();
+  // const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
   const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
   const fiveSecondAgo = new Date(currentTime.getTime() - 5 * 1000);
-
+  const nineSecondsLater = new Date(currentTime.getTime() + 9 * 1000);
   try {
     const auctionsToActivate = await Auction.updateMany(
       {
-        activateTime: { $lte: nineSecondsAgo },
+        activateTime: { $gte: currentTime, $lte: nineSecondsLater },
         status: ENUM_AUCTION_STATUS.UPCOMING,
       },
       {
