@@ -147,6 +147,10 @@ const auctionSchema = new mongoose.Schema(
     totalMonthForFinance: {
       type: Number,
     },
+    countdownTime: {
+      type: Number,
+      default: 0,
+    },
     uniqueBidders: {
       type: [uniqueBidderSchema],
       default: [],

@@ -435,7 +435,8 @@ const updateAuctionStatuses = async () => {
   const currentTime = new Date();
   // const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
   const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
-  const fiveSecondAgo = new Date(currentTime.getTime() - 5 * 1000);
+  // const fiveSecondAgo = new Date(currentTime.getTime() - 5 * 1000);
+  const fiveSecondLetter = new Date(currentTime.getTime() + 5 * 1000);
   const nineSecondsLater = new Date(currentTime.getTime() + 9 * 1000);
   try {
     const auctionsToActivate = await Auction.updateMany(
@@ -445,6 +446,7 @@ const updateAuctionStatuses = async () => {
       },
       {
         $set: { status: ENUM_AUCTION_STATUS.ACTIVE },
+        countdownTime: 9,
       }
     );
     console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
@@ -464,7 +466,7 @@ const updateAuctionStatuses = async () => {
 
     // get auctions those are ready for bid with bidBuddy----------------------------
     const readyAuctionsForBidBuddyBid = await Auction.find({
-      activateTime: { $lte: fiveSecondAgo },
+      activateTime: { $gte: currentTime, $lte: fiveSecondLetter },
       status: ENUM_AUCTION_STATUS.ACTIVE,
     });
 
@@ -501,6 +503,7 @@ const updateAuctionStatuses = async () => {
       },
       {
         $set: { status: ENUM_AUCTION_STATUS.COMPLETED },
+        countdownTime: 0,
       }
     );
     console.log(`Completed ${auctionsToComplete.modifiedCount} auctions.`);
