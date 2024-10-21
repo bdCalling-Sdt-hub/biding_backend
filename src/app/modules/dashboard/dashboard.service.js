@@ -368,6 +368,20 @@ const getBanner = async () => {
   return await Banner.find();
 };
 
+// send credit to user ------------------
+
+const sendCreditToUser = async (userId, creditAmount) => {
+  console.log(userId, creditAmount);
+  const result = await User.findByIdAndUpdate(
+    userId,
+    {
+      $inc: { availableBid: creditAmount },
+    },
+    { new: true, runValidators: true }
+  );
+  return result;
+};
+
 const DashboardServices = {
   getAllUsers,
   getSingleUser,
@@ -378,10 +392,7 @@ const DashboardServices = {
   deleteBanner,
   getAreaChartDataForIncomeFromDB,
   getBanner,
-  // getAllDriver,
-  // getSingleDriver,
-  // blockUnblockDriver,
-  // verifyDriver,
+  sendCreditToUser,
 };
 
 module.exports = DashboardServices;

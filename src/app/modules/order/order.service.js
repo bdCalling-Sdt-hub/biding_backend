@@ -12,6 +12,7 @@ const {
   ENUM_DELIVERY_STATUS,
 } = require("../../../utils/enums");
 const Auction = require("../auction/auction.model");
+const Notification = require("../notification/notification.model");
 
 const getAllOrderFromDB = async (query) => {
   // let query = {};
@@ -201,12 +202,33 @@ const approveFinanceOrder = async (id) => {
   return result;
 };
 
+const declineFinanceOrder = async (id) => {
+  const order = await Order.findById(id);
+  if (!order) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Finance order not found");
+  }
+
+  const result = await Order.findByIdAndDelete(id);
+
+  const notificationData = {
+    title: "Your finance order request has been rejected",
+    message: `Your finance order request has been rejected , please contact our support `,
+    receiver: order.user,
+  };
+  await Notification.create(notificationData);
+
+  return result;
+};
+
 const makePaid = async (id) => {
   const order = await Order.findById(id).select(
     "paidInstallment installmentLeft dueAmount monthlyAmount"
   );
   if (!order) {
     throw new ApiError(httpStatus.NOT_FOUND, "Finance order not found");
+  }
+  if (order.installmentLeft === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "No installment left");
   }
 
   const result = await Order.findByIdAndUpdate(
@@ -220,6 +242,28 @@ const makePaid = async (id) => {
     },
     { new: true, runValidators: true }
   );
+  return result;
+};
+
+//
+const sendPaymentLink = async (id, paymentLink) => {
+  console.log("payment link", paymentLink);
+  const order = await Order.findById(id);
+  if (!order.isApproved) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "The order was not found, or you didn't approve it"
+    );
+  }
+  const result = await Order.findByIdAndUpdate(
+    id,
+    { paymentLink: paymentLink },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+  console.log(result);
   return result;
 };
 
@@ -247,13 +291,29 @@ cron.schedule("0 0 2 * *", async () => {
       orders.map(async (order) => {
         order.monthlyStatus = "due";
         await order.save();
-        console.log(`Updated order ${order._id} to due status`);
       })
     );
-
-    console.log("Monthly due check completed.");
   } catch (error) {
     console.error("Error during monthly due check:", error);
+  }
+});
+
+// This cron job runs every hour
+cron.schedule("*/5 * * * *", async () => {
+  try {
+    // Get the time that is 10 minutes ago from now
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+
+    // Query to delete orders that match the criteria
+    const result = await Order.deleteMany({
+      status: "pending",
+      createdAt: { $lte: tenMinutesAgo },
+      orderType: { $ne: ENUM_ORDER_TYPE.FINANCE },
+    });
+
+    console.log(`${result.deletedCount} orders deleted.`);
+  } catch (error) {
+    console.error("Error running the cron job:", error);
   }
 });
 
@@ -267,6 +327,8 @@ const orderService = {
   createFinanceOrder,
   approveFinanceOrder,
   makePaid,
+  declineFinanceOrder,
+  sendPaymentLink,
 };
 
 module.exports = orderService;

@@ -277,7 +277,7 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
     paymentAmount =
       orderDetails?.orderType === ENUM_ORDER_TYPE.FINANCE
         ? monthlyAmount
-        : auction?.currentPrice.toFixed();
+        : auction?.currentPrice.toFixed(2);
   } else {
     paymentAmount = amount;
   }

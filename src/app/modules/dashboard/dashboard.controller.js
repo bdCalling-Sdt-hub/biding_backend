@@ -97,6 +97,19 @@ const deleteBanner = catchAsync(async (req, res) => {
   });
 });
 
+const sendCreditToUser = catchAsync(async (req, res) => {
+  const result = await DashboardServices.sendCreditToUser(
+    req?.params?.id,
+    req?.body?.creditAmount
+  );
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Credit send successfully",
+    data: result,
+  });
+});
+
 const DashboardController = {
   getAllUsers,
   getSingleUser,
@@ -107,6 +120,7 @@ const DashboardController = {
   updateBannerIndex,
   deleteBanner,
   getBanner,
+  sendCreditToUser,
   // getAllDriver,
   // getSingleDriver,
   // blockUnblockDriver,

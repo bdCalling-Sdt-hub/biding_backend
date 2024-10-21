@@ -55,44 +55,10 @@ router.get(
   DashboardController.getAreaChartDataForIncome
 );
 
-// --- driver ---
-
-// router.get(
-//   "/auth/get-all-driver",
-//   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-//   DashboardController.getAllDriver
-// );
-
-// router.get(
-//   "/auth/get-single-driver",
-//   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-//   DashboardController.getSingleDriver
-// );
-
-// router.patch(
-//   "/auth/block-unblock-driver",
-//   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-//   DashboardController.blockUnblockDriver
-// );
-
-// router.patch(
-//   "/auth/verify-driver",
-//   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-//   DashboardController.verifyDriver
-// );
-
-// -------------
-
-// router.post(
-//   "/auth/add-user",
-//   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-//   AdminController.createUser
-// );
-
-// router.get(
-//   "/auth/admins",
-//   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-//   AdminController.getAllAdmin
-// );
+router.post(
+  "/send-credit/:id",
+  auth(ENUM_USER_ROLE.ADMIN),
+  DashboardController.sendCreditToUser
+);
 
 module.exports = router;

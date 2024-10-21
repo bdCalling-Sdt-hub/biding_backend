@@ -101,6 +101,16 @@ const approveFinanceOrder = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const declineFinanceOrder = catchAsync(async (req, res) => {
+  const result = await orderService.declineFinanceOrder(req?.params?.id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Order decline successfully",
+    data: result,
+  });
+});
 const makePaid = catchAsync(async (req, res) => {
   const result = await orderService.makePaid(req?.params?.id);
 
@@ -108,6 +118,19 @@ const makePaid = catchAsync(async (req, res) => {
     statusCode: 200,
     success: true,
     message: "Successfully make paid",
+    data: result,
+  });
+});
+const sendPaymentLink = catchAsync(async (req, res) => {
+  const result = await orderService.sendPaymentLink(
+    req?.params?.id,
+    req?.body?.paymentLink
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Successfully send payment link",
     data: result,
   });
 });
@@ -121,7 +144,9 @@ const orderController = {
   getMyBids,
   createFinanceOrder,
   approveFinanceOrder,
+  declineFinanceOrder,
   makePaid,
+  sendPaymentLink,
 };
 
 module.exports = orderController;

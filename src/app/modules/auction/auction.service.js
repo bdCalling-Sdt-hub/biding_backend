@@ -613,15 +613,25 @@ const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
 
 // update auction into db
 const updateAuctionIntoDB = async (id, data) => {
+  const auction = await Auction.findById(id).select("status currentPrice");
+  if (!auction) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
+  }
+
+  if (
+    result.status === ENUM_AUCTION_STATUS.COMPLETED &&
+    result.currentPrice > 0
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "This auction already completed , a user won this auction you can not update this auction right now "
+    );
+  }
   const startingDate = new Date(data.startingDate);
   const [hours, minutes] = data.startingTime.split(":");
 
   startingDate.setHours(hours, minutes);
 
-  // const auction = await Auction.findById(id);
-  // if (!auction) {
-  //   throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
-  // }
   data.activateTime = startingDate;
   if (startingDate <= new Date()) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
@@ -700,8 +710,6 @@ const getMyBiddingHistoryFromDB = async (userId) => {
 };
 
 // // Schedule to run the update function every second
-// setInterval(updateAuctionStatuses, 1000);
-
 let isRunning = false;
 
 const updateAuctionStatuses = async () => {
@@ -737,17 +745,17 @@ const updateAuctionStatuses = async () => {
     // const allAuctions = await Auction.find();
     // global.io.emit("allAuctions", allAuctions);
 
-    // get auctions those are ready for bid with bidBuddy
-    // const readyAuctionsForBidBuddyBid = await Auction.find({
-    //   activateTime: { $lte: fiveSecondAgo },
-    //   status: ENUM_AUCTION_STATUS.ACTIVE,
-    // });
+    // get auctions those are ready for bid with bidBuddy----------------------------
+    const readyAuctionsForBidBuddyBid = await Auction.find({
+      activateTime: { $lte: fiveSecondAgo },
+      status: ENUM_AUCTION_STATUS.ACTIVE,
+    });
 
-    // readyAuctionsForBidBuddyBid?.forEach((auction) => {
-    //   console.log("Nice to meet yo9u in random bit");
-    //   placeRandomBid(auction?._id);
-    // });
-
+    readyAuctionsForBidBuddyBid?.forEach((auction) => {
+      console.log("Nice to meet yo9u in random bit");
+      placeRandomBid(auction?._id);
+    });
+    //-----------------------------------------------
     // for complete auction
     // const auctionsToComplete = await Auction.find(
     //   {
@@ -768,37 +776,38 @@ const updateAuctionStatuses = async () => {
     //   }
     // );
 
-    // Mark auctions as completed if activateTime is less than or equal to the current time
-    // const auctionsToComplete = await Auction.updateMany(
-    //   {
-    //     activateTime: { $lte: currentTime },
-    //     status: ENUM_AUCTION_STATUS.ACTIVE,
-    //   },
-    //   {
-    //     $set: { status: ENUM_AUCTION_STATUS.COMPLETED },
-    //   }
-    // );
-    // console.log(`Completed ${auctionsToComplete.modifiedCount} auctions.`);
-    // const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
-    // // Find and broadcast the completed auctions
-    // if (auctionsToComplete.modifiedCount > 0) {
-    //   const completedAuctions = await Auction.find({
-    //     status: ENUM_AUCTION_STATUS.COMPLETED,
-    //     updatedAt: { $gte: oneMinuteAgo },
-    //   });
+    // Mark auctions as completed if activateTime is less than or equal to the current time---------------
+    const auctionsToComplete = await Auction.updateMany(
+      {
+        activateTime: { $lte: currentTime },
+        status: ENUM_AUCTION_STATUS.ACTIVE,
+      },
+      {
+        $set: { status: ENUM_AUCTION_STATUS.COMPLETED },
+      }
+    );
+    console.log(`Completed ${auctionsToComplete.modifiedCount} auctions.`);
+    const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
+    // Find and broadcast the completed auctions
+    if (auctionsToComplete.modifiedCount > 0) {
+      const completedAuctions = await Auction.find({
+        status: ENUM_AUCTION_STATUS.COMPLETED,
+        updatedAt: { $gte: oneMinuteAgo },
+      });
 
-    //   completedAuctions.forEach((completedAuction) => {
-    //     global.io.sockets.sockets.forEach((socket) => {
-    //       socket.broadcast.emit("updated-auction", {
-    //         updatedAuction: completedAuction,
-    //       });
-    //       console.log("completed id", completedAuction?._id);
-    //       global.io
-    //         .to(completedAuction?._id)
-    //         .emit("bidHistory", { updatedAuction: completedAuction });
-    //     });
-    //   });
-    // }
+      completedAuctions.forEach((completedAuction) => {
+        global.io.sockets.sockets.forEach((socket) => {
+          socket.broadcast.emit("updated-auction", {
+            updatedAuction: completedAuction,
+          });
+          console.log("completed id", completedAuction?._id);
+          global.io
+            .to(completedAuction?._id)
+            .emit("bidHistory", { updatedAuction: completedAuction });
+        });
+      });
+    }
+    //-----------------------------------------
   } catch (error) {
     console.error("Error updating auctions:", error);
   } finally {

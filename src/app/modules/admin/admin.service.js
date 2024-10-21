@@ -55,7 +55,6 @@ const updateAdminProfile = async (req) => {
   }
   const userId = req?.user?.userId;
   const data = req?.body;
-  console.log("profile body data", data);
 
   const result = await Admin.findByIdAndUpdate(userId, data, {
     runValidators: true,

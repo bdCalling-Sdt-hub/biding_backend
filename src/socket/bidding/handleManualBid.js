@@ -12,6 +12,14 @@ const handleManualBid = async (io, socket) => {
     console.log("dat", data);
     const auctionId = data?.auction_id;
     const userId = data?.user_id;
+
+    const userData = await User.findById(userId);
+    if (userData.is_block) {
+      io.to(userId).emit("socket-error", {
+        errorMessage: "You are not authorized for place bid",
+      });
+    }
+
     // try {
     const auction = await Auction.findOne({
       _id: auctionId,
