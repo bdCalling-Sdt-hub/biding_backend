@@ -62,7 +62,7 @@ const handleManualBid = async (io, socket) => {
 
     // Set activateTime to 9 seconds ago
     const currentTime = new Date();
-    auction.activateTime = new Date(currentTime.getTime() - 9 * 1000);
+    auction.activateTime = new Date(currentTime.getTime() + 9 * 1000);
 
     //save auction
     await auction.save();

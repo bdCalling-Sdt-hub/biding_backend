@@ -54,7 +54,7 @@ const placeRandomBid = async (auctionId) => {
         {
           $set: {
             currentPrice: newBidAmount,
-            activateTime: nineSecondsAgo,
+            activateTime: new Date(currentTime.getTime() + 9 * 1000),
             winingBidder: {
               user: randomUser?.user,
               bidAmount: newBidAmount,
