@@ -522,7 +522,6 @@ const updateAuctionStatuses = async () => {
           socket.broadcast.emit("updated-auction", {
             updatedAuction: completedAuction,
           });
-          console.log("completed id", completedAuction?._id);
           global.io
             .to(completedAuction?._id.toString())
             .emit("bidHistory", { updatedAuction: completedAuction });

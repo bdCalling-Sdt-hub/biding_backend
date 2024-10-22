@@ -1,13 +1,34 @@
 const Auction = require("../../app/modules/auction/auction.model");
 const User = require("../../app/modules/user/user.model");
 const getUpdatedAuction = require("../../helpers/getUpdatedAuctiion");
+const { ENUM_AUCTION_STATUS } = require("../../utils/enums");
 
 const activateBidBuddy = async (io, socket) => {
   socket.on("activateBidBuddy", async ({ auctionId, userId, totalBids }) => {
-    const auction = await Auction.findById(auctionId).select("bidBuddyUsers");
+    const existUser = await User.findById(userId);
+    if (existUser.availableBid < totalBids) {
+      io.to(userId).emit("socket-error", {
+        errorMessage: "You don't have available bids",
+      });
+      return;
+    }
+
+    const auction = await Auction.findById(auctionId).select(
+      "bidBuddyUsers status"
+    );
+
+    if (auction.status !== ENUM_AUCTION_STATUS.ACTIVE) {
+      io.to(userId).emit("socket-error", {
+        errorMessage:
+          "You can activate the bid buddy when the auction is active",
+      });
+      return;
+    }
+
     const existsUser = auction.bidBuddyUsers.find(
       (user) => user?.user?.toString() === userId
     );
+    const currentTime = new Date();
     if (!existsUser) {
       await Auction.findByIdAndUpdate(
         auctionId,
@@ -19,6 +40,7 @@ const activateBidBuddy = async (io, socket) => {
               isActive: true,
             },
           },
+          activateTime: new Date(currentTime.getTime() + 9 * 1000),
         },
         { new: true }
       );

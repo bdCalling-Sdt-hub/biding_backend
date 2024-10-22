@@ -15,7 +15,6 @@ const placeRandomBid = async (auctionId) => {
     if (!auction) {
       throw new Error("Auction not found");
     }
-    // console.log("bidHistory", auction.bidHistory);
     const lastBidUser =
       auction.bidHistory.length > 0
         ? auction.bidHistory[auction.bidHistory.length - 1].user
@@ -25,7 +24,7 @@ const placeRandomBid = async (auctionId) => {
       (user) =>
         user.isActive &&
         user.availableBids > auction.reservedBid &&
-        user.user.toString() !== lastBidUser._id.toString()
+        user.user.toString() !== lastBidUser?._id?.toString()
     );
 
     if (activeBidBuddyUsers.length > 0) {
@@ -35,9 +34,7 @@ const placeRandomBid = async (auctionId) => {
           Math.floor(Math.random() * activeBidBuddyUsers.length)
         ];
 
-      console.log("random user", randomUser);
       const newBidAmount = auction.currentPrice + auction.incrementValue;
-      console.log("new bid from random", newBidAmount);
       // const userUpdate = await User.findByIdAndUpdate(
       //   randomUser.user,
       //   {
@@ -55,7 +52,6 @@ const placeRandomBid = async (auctionId) => {
       //   randomUser.isActive = false;
       // }
       const currentTime = new Date();
-      const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
       // Update the auction details atomically
       const updateAuction = await Auction.findOneAndUpdate(
         { _id: auctionId, "bidBuddyUsers.user": randomUser.user },
