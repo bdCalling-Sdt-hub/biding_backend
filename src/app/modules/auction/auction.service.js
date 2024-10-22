@@ -337,8 +337,8 @@ const updateAuctionIntoDB = async (id, data) => {
   }
 
   if (
-    result.status === ENUM_AUCTION_STATUS.COMPLETED &&
-    result.currentPrice > 0
+    auction.status === ENUM_AUCTION_STATUS.COMPLETED &&
+    auction.currentPrice > 0
   ) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -465,7 +465,7 @@ const updateAuctionStatuses = async () => {
 
     const allAuctions = await Auction.find();
     global.io.emit("allAuctions", allAuctions);
-    global.io.emit("bidHistory", allAuctions);
+    // global.io.emit("bidHistory", allAuctions);
 
     // get auctions those are ready for bid with bidBuddy----------------------------
     const readyAuctionsForBidBuddyBid = await Auction.find({
