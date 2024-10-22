@@ -1,4 +1,5 @@
 const Auction = require("../../app/modules/auction/auction.model");
+const User = require("../../app/modules/user/user.model");
 const getUpdatedAuction = require("../../helpers/getUpdatedAuctiion");
 
 const addBids = async (io, socket) => {
@@ -22,11 +23,8 @@ const addBids = async (io, socket) => {
       }
     );
 
-    // const updatedAuction = await Auction.findById(auctionId)
-    //   .populate({
-    //     path: "bidHistory.user",
-    //   })
-    //   .populate({ path: "bidBuddyUsers.user" });
+    // user user data
+    await User.findByIdAndUpdate(userId, { $inc: { availableBid: -bids } });
 
     const updatedAuction = await getUpdatedAuction(auctionId);
 

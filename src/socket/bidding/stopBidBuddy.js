@@ -18,22 +18,8 @@ const stopBidBuddy = async (io, socket) => {
       ).select("bidBuddyUsers");
 
       await User.findByIdAndUpdate(userId, {
-        // availableBid: userData?.availableBid + totalBids,
         $inc: { availableBid: totalBids },
       });
-
-      //   if (updatedAuction) {
-      //     io.to(auctionId).emit("bidBuddyUpdated", updatedAuction.bidBuddyUsers);
-      //   }
-      // const updatedAuction = await Auction.findById(auctionId)
-      //   .populate({
-      //     path: "bidHistory.user",
-      //     options: { limit: 10 }, // Limit for bidHistory
-      //   })
-      //   .populate({
-      //     path: "bidBuddyUsers.user",
-      //     options: { limit: 10 }, // Limit for bidBuddyUsers
-      //   });
       const updatedAuction = await getUpdatedAuction(auctionId);
       io.to(auctionId).emit("bidHistory", { updatedAuction });
       socket.broadcast.emit("updated-auction", { updatedAuction });

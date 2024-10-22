@@ -8,8 +8,6 @@ const activateBidBuddy = async (io, socket) => {
     const existsUser = auction.bidBuddyUsers.find(
       (user) => user?.user?.toString() === userId
     );
-
-    console.log("existsuser", existsUser);
     if (!existsUser) {
       await Auction.findByIdAndUpdate(
         auctionId,
@@ -48,16 +46,6 @@ const activateBidBuddy = async (io, socket) => {
       });
     }
 
-    // const updatedAuction = await Auction.findById(auctionId);
-    // const updatedAuction = await Auction.findById(auctionId)
-    //   .populate({
-    //     path: "bidHistory.user",
-    //     options: { limit: 10 }, // Limit for bidHistory
-    //   })
-    //   .populate({
-    //     path: "bidBuddyUsers.user",
-    //     options: { limit: 10 }, // Limit for bidBuddyUsers
-    //   });
     const updatedAuction = await getUpdatedAuction(auctionId);
     io.to(auctionId).emit("bidHistory", { updatedAuction });
     socket.broadcast.emit("updated-auction", { updatedAuction });

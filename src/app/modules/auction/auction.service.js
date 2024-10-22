@@ -12,6 +12,7 @@ const { sendEmail } = require("../../../utils/sendEmail");
 const getAdminNotificationCount = require("../../../helpers/getAdminNotificationCount");
 const placeRandomBid = require("../../../socket/bidding/placeRandomBid");
 const QueryBuilder = require("../../../builder/queryBuilder");
+const User = require("../user/user.model");
 // const createAuctionIntoDB = async (data) => {
 //   const startingDate = new Date(data.startingDate);
 //   const [hours, minutes] = data.startingTime.split(":");
@@ -516,16 +517,40 @@ const updateAuctionStatuses = async () => {
         updatedAt: { $gte: oneMinuteAgo },
       });
 
-      completedAuctions.forEach((completedAuction) => {
+      completedAuctions.forEach(async (completedAuction) => {
         global.io.sockets.sockets.forEach((socket) => {
           socket.broadcast.emit("updated-auction", {
             updatedAuction: completedAuction,
           });
           console.log("completed id", completedAuction?._id);
           global.io
-            .to(completedAuction?._id)
+            .to(completedAuction?._id.toString())
             .emit("bidHistory", { updatedAuction: completedAuction });
         });
+        // return back bids to the winner if he set bidBuddy
+        const winningBidderId = completedAuction?.winingBidder?.user;
+
+        if (winningBidderId) {
+          // Find the bidBuddyUser matching the winning bidder
+          const winningBidderBuddy = completedAuction.bidBuddyUsers.find(
+            (buddy) => String(buddy.user) === String(winningBidderId)
+          );
+
+          if (winningBidderBuddy) {
+            const remainingBids = winningBidderBuddy.availableBids;
+            await User.findByIdAndUpdate(winningBidderId, {
+              $inc: { availableBid: remainingBids },
+            });
+
+            console.log(
+              `Added ${remainingBids} bids to user ${winningBidderId}`
+            );
+          } else {
+            console.log("Winning bidder not found in bidBuddyUsers");
+          }
+        } else {
+          console.log("No winning bidder for auction", completedAuction._id);
+        }
       });
     }
     //-----------------------------------------
