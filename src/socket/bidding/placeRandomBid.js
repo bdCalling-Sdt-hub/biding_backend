@@ -49,10 +49,14 @@ const placeRandomBid = async (auctionId) => {
       const currentTime = new Date();
       const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
       // Update the auction details atomically
-      const updateAuction = await Auction.findByIdAndUpdate(
-        auctionId,
+      const updateAuction = await Auction.findOneAndUpdate(
+        { auctionId, "bidBuddyUsers.user": randomUser.user },
         {
+          $inc: { "bidBuddyUsers.$.availableBids": auction.reservedBid },
           $set: {
+            "bidBuddyUsers.$.isActive":
+              randomUser.availableBids - auction.reservedBid <
+              auction.reservedBid,
             currentPrice: newBidAmount,
             activateTime: new Date(currentTime.getTime() + 9 * 1000),
             winingBidder: {
