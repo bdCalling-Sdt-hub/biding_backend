@@ -461,8 +461,9 @@ const updateAuctionStatuses = async () => {
       });
     });
 
-    // const allAuctions = await Auction.find();
-    // global.io.emit("allAuctions", allAuctions);
+    const allAuctions = await Auction.find();
+    global.io.emit("allAuctions", allAuctions);
+    global.io.email("bidHistory", allAuctions);
 
     // get auctions those are ready for bid with bidBuddy----------------------------
     const readyAuctionsForBidBuddyBid = await Auction.find({
