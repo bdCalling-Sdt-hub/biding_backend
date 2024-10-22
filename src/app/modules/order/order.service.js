@@ -117,6 +117,7 @@ const getMyBids = async (userId) => {
 const createFinanceOrder = async (userId, orderDetails) => {
   const isExistFinanceOrder = await Order.findOne({
     item: orderDetails?.product,
+    status: { $ne: "PAYMENT_PENDING" },
   });
   if (isExistFinanceOrder) {
     throw new ApiError(
@@ -281,12 +282,12 @@ cron.schedule("0 0 2 * *", async () => {
   }
 });
 
-// This cron job runs every 5 mins
-cron.schedule("*/5 * * * *", async () => {
+// This cron job runs every 3 mins
+cron.schedule("*/3 * * * *", async () => {
   try {
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
     const result = await Order.deleteMany({
-      status: "pending",
+      status: "PAYMENT_PENDING",
       createdAt: { $lte: tenMinutesAgo },
       orderType: { $ne: ENUM_ORDER_TYPE.FINANCE },
     });

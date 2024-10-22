@@ -27,6 +27,7 @@ paypal.configure({
 });
 
 const createPaymentIntent = async (orderDetails, userId) => {
+  console.log("create payment intent", orderDetails);
   if (orderDetails?.shippingAddress) {
     const isValidProduct = await Auction.findOne({
       "winingBidder.user": userId,
@@ -63,8 +64,8 @@ const createPaymentIntent = async (orderDetails, userId) => {
     "totalMonthForFinance currentPrice"
   );
   console.log("auction", auction);
-  const totalMonth = auction?.totalMonthForFinance;
-  const monthlyAmount = (auction?.currentPrice / totalMonth).toFixed(2);
+  const totalMonth = auction?.totalMonthForFinance || 0;
+  const monthlyAmount = (auction?.currentPrice / totalMonth)?.toFixed(2) || 0;
   let paymentAmount;
   if (orderDetails?.shippingAddress) {
     paymentAmount =
