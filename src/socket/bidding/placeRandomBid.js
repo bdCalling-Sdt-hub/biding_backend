@@ -87,14 +87,17 @@ const placeRandomBid = async (auctionId) => {
       //   })
       //   .populate({ path: "bidBuddyUsers.user" });
       const updatedAuction = await getUpdatedAuction(auctionId);
-      global.io.to(auctionId).emit("bidHistory", { updatedAuction });
+      global.io.to(auctionId.toString()).emit("bidHistory", { updatedAuction });
       // socket.broadcast.emit("updated-auction", { updatedAuction });
       global.io.emit("updated-auction", { updatedAuction });
     } else {
-      io.to(auctionId).emit("noActiveBidders", "No active bidders remaining.");
+      io.to(auctionId.toString()).emit(
+        "noActiveBidders",
+        "No active bidders remaining."
+      );
     }
   } catch (error) {
-    io.to(auctionId).emit("socket-error", "Error placing bid");
+    io.to(auctionId.toString()).emit("socket-error", "Error placing bid");
   }
 };
 
