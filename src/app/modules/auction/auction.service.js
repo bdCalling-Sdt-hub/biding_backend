@@ -387,7 +387,10 @@ const deleteAuctionFromDB = async (id) => {
 
 // get my bidding history
 const getMyBiddingHistoryFromDB = async (userId) => {
-  const auctions = await Auction.find({ status: ENUM_AUCTION_STATUS.COMPLETED })
+  const auctions = await Auction.find({
+    status: ENUM_AUCTION_STATUS.COMPLETED,
+    "bidHistory.user": userId,
+  })
     // .select(
     //   "name category reservedBid status images bidBuddyUsers currentPrice bidPlace bidHistory winingBidder status"
     // )
