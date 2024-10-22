@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const Auction = require("../app/modules/auction/auction.model");
+const getUniqueUsersFromBidHistory = require("./getUniqueUsersFromBidHistory");
 
 const getUpdatedAuction = async (auctionId, bidHistoryLimit = 5) => {
   try {
@@ -139,7 +140,12 @@ const getUpdatedAuction = async (auctionId, bidHistoryLimit = 5) => {
       throw new Error("Auction not found");
     }
 
-    return auction[0]; // Return the first (and only) auction object
+    const uniqueBidders = await getUniqueUsersFromBidHistory(auctionId);
+    // return auction[0];
+    return {
+      ...auction[0],
+      uniqueBidders,
+    };
   } catch (error) {
     console.error("Error fetching auction:", error);
     throw error;
