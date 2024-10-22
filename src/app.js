@@ -5,6 +5,7 @@ const routes = require("./app/routes");
 const NotFoundHandler = require("./errors/NotFoundHandler");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
+const getUniqueUsersFromBidHistory = require("./helpers/getUniqueUsersFromBidHistory");
 
 const app = express();
 
@@ -42,6 +43,8 @@ app.use("/uploads", express.static("uploads"));
 app.use("/", routes);
 app.get("/", async (req, res) => {
   res.json("Welcome to Bidding Website");
+  const nun = await getUniqueUsersFromBidHistory("67176ba0eda7b41f66e6f12e");
+  console.log("|num", nun);
 });
 
 // Global Error Handler

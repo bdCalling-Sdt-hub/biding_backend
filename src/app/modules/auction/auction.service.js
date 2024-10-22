@@ -14,6 +14,7 @@ const placeRandomBid = require("../../../socket/bidding/placeRandomBid");
 const QueryBuilder = require("../../../builder/queryBuilder");
 const User = require("../user/user.model");
 const getUpdatedAuction = require("../../../helpers/getUpdatedAuctiion");
+const getUniqueUsersFromBidHistory = require("../../../helpers/getUniqueUsersFromBidHistory");
 // const createAuctionIntoDB = async (data) => {
 //   const startingDate = new Date(data.startingDate);
 //   const [hours, minutes] = data.startingTime.split(":");
@@ -384,6 +385,7 @@ const deleteAuctionFromDB = async (id) => {
   return result;
 };
 
+// get my bidding history
 const getMyBiddingHistoryFromDB = async (userId) => {
   const auctions = await Auction.find({ status: ENUM_AUCTION_STATUS.COMPLETED })
     // .select(
@@ -396,33 +398,35 @@ const getMyBiddingHistoryFromDB = async (userId) => {
     })
     .populate({ path: "bidHistory.user" });
 
-  const result = auctions.map((auction) => {
-    console.log("bid history", auction?.bidHistory?.slice(0, 2));
-    const userBidHistory = auction.bidHistory.filter(
-      (bid) => bid?.user?._id === userId
-    );
+  const result = await Promise.all(
+    auctions.map(async (auction) => {
+      const uniqueBidHistory = await getUniqueUsersFromBidHistory(auction._id);
+      const userBidHistory = uniqueBidHistory.filter(
+        (bid) => bid?.userId.toString() === userId
+      );
 
-    const finalBid = userBidHistory.length
-      ? userBidHistory[userBidHistory.length - 1].bidAmount
-      : null;
+      const finalBid = userBidHistory.length
+        ? userBidHistory[userBidHistory.length - 1].bidAmount
+        : null;
 
-    const isWinner =
-      auction.winingBidder &&
-      auction.winingBidder.user._id.toString() === userId.toString();
+      const isWinner =
+        auction.winingBidder &&
+        auction.winingBidder.user._id.toString() === userId.toString();
 
-    return {
-      name: auction.name,
-      category: auction.category,
-      status: isWinner ? "Winner" : "Outbid",
-      image: auction.images[0],
-      currentPrice: auction.currentPrice,
-      finalBid: finalBid,
-      bidPlace: auction.bidPlace,
-      winningBidderName: auction.winingBidder
-        ? auction.winingBidder.user.name
-        : null,
-    };
-  });
+      return {
+        name: auction.name,
+        category: auction.category,
+        status: isWinner ? "Winner" : "Outbid",
+        image: auction.images[0],
+        currentPrice: auction.currentPrice,
+        finalBid: finalBid,
+        bidPlace: auction.totalBidPlace,
+        winningBidderName: auction.winingBidder
+          ? auction.winingBidder.user.name
+          : null,
+      };
+    })
+  );
 
   return result;
 };
