@@ -1,8 +1,16 @@
 const Auction = require("../../app/modules/auction/auction.model");
+const User = require("../../app/modules/user/user.model");
 const getUpdatedAuction = require("../../helpers/getUpdatedAuctiion");
 
 const addBids = async (io, socket) => {
   socket.on("add-bids", async ({ auctionId, userId, bids }) => {
+    const existUser = await User.findById(userId);
+    if (existUser.availableBid < bids) {
+      io.to(userId).emit("socket-error", {
+        errorMessage: "You don't have available bids",
+      });
+      return;
+    }
     const auction = await Auction.findById(auctionId).select("bidBuddyUsers");
     const existsUser = auction.bidBuddyUsers.find(
       (user) => user?.user?.toString() === userId
@@ -22,11 +30,8 @@ const addBids = async (io, socket) => {
       }
     );
 
-    // const updatedAuction = await Auction.findById(auctionId)
-    //   .populate({
-    //     path: "bidHistory.user",
-    //   })
-    //   .populate({ path: "bidBuddyUsers.user" });
+    // user user data
+    await User.findByIdAndUpdate(userId, { $inc: { availableBid: -bids } });
 
     const updatedAuction = await getUpdatedAuction(auctionId);
 
