@@ -5,7 +5,7 @@ const config = require("./config");
 const { Server } = require("socket.io");
 const socket = require("./socket/socket");
 const seedAdmin = require("./app/DB");
-let customIO;
+// let customIO;
 async function main() {
   try {
     await connectDB();
@@ -40,7 +40,7 @@ async function main() {
     socket(socketIO);
     // Assign Socket.IO to global for potential use in other parts of the application
     global.io = socketIO;
-
+    // customIO = socketIO;
     // handle unhandled promise rejections
     process.on("unhandledRejection", (error) => {
       logger.error("Unhandled Rejection:", error);
@@ -66,3 +66,5 @@ async function main() {
 
 // start application
 main();
+
+// module.exports = customIO;

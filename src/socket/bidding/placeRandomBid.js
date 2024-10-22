@@ -28,6 +28,7 @@ const placeRandomBid = async (auctionId) => {
           Math.floor(Math.random() * activeBidBuddyUsers.length)
         ];
 
+      console.log("random user", randomUser);
       const newBidAmount = auction.currentPrice + auction.incrementValue;
       console.log("new bid from random", newBidAmount);
       const userUpdate = await User.findByIdAndUpdate(
@@ -50,12 +51,13 @@ const placeRandomBid = async (auctionId) => {
       const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
       // Update the auction details atomically
       const updateAuction = await Auction.findOneAndUpdate(
-        { auctionId, "bidBuddyUsers.user": randomUser.user },
+        { _id: auctionId, "bidBuddyUsers.user": randomUser.user },
         {
-          $inc: { "bidBuddyUsers.$.availableBids": auction.reservedBid },
+          "bidBuddyUsers.$.availableBids":
+            randomUser.availableBids - auction.reservedBid,
           $set: {
             "bidBuddyUsers.$.isActive":
-              randomUser.availableBids - auction.reservedBid <
+              randomUser.availableBids - auction.reservedBid >
               auction.reservedBid,
             currentPrice: newBidAmount,
             activateTime: new Date(currentTime.getTime() + 9 * 1000),
