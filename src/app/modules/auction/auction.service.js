@@ -13,6 +13,7 @@ const getAdminNotificationCount = require("../../../helpers/getAdminNotification
 const placeRandomBid = require("../../../socket/bidding/placeRandomBid");
 const QueryBuilder = require("../../../builder/queryBuilder");
 const User = require("../user/user.model");
+const getUpdatedAuction = require("../../../helpers/getUpdatedAuctiion");
 // const createAuctionIntoDB = async (data) => {
 //   const startingDate = new Date(data.startingDate);
 //   const [hours, minutes] = data.startingTime.split(":");
@@ -518,13 +519,17 @@ const updateAuctionStatuses = async () => {
       });
 
       completedAuctions.forEach(async (completedAuction) => {
+        const updatedCompletedAuction = await getUpdatedAuction(
+          completedAuction?._id
+        );
+
         global.io.sockets.sockets.forEach((socket) => {
           socket.broadcast.emit("updated-auction", {
-            updatedAuction: completedAuction,
+            updatedAuction: updatedCompletedAuction,
           });
           global.io
             .to(completedAuction?._id.toString())
-            .emit("bidHistory", { updatedAuction: completedAuction });
+            .emit("bidHistory", { updatedAuction: updatedCompletedAuction });
         });
         // return back bids to the winner if he set bidBuddy
         const winningBidderId = completedAuction?.winingBidder?.user;
