@@ -47,7 +47,16 @@ const getSingleOrder = async (id) => {
 
 // get my orders
 const getMyOrderFromDB = async (userId, query) => {
-  const orderQuery = new QueryBuilder(Order.find({ user: userId }), query)
+  const orderQuery = new QueryBuilder(
+    Order.find({
+      user: userId,
+      $or: [
+        { status: { $ne: ENUM_DELIVERY_STATUS.PAYMENT_PENDING } }, // Status is not "pending"
+        { orderType: ENUM_ORDER_TYPE.FINANCE }, // Order type is "finance"
+      ],
+    }),
+    query
+  )
     .search(["name"])
     .filter()
     .sort()

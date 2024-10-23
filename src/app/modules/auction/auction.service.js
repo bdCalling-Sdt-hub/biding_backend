@@ -395,9 +395,6 @@ const getMyBiddingHistoryFromDB = async (userId) => {
     status: ENUM_AUCTION_STATUS.COMPLETED,
     "bidHistory.user": userId,
   })
-    // .select(
-    //   "name category reservedBid status images bidBuddyUsers currentPrice bidPlace bidHistory winingBidder status"
-    // )
     .populate("winingBidder.user", "name")
     .populate({
       path: "bidBuddyUsers.user",
@@ -446,9 +443,6 @@ const updateAuctionStatuses = async () => {
 
   isRunning = true;
   const currentTime = new Date();
-  // const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
-  const nineSecondsAgo = new Date(currentTime.getTime() - 9 * 1000);
-  // const fiveSecondAgo = new Date(currentTime.getTime() - 5 * 1000);
   const fiveSecondLetter = new Date(currentTime.getTime() + 5 * 1000);
   const nineSecondsLater = new Date(currentTime.getTime() + 9 * 1000);
   try {
@@ -488,26 +482,6 @@ const updateAuctionStatuses = async () => {
       console.log("Nice to meet yo9u in random bit");
       placeRandomBid(auction?._id);
     });
-    //-----------------------------------------------
-    // for complete auction
-    // const auctionsToComplete = await Auction.find(
-    //   {
-    //     activateTime: { $lte: currentTime },
-    //     status: ENUM_AUCTION_STATUS.ACTIVE,
-    //   },
-    //   { _id: 1 }
-    // );
-
-    // const auctionIds = auctionsToComplete.map((auction) => auction._id);
-
-    // await Auction.updateMany(
-    //   {
-    //     _id: { $in: auctionIds },
-    //   },
-    //   {
-    //     $set: { status: ENUM_AUCTION_STATUS.COMPLETED },
-    //   }
-    // );
 
     // Mark auctions as completed if activateTime is less than or equal to the current time---------------
     const auctionsToComplete = await Auction.updateMany(
@@ -546,6 +520,10 @@ const updateAuctionStatuses = async () => {
         const winningBidderId = completedAuction?.winingBidder?.user;
 
         if (winningBidderId) {
+          await User.findByIdAndUpdate(winningBidderId, {
+            $inc: { totalWin: 1 },
+          });
+
           // Find the bidBuddyUser matching the winning bidder
           const winningBidderBuddy = completedAuction.bidBuddyUsers.find(
             (buddy) => String(buddy.user) === String(winningBidderId)
