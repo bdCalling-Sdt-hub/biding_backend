@@ -73,6 +73,7 @@ const updateShippingAddress = async (payload, id, userId) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Missing shipping id");
   }
 
+
   const existingShipping = await Shipping.findOne({ _id: id, user_id: userId });
 
   if (!existingShipping) {

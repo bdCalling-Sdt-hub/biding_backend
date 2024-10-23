@@ -7,7 +7,7 @@ const uploadFile = require("../../middlewares/fileUploader");
 
 const router = express.Router();
 
-router.post("/auth/register", AdminController.registrationAdmin);
+// router.post("/auth/register", AdminController.registrationAdmin);
 router.post("/auth/login", AdminController.login);
 router.patch("/auth/forgot-password", AdminController.forgotPass);
 router.patch(
