@@ -23,7 +23,7 @@ const getSingleTransactionFromDB = async (id) => {
 };
 
 // This cron job runs every 5 mins for delete unpaid transaction--------------------
-cron.schedule("*/1 * * * *", async () => {
+cron.schedule("*/3 * * * *", async () => {
   try {
     // Get the time that is 10 minutes ago from now
     const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
