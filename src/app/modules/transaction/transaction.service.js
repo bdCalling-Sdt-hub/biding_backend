@@ -23,15 +23,15 @@ const getSingleTransactionFromDB = async (id) => {
 };
 
 // This cron job runs every 5 mins for delete unpaid transaction--------------------
-cron.schedule("*/5 * * * *", async () => {
+cron.schedule("*/1 * * * *", async () => {
   try {
     // Get the time that is 10 minutes ago from now
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
 
     // Query to delete orders that match the criteria
     const result = await Transaction.deleteMany({
       paymentStatus: ENUM_PAYMENT_STATUS.UNPAID,
-      createdAt: { $lte: tenMinutesAgo },
+      createdAt: { $lte: fiveMinsAgo },
     });
 
     console.log(`${result.deletedCount} transaction deleted.`);
