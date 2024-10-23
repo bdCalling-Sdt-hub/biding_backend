@@ -528,7 +528,6 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
 const executePaymentWithCreditCard = async (paymentId, userId) => {
   const userData = await User.findById(userId);
   // Update the transaction status to PAID
-  console.log("paymentid", paymentId);
   const updatedTransaction = await Transaction.findOneAndUpdate(
     { paymentId: paymentId },
     {
