@@ -12,6 +12,7 @@ const {
   ENUM_PAYMENT_STATUS,
   ENUM_USER_ROLE,
   ENUM_ORDER_TYPE,
+  ENUM_ITEM_TYPE,
 } = require("../../../utils/enums");
 const getUnseenNotificationCount = require("../../../helpers/getUnseenNotification");
 const { default: mongoose } = require("mongoose");
@@ -156,6 +157,24 @@ const createPaymentIntent = async (orderDetails, userId) => {
     await Order.findByIdAndUpdate(orderDetails?.orderId, {
       paymentId: paymentIntent.id,
     });
+    const transactionData = {
+      user: userId,
+      item: item,
+      paymentStatus: ENUM_PAYMENT_STATUS.UNPAID,
+      paidAmount: totalAmount,
+      itemType: itemType,
+      // paymentType: "Online Payment",
+      // paymentType: "Online Payment",
+      paymentType: orderDetails?.paymentType,
+      paymentId: paymentIntent.id,
+      transactionId: paymentIntent.id,
+      totalBid: orderDetails?.totalBid || 0,
+    };
+
+    await Transaction.create(transactionData);
+  }
+
+  if (itemType === ENUM_ITEM_TYPE.BID) {
     const transactionData = {
       user: userId,
       item: item,

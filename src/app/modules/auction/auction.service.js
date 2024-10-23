@@ -355,6 +355,10 @@ const updateAuctionIntoDB = async (id, data) => {
   if (startingDate <= new Date()) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
   }
+
+  if (startingDate > new Date()) {
+    data.status = ENUM_AUCTION_STATUS.UPCOMING;
+  }
   const result = await Auction.findByIdAndUpdate(id, data, {
     runValidators: true,
     new: true,
