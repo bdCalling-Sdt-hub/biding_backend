@@ -26,7 +26,7 @@ router.get(
   auth(ENUM_USER_ROLE.USER),
   UserController.myProfile
 );
-router.post(
+router.post (
   "/auth/verify-otp-forgot-password",
   UserController.verifyForgetPassOTP
 );

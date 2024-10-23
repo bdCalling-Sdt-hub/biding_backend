@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+ const mongoose = require("mongoose");
 const { ENUM_AUCTION_STATUS } = require("../../../utils/enums");
 
 // bid buddy user schema
