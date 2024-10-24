@@ -173,6 +173,7 @@ const createPaymentIntent = async (orderDetails, userId) => {
       await Transaction.create(transactionData);
     }
   }
+  // changes
   if (orderDetails?.orderId) {
     await Order.findByIdAndUpdate(orderDetails?.orderId, {
       paymentId: paymentIntent.id,
