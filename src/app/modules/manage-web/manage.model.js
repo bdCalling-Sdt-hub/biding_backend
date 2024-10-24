@@ -109,7 +109,7 @@ const sliderSchema = new mongoose.Schema(
 
 const customerSchema = new mongoose.Schema(
   {
-    contactUs: {
+    description: {
       type: String,
       trim: true,
       required: true,
