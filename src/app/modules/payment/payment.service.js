@@ -29,6 +29,17 @@ paypal.configure({
 
 const createPaymentIntent = async (orderDetails, userId) => {
   console.log("create payment intent", orderDetails);
+  if (orderDetails.itemType === ENUM_ITEM_TYPE.BID) {
+    if (orderDetails.totalBid < 10) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "You can not buy less then 10 credits"
+      );
+    }
+    if (orderDetails.totalBid / Number(orderDetails.totalAmount) !== 10) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Unauthorized access");
+    }
+  }
   if (orderDetails?.shippingAddress) {
     const isValidProduct = await Auction.findOne({
       "winingBidder.user": userId,
@@ -64,6 +75,7 @@ const createPaymentIntent = async (orderDetails, userId) => {
   const auction = await Auction.findById(orderDetails?.product).select(
     "totalMonthForFinance currentPrice"
   );
+  console.log("total amount", totalAmount);
   console.log("auction", auction);
   const totalMonth = auction?.totalMonthForFinance || 0;
   const monthlyAmount = (auction?.currentPrice / totalMonth)?.toFixed(2) || 0;
@@ -78,7 +90,7 @@ const createPaymentIntent = async (orderDetails, userId) => {
   }
 
   const paymentIntent = await stripe.paymentIntents.create({
-    amount: paymentAmount * 100,
+    amount: Number((paymentAmount * 100).toFixed(2)),
     currency: "usd",
     payment_method_types: ["card"],
   });
@@ -198,6 +210,17 @@ const createPaymentIntent = async (orderDetails, userId) => {
 };
 
 const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
+  if (orderDetails.itemType === ENUM_ITEM_TYPE.BID) {
+    if (orderDetails.totalBid < 10) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "You can not buy less then 10 credits"
+      );
+    }
+    if (orderDetails.totalBid / Number(amount) !== 10) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Unauthorized access");
+    }
+  }
   if (orderDetails?.shippingAddress) {
     const isValidProduct = await Auction.findOne({
       "winingBidder.user": userId,
@@ -252,13 +275,13 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
           items: [
             {
               name: orderDetails?.item,
-              price: paymentAmount,
+              price: Number(paymentAmount.toFixed(2)),
               currency: "USD",
               quantity: 1,
             },
           ],
         },
-        amount: { currency: "USD", total: paymentAmount },
+        amount: { currency: "USD", total: Number(paymentAmount.toFixed(2)) },
         description: "Payment for your order.",
       },
     ],
