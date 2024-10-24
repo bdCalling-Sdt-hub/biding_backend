@@ -46,23 +46,6 @@ const createPaymentWithPaypal = catchAsync(async (req, res) => {
   });
 });
 
-// execute payment with paypal
-// const executePaymentWithPaypal = catchAsync(async (req, res) => {
-//   const { paymentId, payerId, orderDetails } = req.body; // Include orderDetails
-//   const paymentResult = await PaymentService.executePaymentWithPaypal(
-//     req?.user?.userId,
-//     paymentId,
-//     payerId,
-//     orderDetails
-//   );
-
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: "Payment executed successfully",
-//     data: paymentResult,
-//   });
-// });
 const executePaymentWithPaypal = catchAsync(async (req, res) => {
   const { paymentId, payerID } = req.body; // Include orderDetails
   const paymentResult = await PaymentService.executePaymentWithPaypal(
