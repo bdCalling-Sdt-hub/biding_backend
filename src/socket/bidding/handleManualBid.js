@@ -7,6 +7,9 @@ const getUpdatedAuction = require("../../helpers/getUpdatedAuctiion");
 
 const handleManualBid = async (io, socket) => {
   socket.on("place-manual-bid", async (data) => {
+    console.log(
+      "manual bid is the fist---------------------------------------"
+    );
     const auctionId = data?.auction_id;
     const userId = data?.user_id;
 

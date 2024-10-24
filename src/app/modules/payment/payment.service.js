@@ -40,6 +40,16 @@ const createPaymentIntent = async (orderDetails, userId) => {
       throw new ApiError(httpStatus.BAD_REQUEST, "Unauthorized access");
     }
   }
+
+  if (
+    orderDetails.itemType === ENUM_ITEM_TYPE.PRODUCT &&
+    !orderDetails.shippingAddress
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You need to add shipping address before order"
+    );
+  }
   if (orderDetails?.shippingAddress) {
     const isValidProduct = await Auction.findOne({
       "winingBidder.user": userId,
@@ -418,6 +428,11 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
       { new: true, session }
     );
 
+    console.log(
+      "updated transaction----------------------------------- ",
+      updatedTransaction
+    );
+
     if (updatedTransaction?.totalBid > 0) {
       await User.findByIdAndUpdate(
         userId,
@@ -492,9 +507,9 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
 
     console.log("updated order from execute payment with paypal", updatedOrder);
 
-    if (!updatedOrder) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
-    }
+    // if (!updatedOrder) {
+    //   throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
+    // }
 
     // Prepare notification data
     const notificationData = [
@@ -549,6 +564,7 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
 };
 
 const executePaymentWithCreditCard = async (paymentId, userId) => {
+  console.log("|update transctind fd-------------", paymentId, userId);
   const userData = await User.findById(userId);
   // Update the transaction status to PAID
   const updatedTransaction = await Transaction.findOneAndUpdate(
@@ -562,6 +578,8 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
   if (!updatedTransaction) {
     throw new ApiError(httpStatus.NOT_FOUND, "Transaction not found.");
   }
+
+  console.log("updated transaction --------------------", updatedTransaction);
 
   if (updatedTransaction?.totalBid > 0) {
     await User.findByIdAndUpdate(
@@ -664,20 +682,39 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
     );
   }
 
-  console.log("updated order from execute payment with paypal", updatedOrder);
-
-  if (!updatedOrder) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
-  }
+  // if (!updatedOrder) {
+  //   throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
+  // }
 
   // Prepare notification data
-  const notificationData = [
-    {
-      title: "",
-      message: `Payment of $${updatedTransaction?.paidAmount} has been received for "${updatedTransaction.item}" from ${userData.name}.`,
-      receiver: ENUM_USER_ROLE.ADMIN,
-    },
-    {
+  // const notificationData = [
+  //   {
+  //     title: "",
+  //     message: `Payment of $${updatedTransaction?.paidAmount} has been received for "${updatedTransaction.item}" from ${userData.name}.`,
+  //     receiver: ENUM_USER_ROLE.ADMIN,
+  //   },
+  //   {
+  //     title: "Payment successfully completed",
+  //     message: `${
+  //       isFinanceOrder
+  //         ? `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
+  //         : `Your payment for order ${updatedOrder._id} is successful`
+  //     }`,
+  //     receiver: userId,
+  //   },
+  // ];
+  // // Insert notifications
+  // await Notification.insertMany(notificationData);
+
+  const adminNotificationData = {
+    title: "",
+    message: `Payment of $${updatedTransaction?.paidAmount} has been received for "${updatedTransaction.item}" from ${userData.name}.`,
+    receiver: ENUM_USER_ROLE.ADMIN,
+  };
+  await Notification.create(adminNotificationData);
+
+  if (updatedOrder) {
+    const userNotificationData = {
       title: "Payment successfully completed",
       message: `${
         isFinanceOrder
@@ -685,11 +722,9 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
           : `Your payment for order ${updatedOrder._id} is successful`
       }`,
       receiver: userId,
-    },
-  ];
-
-  // Insert notifications
-  await Notification.insertMany(notificationData);
+    };
+    await Notification.create(userNotificationData);
+  }
 
   // if (!updatedOrder) {
   //   throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
