@@ -200,9 +200,16 @@ const approveFinanceOrder = async (id) => {
     id,
     {
       isApproved: true,
+      isRejected: false,
     },
     { new: true, runValidators: true }
   );
+  const notificationData = {
+    title: `Your finance order request has been accepted`,
+    message: `Your finance order request has been accepted.The order id is ${order?._id}`,
+    receiver: order.user,
+  };
+  await Notification.create(notificationData);
   return result;
 };
 
@@ -212,11 +219,11 @@ const declineFinanceOrder = async (id) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Finance order not found");
   }
 
-  const result = await Order.findByIdAndDelete(id);
+  const result = await Order.findByIdAndUpdate(id, { isRejected: true });
 
   const notificationData = {
-    title: "Your finance order request has been rejected",
-    message: `Your finance order request has been rejected , please contact our support `,
+    title: `Your finance order request has been rejected.`,
+    message: `Your finance order request has been rejected.The order id is ${order?._id} `,
     receiver: order.user,
   };
   await Notification.create(notificationData);
