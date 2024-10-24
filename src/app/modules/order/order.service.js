@@ -16,7 +16,15 @@ const isStatusTransitionValid = require("./order.utils");
 const QueryBuilder = require("../../../builder/queryBuilder");
 
 const getAllOrderFromDB = async (query) => {
-  const orderQuery = new QueryBuilder(Order.find(), query)
+  const orderQuery = new QueryBuilder(
+    Order.find({
+      $or: [
+        { status: { $ne: ENUM_DELIVERY_STATUS.PAYMENT_PENDING } }, // Status is not "pending"
+        { orderType: ENUM_ORDER_TYPE.FINANCE }, // Order type is "finance"
+      ],
+    }),
+    query
+  )
     .search(["name", "item.name"])
     .filter()
     .sort()
