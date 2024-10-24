@@ -26,7 +26,7 @@ const getSingleTransactionFromDB = async (id) => {
 cron.schedule("*/3 * * * *", async () => {
   try {
     // Get the time that is 10 minutes ago from now
-    const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const fiveMinsAgo = new Date(Date.now() - 2 * 60 * 1000);
 
     // Query to delete orders that match the criteria
     const result = await Transaction.deleteMany({

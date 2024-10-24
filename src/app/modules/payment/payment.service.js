@@ -85,8 +85,6 @@ const createPaymentIntent = async (orderDetails, userId) => {
   const auction = await Auction.findById(orderDetails?.product).select(
     "totalMonthForFinance currentPrice"
   );
-  console.log("total amount", totalAmount);
-  console.log("auction", auction);
   const totalMonth = auction?.totalMonthForFinance || 0;
   const monthlyAmount = (auction?.currentPrice / totalMonth)?.toFixed(2) || 0;
   let paymentAmount;
@@ -231,13 +229,22 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
       throw new ApiError(httpStatus.BAD_REQUEST, "Unauthorized access");
     }
   }
+
+  if (
+    orderDetails.itemType === ENUM_ITEM_TYPE.PRODUCT &&
+    !orderDetails.shippingAddress
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You need to add shipping address before order"
+    );
+  }
+
   if (orderDetails?.shippingAddress) {
     const isValidProduct = await Auction.findOne({
       "winingBidder.user": userId,
       currentPrice: orderDetails.totalAmount,
     });
-
-    console.log("valid product", isValidProduct);
 
     if (!isValidProduct) {
       throw new ApiError(
@@ -259,9 +266,8 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
   const auction = await Auction.findById(orderDetails?.product).select(
     "totalMonthForFinance currentPrice"
   );
-  console.log("auction", auction);
-  const totalMonth = auction?.totalMonthForFinance;
-  const monthlyAmount = auction?.currentPrice / totalMonth;
+  const totalMonth = auction?.totalMonthForFinance || 0;
+  const monthlyAmount = (auction?.currentPrice / totalMonth)?.toFixed(2) || 0;
   let paymentAmount;
   if (orderDetails?.shippingAddress) {
     paymentAmount =
@@ -285,13 +291,13 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
           items: [
             {
               name: orderDetails?.item,
-              price: Number(paymentAmount.toFixed(2)),
+              price: Number(paymentAmount).toFixed(2),
               currency: "USD",
               quantity: 1,
             },
           ],
         },
-        amount: { currency: "USD", total: Number(paymentAmount.toFixed(2)) },
+        amount: { currency: "USD", total: Number(paymentAmount).toFixed(2) },
         description: "Payment for your order.",
       },
     ],
@@ -371,7 +377,221 @@ const createPaymentWithPaypal = async (userId, amount, orderDetails) => {
   };
 };
 
+// const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
+//   const execute_payment_json = { payer_id: payerId };
+
+//   // Check if the user is authorized
+//   const userData = await User.findById(userId);
+//   if (!userData) {
+//     throw new ApiError(
+//       httpStatus.UNAUTHORIZED,
+//       "You are not authorized. You need to log in to make a payment."
+//     );
+//   }
+
+//   // Start a new session for the transaction
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+
+//   try {
+//     // Convert PayPal `execute` to a promise-based function
+//     const executePaypalPayment = (paymentId, execute_payment_json) =>
+//       new Promise((resolve, reject) => {
+//         paypal.payment.execute(
+//           paymentId,
+//           execute_payment_json,
+//           (error, payment) => {
+//             if (error) {
+//               reject(error);
+//             } else {
+//               resolve(payment);
+//             }
+//           }
+//         );
+//       });
+//     console.log("nice to meet you before updated order 1");
+//     // Await the PayPal payment execution
+//     const payment = await executePaypalPayment(paymentId, execute_payment_json);
+//     console.log("nice to meet you before updated order 2");
+//     // Check if the transaction already exists
+//     const alreadyPay = await Transaction.findOne({
+//       transactionId: payment.cart,
+//     });
+//     if (alreadyPay) {
+//       throw new ApiError(
+//         httpStatus.CONFLICT,
+//         "Payment has already been processed."
+//       );
+//     }
+//     console.log("nice to meet you before updated order 3");
+//     // Update the transaction status to PAID
+//     const updatedTransaction = await Transaction.findOneAndUpdate(
+//       { paymentId: paymentId },
+//       {
+//         paymentStatus: ENUM_PAYMENT_STATUS.PAID,
+//         transactionId: payment.cart,
+//       },
+//       { new: true, session }
+//     );
+//     console.log("nice to meet you before updated order 4");
+//     console.log(
+//       "updated transaction----------------------------------- ",
+//       updatedTransaction
+//     );
+
+//     if (updatedTransaction?.totalBid > 0) {
+//       await User.findByIdAndUpdate(
+//         userId,
+//         {
+//           $inc: { availableBid: updatedTransaction.totalBid },
+//         },
+//         { new: true }
+//       );
+//     }
+
+//     if (!updatedTransaction) {
+//       throw new ApiError(httpStatus.NOT_FOUND, "Transaction not found.");
+//     }
+
+//     // Update the order status and statusWithTime
+//     const isFinanceOrder = await Order.findOne({
+//       paymentId: paymentId,
+//       orderType: ENUM_ORDER_TYPE.FINANCE,
+//     });
+//     console.log("nice to meet you before updated order");
+//     let updatedOrder;
+//     if (isFinanceOrder) {
+//       updatedOrder = await Order.findOneAndUpdate(
+//         {
+//           paymentId: paymentId,
+//           orderType: ENUM_ORDER_TYPE.FINANCE,
+//         },
+//         {
+//           $inc: {
+//             paidInstallment: 1,
+//             dueAmount: -updatedTransaction?.paidAmount,
+//           },
+//           $set: {
+//             lastPayment: Date.now(),
+//             // Update status and statusWithTime only if current status is pending
+//             ...((
+//               await Order.findOne({
+//                 paymentId: paymentId,
+//                 orderType: ENUM_ORDER_TYPE.FINANCE,
+//               })
+//             ).status === ENUM_DELIVERY_STATUS.PENDING
+//               ? {
+//                   status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+//                   statusWithTime: [
+//                     {
+//                       status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+//                       time: new Date(),
+//                     },
+//                   ],
+//                 }
+//               : {}),
+//           },
+//         },
+//         {
+//           new: true,
+//         }
+//       );
+//     } else {
+//       updatedOrder = await Order.findOneAndUpdate(
+//         { paymentId: paymentId, status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING },
+//         {
+//           status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+//           statusWithTime: [
+//             {
+//               status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+//               time: new Date(),
+//             },
+//           ],
+//         },
+//         { new: true, session }
+//       );
+//     }
+
+//     console.log("nice to meet you");
+
+//     console.log("updated order", updatedOrder);
+
+//     // if (!updatedOrder) {
+//     //   throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
+//     // }
+
+//     // Prepare notification data
+//     // const notificationData = [
+//     //   {
+//     //     title: "",
+//     //     message: `Payment of $${updatedTransaction?.paidAmount} has been received for "${updatedTransaction.item}" from ${userData.name}.`,
+//     //     receiver: ENUM_USER_ROLE.ADMIN,
+//     //   },
+//     //   {
+//     //     title: "Payment successfully completed",
+//     //     message: `${
+//     //       isFinanceOrder
+//     //         ? `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
+//     //         : `Your payment for order ${updatedOrder._id} is successful`
+//     //     }`,
+//     //     receiver: userId,
+//     //   },
+//     // ];
+
+//     // // Insert notifications
+//     // await Notification.insertMany(notificationData, { session });
+//     const adminNotificationData = {
+//       title: "",
+//       message: `Payment of $${updatedTransaction?.paidAmount} has been received for "${updatedTransaction.item}" from ${userData.name}.`,
+//       receiver: ENUM_USER_ROLE.ADMIN,
+//     };
+//     await Notification.create(adminNotificationData);
+
+//     if (updatedOrder) {
+//       const userNotificationData = {
+//         title: "Payment successfully completed",
+//         message: `${
+//           isFinanceOrder
+//             ? `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
+//             : `Your payment for order ${updatedOrder._id} is successful`
+//         }`,
+//         receiver: userId,
+//       };
+//       await Notification.create(userNotificationData);
+//     }
+
+//     // Emit notifications to the admin and user
+//     const adminUnseenNotificationCount = await getAdminNotificationCount();
+//     global.io.emit("admin-notifications", adminUnseenNotificationCount);
+
+//     const userNotificationCount = await getUnseenNotificationCount(userId);
+//     global.io.to(userId).emit("notifications", userNotificationCount);
+
+//     await session.commitTransaction();
+//     return {
+//       message: "Payment execution successful",
+//       order: updatedOrder,
+//       transaction: updatedTransaction,
+//     };
+//   } catch (err) {
+//     await session.abortTransaction();
+
+//     session.endSession();
+
+//     if (err instanceof ApiError) {
+//       throw err;
+//     }
+
+//     throw new ApiError(
+//       httpStatus.SERVICE_UNAVAILABLE,
+//       err.message || "Something went wrong. Try again later."
+//     );
+//   } finally {
+//     session.endSession();
+//   }
+// };
 const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
+  console.log("payer id", payerId);
   const execute_payment_json = { payer_id: payerId };
 
   // Check if the user is authorized
@@ -383,188 +603,95 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
     );
   }
 
-  // Start a new session for the transaction
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    // Convert PayPal `execute` to a promise-based function
-    const executePaypalPayment = (paymentId, execute_payment_json) =>
-      new Promise((resolve, reject) => {
-        paypal.payment.execute(
-          paymentId,
-          execute_payment_json,
-          (error, payment) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(payment);
-            }
+  // Convert PayPal `execute` to a promise-based function
+  const executePaypalPayment = (paymentId, execute_payment_json) =>
+    new Promise((resolve, reject) => {
+      paypal.payment.execute(
+        paymentId,
+        execute_payment_json,
+        (error, payment) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(payment);
           }
-        );
-      });
-
-    // Await the PayPal payment execution
-    const payment = await executePaypalPayment(paymentId, execute_payment_json);
-
-    // Check if the transaction already exists
-    const alreadyPay = await Transaction.findOne({
-      transactionId: payment.cart,
-    });
-    if (alreadyPay) {
-      throw new ApiError(
-        httpStatus.CONFLICT,
-        "Payment has already been processed."
-      );
-    }
-
-    // Update the transaction status to PAID
-    const updatedTransaction = await Transaction.findOneAndUpdate(
-      { paymentId: paymentId },
-      {
-        paymentStatus: ENUM_PAYMENT_STATUS.PAID,
-        transactionId: payment.cart,
-      },
-      { new: true, session }
-    );
-
-    console.log(
-      "updated transaction----------------------------------- ",
-      updatedTransaction
-    );
-
-    if (updatedTransaction?.totalBid > 0) {
-      await User.findByIdAndUpdate(
-        userId,
-        {
-          $inc: { availableBid: updatedTransaction.totalBid },
-        },
-        { new: true }
-      );
-    }
-
-    if (!updatedTransaction) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Transaction not found.");
-    }
-
-    // Update the order status and statusWithTime
-    const isFinanceOrder = await Order.findOne({
-      paymentId: paymentId,
-      orderType: ENUM_ORDER_TYPE.FINANCE,
-    });
-    let updatedOrder;
-    if (isFinanceOrder) {
-      updatedOrder = await Order.findOneAndUpdate(
-        {
-          paymentId: paymentId,
-          orderType: ENUM_ORDER_TYPE.FINANCE,
-        },
-        {
-          $inc: {
-            paidInstallment: 1,
-            dueAmount: -updatedTransaction?.paidAmount,
-          },
-          $set: {
-            lastPayment: Date.now(),
-            // Update status and statusWithTime only if current status is pending
-            ...((
-              await Order.findOne({
-                paymentId: paymentId,
-                orderType: ENUM_ORDER_TYPE.FINANCE,
-              })
-            ).status === ENUM_DELIVERY_STATUS.PENDING
-              ? {
-                  status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-                  statusWithTime: [
-                    {
-                      status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-                      time: new Date(),
-                    },
-                  ],
-                }
-              : {}),
-          },
-        },
-        {
-          new: true,
         }
       );
-    } else {
-      updatedOrder = await Order.findOneAndUpdate(
-        { paymentId: paymentId, status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING },
-        {
-          status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-          statusWithTime: [
-            {
-              status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-              time: new Date(),
-            },
-          ],
-        },
-        { new: true, session }
-      );
-    }
+    });
 
-    console.log("updated order from execute payment with paypal", updatedOrder);
+  // Execute PayPal payment
+  const payment = await executePaypalPayment(paymentId, execute_payment_json);
 
-    // if (!updatedOrder) {
-    //   throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
-    // }
-
-    // Prepare notification data
-    const notificationData = [
-      {
-        title: "",
-        message: `Payment of $${updatedTransaction?.paidAmount} has been received for "${updatedTransaction.item}" from ${userData.name}.`,
-        receiver: ENUM_USER_ROLE.ADMIN,
-      },
-      {
-        title: "Payment successfully completed",
-        message: `${
-          isFinanceOrder
-            ? `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
-            : `Your payment for order ${updatedOrder._id} is successful`
-        }`,
-        receiver: userId,
-      },
-    ];
-
-    // Insert notifications
-    await Notification.insertMany(notificationData, { session });
-
-    // Emit notifications to the admin and user
-    const adminUnseenNotificationCount = await getAdminNotificationCount();
-    global.io.emit("admin-notifications", adminUnseenNotificationCount);
-
-    const userNotificationCount = await getUnseenNotificationCount(userId);
-    global.io.to(userId).emit("notifications", userNotificationCount);
-
-    await session.commitTransaction();
-    return {
-      message: "Payment execution successful",
-      order: updatedOrder,
-      transaction: updatedTransaction,
-    };
-  } catch (err) {
-    await session.abortTransaction();
-
-    session.endSession();
-
-    if (err instanceof ApiError) {
-      throw err;
-    }
-
+  // Check if the transaction already exists
+  const alreadyPay = await Transaction.findOne({ transactionId: payment.cart });
+  if (alreadyPay) {
     throw new ApiError(
-      httpStatus.SERVICE_UNAVAILABLE,
-      err.message || "Something went wrong. Try again later."
+      httpStatus.CONFLICT,
+      "Payment has already been processed."
     );
-  } finally {
-    session.endSession();
   }
+
+  // Update the order status
+  const isFinanceOrder = await Order.findOne({
+    paymentId,
+    orderType: ENUM_ORDER_TYPE.FINANCE,
+  });
+  let updatedOrder;
+
+  if (isFinanceOrder) {
+    updatedOrder = await Order.findOneAndUpdate(
+      { paymentId, orderType: ENUM_ORDER_TYPE.FINANCE },
+      {
+        $inc: {
+          paidInstallment: 1,
+          dueAmount: -payment.transactions[0].amount.total,
+        },
+        $set: {
+          lastPayment: Date.now(),
+          status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+        },
+      },
+      { new: true }
+    );
+  } else {
+    updatedOrder = await Order.findOneAndUpdate(
+      { paymentId, status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING },
+      {
+        status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
+        statusWithTime: [
+          { status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS, time: new Date() },
+        ],
+      },
+      { new: true }
+    );
+  }
+
+  // Send notifications
+  const adminNotificationData = {
+    title: "",
+    message: `Payment of $${payment.transactions[0].amount.total} has been received for "${payment.transactions[0].description}" from ${userData.name}.`,
+    receiver: ENUM_USER_ROLE.ADMIN,
+  };
+  await Notification.create(adminNotificationData);
+
+  const userNotificationData = {
+    title: "Payment successfully completed",
+    message: `Your payment for order ${updatedOrder._id} is successful.`,
+    receiver: userId,
+  };
+  await Notification.create(userNotificationData);
+
+  // Emit notifications to admin and user
+  const adminUnseenNotificationCount = await getAdminNotificationCount();
+  global.io.emit("admin-notifications", adminUnseenNotificationCount);
+
+  const userNotificationCount = await getUnseenNotificationCount(userId);
+  global.io.to(userId).emit("notifications", userNotificationCount);
+
+  return { message: "Payment execution successful", order: updatedOrder };
 };
 
 const executePaymentWithCreditCard = async (paymentId, userId) => {
-  console.log("|update transctind fd-------------", paymentId, userId);
   const userData = await User.findById(userId);
   // Update the transaction status to PAID
   const updatedTransaction = await Transaction.findOneAndUpdate(
