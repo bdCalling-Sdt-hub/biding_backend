@@ -87,16 +87,20 @@ const getUniqueUsersFromBidHistory = require("../../../helpers/getUniqueUsersFro
 //   }
 // };
 const createAuctionIntoDB = async (data) => {
+  const endingDate = new Date(data.endingDate);
+  const [hours, minutes] = data.endingTime.split(":");
   const startingDate = new Date(data.startingDate);
-  const [hours, minutes] = data.startingTime.split(":");
+  const [startHours, startMinutes] = data.startingTime.split(":");
+  startingDate.setHours(startHours, startMinutes);
+  data.startingDateTime = startingDate;
 
-  startingDate.setHours(hours, minutes);
-  data.activateDateTime = startingDate;
+  endingDate.setHours(hours, minutes);
+  data.activateDateTime = endingDate;
 
   try {
     // Check if starting date is in the future
-    data.activateTime = startingDate;
-    if (startingDate <= new Date()) {
+    data.activateTime = endingDate;
+    if (endingDate <= new Date()) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
     }
 
@@ -118,7 +122,7 @@ const createAuctionIntoDB = async (data) => {
       minute: "numeric",
       hour12: true,
     };
-    const formattedDate = startingDate.toLocaleDateString("en-US", options);
+    const formattedDate = endingDate.toLocaleDateString("en-US", options);
     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
 
     // Create a notification for the admin
@@ -215,6 +219,8 @@ const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
           incrementValue: 1,
           startingDate: 1,
           startingTime: 1,
+          endingDate: 1,
+          endingTime: 1,
           description: 1,
           images: 1,
           status: 1,
@@ -222,6 +228,7 @@ const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
           totalBidPlace: 1,
           countdownTime: 1,
           activateTime: 1,
+          startingDateTime: 1,
           endedTime: 1,
           financeAvailable: 1,
           totalMonthForFinance: 1,
@@ -346,17 +353,21 @@ const updateAuctionIntoDB = async (id, data) => {
       "This auction already completed , a user won this auction you can not update this auction right now "
     );
   }
+  const endingDate = new Date(data.endingDate);
+  const [hours, minutes] = data.endingTime.split(":");
   const startingDate = new Date(data.startingDate);
-  const [hours, minutes] = data.startingTime.split(":");
+  const [startHours, startMinutes] = data.startingTime.split(":");
+  startingDate.setHours(startHours, startMinutes);
+  data.startingDateTime = startingDate;
 
-  startingDate.setHours(hours, minutes);
+  endingDate.setHours(hours, minutes);
 
-  data.activateTime = startingDate;
-  if (startingDate <= new Date()) {
+  data.activateTime = endingDate;
+  if (endingDate <= new Date()) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
   }
 
-  if (startingDate > new Date()) {
+  if (endingDate > new Date()) {
     data.status = ENUM_AUCTION_STATUS.UPCOMING;
   }
   const result = await Auction.findByIdAndUpdate(id, data, {
@@ -448,7 +459,8 @@ const updateAuctionStatuses = async () => {
   try {
     const auctionsToActivate = await Auction.updateMany(
       {
-        activateTime: { $gte: currentTime, $lte: nineSecondsLater },
+        // activateTime: { $gte: currentTime, $lte: nineSecondsLater },
+        startingDateTime: { $lte: currentTime },
         status: ENUM_AUCTION_STATUS.UPCOMING,
       },
       {

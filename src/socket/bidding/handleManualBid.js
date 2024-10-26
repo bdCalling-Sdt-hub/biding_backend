@@ -7,9 +7,6 @@ const getUpdatedAuction = require("../../helpers/getUpdatedAuctiion");
 
 const handleManualBid = async (io, socket) => {
   socket.on("place-manual-bid", async (data) => {
-    console.log(
-      "manual bid is the fist---------------------------------------"
-    );
     const auctionId = data?.auction_id;
     const userId = data?.user_id;
 
@@ -65,7 +62,13 @@ const handleManualBid = async (io, socket) => {
 
     // Set activateTime to 9 seconds ago
     const currentTime = new Date();
-    auction.activateTime = new Date(currentTime.getTime() + 9 * 1000);
+    // auction.activateTime = new Date(currentTime.getTime() + 9 * 1000);
+    // Check if the bid is placed in the last 9 seconds of the current activateTime
+    const timeRemaining = auction.activateTime - new Date();
+    if (timeRemaining <= 9 * 1000) {
+      // Extend activateTime by 9 seconds
+      auction.activateTime = new Date(currentTime.getTime() + 9 * 1000);
+    }
 
     //save auction
     await auction.save();
