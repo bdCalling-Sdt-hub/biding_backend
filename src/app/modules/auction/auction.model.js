@@ -1,4 +1,4 @@
- const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 const { ENUM_AUCTION_STATUS } = require("../../../utils/enums");
 
 // bid buddy user schema
@@ -64,6 +64,8 @@ const auctionSchema = new mongoose.Schema(
 
     startingDate: { type: Date, required: true },
     startingTime: { type: String, required: true },
+    endingDate: { type: Date, required: true },
+    endingTime: { type: String, required: true },
 
     description: { type: String, required: true },
 
@@ -99,6 +101,9 @@ const auctionSchema = new mongoose.Schema(
       default: null,
     },
     activateTime: {
+      type: Date,
+    },
+    startingDateTime: {
       type: Date,
     },
     endedTime: {
