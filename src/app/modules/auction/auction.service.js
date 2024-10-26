@@ -400,7 +400,7 @@ const deleteAuctionFromDB = async (id) => {
   return result;
 };
 
-// get my bidding history
+// get my bidding history----------------
 const getMyBiddingHistoryFromDB = async (userId) => {
   const auctions = await Auction.find({
     status: ENUM_AUCTION_STATUS.COMPLETED,
