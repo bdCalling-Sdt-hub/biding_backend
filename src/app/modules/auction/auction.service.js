@@ -473,13 +473,19 @@ const updateAuctionStatuses = async () => {
     const activatedAuctions = await Auction.find({
       status: ENUM_AUCTION_STATUS.ACTIVE,
     });
+    const activatedAuctions2 = await Auction.find({
+      startingDateTime: {
+        $gte: new Date(Date.now() - 500),
+        $lt: new Date(Date.now()),
+      },
+    });
 
     activatedAuctions.forEach((auction) => {
       global.io.sockets.sockets.forEach((socket) => {
         socket.join(auction._id.toString());
       });
     });
-    activatedAuctions.forEach(async (auction) => {
+    activatedAuctions2.forEach(async (auction) => {
       const updatedActiveAuction = await getUpdatedAuction(auction?._id);
       global.io.sockets.sockets.forEach((socket) => {
         socket.broadcast.emit("updated-auction", {
