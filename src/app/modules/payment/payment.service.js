@@ -523,7 +523,7 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
           title: "Payment successfully completed",
           message: `${
             order.orderType === ENUM_ORDER_TYPE.FINANCE
-              ? `Your payment for order ${updatedOrder?._id} is successful.`
+              ? `Your finance request for order ${updatedOrder?._id} is successful.`
               : `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
           }`,
           receiver: userId,
@@ -650,26 +650,6 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
   //   throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
   // }
 
-  // Prepare notification data
-  // const notificationData = [
-  //   {
-  //     title: "",
-  //     message: `Payment of $${updatedTransaction?.paidAmount} has been received for "${updatedTransaction.item}" from ${userData.name}.`,
-  //     receiver: ENUM_USER_ROLE.ADMIN,
-  //   },
-  //   {
-  //     title: "Payment successfully completed",
-  //     message: `${
-  //       isFinanceOrder
-  //         ? `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
-  //         : `Your payment for order ${updatedOrder._id} is successful`
-  //     }`,
-  //     receiver: userId,
-  //   },
-  // ];
-  // // Insert notifications
-  // await Notification.insertMany(notificationData);
-
   const adminNotificationData = {
     title: "",
     message: `Payment of $${updatedTransaction?.paidAmount} has been received for "${updatedTransaction.item}" from ${userData.name}.`,
@@ -682,7 +662,7 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
       title: "Payment successfully completed",
       message: `${
         order.orderType === ENUM_ORDER_TYPE.FINANCE
-          ? `Your payment for order ${updatedOrder?._id} is successful.`
+          ? `Your finance request for order ${updatedOrder?._id} is successful.`
           : `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
       }`,
       receiver: userId,
