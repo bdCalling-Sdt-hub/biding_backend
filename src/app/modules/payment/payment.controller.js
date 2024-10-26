@@ -90,39 +90,6 @@ const createPaymentIntent = catchAsync(async (req, res) => {
   });
 });
 
-// const savePaymentUpdateSpending = catchAsync(async (req, res) => {
-//   const result = await PaymentService.savePaymentUpdateSpending(req.body);
-
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: "You payment is saved. Total spend amount updated successfully",
-//     data: result,
-//   });
-// });
-
-// const updateTotalEarning = catchAsync(async (req, res) => {
-//   const result = await PaymentService.updateTotalEarning(req.body);
-
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: "Payment saved. Total earning amount updated successfully",
-//     data: result,
-//   });
-// });
-
-// const allPayments = catchAsync(async (req, res) => {
-//   const result = await PaymentService.allPayments();
-
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: "Total earning amount updated successfully",
-//     data: result,
-//   });
-// });
-
 const PaymentController = {
   // createPaymentIntent,
   // savePaymentUpdateSpending,

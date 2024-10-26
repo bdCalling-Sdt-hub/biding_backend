@@ -579,8 +579,6 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Transaction not found.");
   }
 
-  console.log("updated transaction --------------------", updatedTransaction);
-
   if (updatedTransaction?.totalBid > 0) {
     await User.findByIdAndUpdate(
       userId,
@@ -592,45 +590,11 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
   }
 
   // Update the order status and statusWithTime
-  // const updatedOrder = await Order.findOneAndUpdate(
-  //   { paymentId: paymentId, status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING },
-  //   {
-  //     status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-  //     statusWithTime: [
-  //       {
-  //         status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-  //         time: new Date(),
-  //       },
-  //     ],
-  //   },
-  //   { new: true }
-  // );
-  // Update the order status and statusWithTime
-  const isFinanceOrder = await Order.findOne({
+  const order = await Order.findOne({
     paymentId: paymentId,
-    orderType: ENUM_ORDER_TYPE.FINANCE,
   });
   let updatedOrder;
-  if (isFinanceOrder) {
-    // updatedOrder = await Order.findOneAndUpdate(
-    //   {
-    //     paymentId: paymentId,
-    //     orderType: ENUM_ORDER_TYPE.FINANCE,
-    //   },
-    //   {
-    //     $inc: {
-    //       paidInstallment: 1,
-    //       dueAmount: -updatedTransaction?.paidAmount,
-    //     },
-    //     $set: { lastPayment: Date.now() },
-    //     statusWithTime: [
-    //       {
-    //         status: ENUM_DELIVERY_STATUS.PAYMENT_SUCCESS,
-    //         time: new Date(),
-    //       },
-    //     ],
-    //   }
-    // );
+  if (order && order.orderType === ENUM_ORDER_TYPE.FINANCE) {
     updatedOrder = await Order.findOneAndUpdate(
       {
         paymentId: paymentId,
@@ -666,7 +630,7 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
         new: true,
       }
     );
-  } else {
+  } else if (order) {
     updatedOrder = await Order.findOneAndUpdate(
       { paymentId: paymentId, status: ENUM_DELIVERY_STATUS.PAYMENT_PENDING },
       {
@@ -725,10 +689,6 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
     };
     await Notification.create(userNotificationData);
   }
-
-  // if (!updatedOrder) {
-  //   throw new ApiError(httpStatus.NOT_FOUND, "Order not found.");
-  // }
 
   return {
     message: "Order Confirmed",
