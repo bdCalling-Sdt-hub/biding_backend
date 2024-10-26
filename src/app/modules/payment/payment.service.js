@@ -524,7 +524,7 @@ const executePaymentWithPaypal = async (userId, paymentId, payerId) => {
           message: `${
             order.orderType === ENUM_ORDER_TYPE.FINANCE
               ? `Your payment for order ${updatedOrder?._id} is successful.`
-              : `Your payment for order ${updatedOrder?._id} is successful`
+              : `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
           }`,
           receiver: userId,
         };
@@ -681,9 +681,9 @@ const executePaymentWithCreditCard = async (paymentId, userId) => {
     const userNotificationData = {
       title: "Payment successfully completed",
       message: `${
-        isFinanceOrder
-          ? `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
-          : `Your payment for order ${updatedOrder._id} is successful`
+        order.orderType === ENUM_ORDER_TYPE.FINANCE
+          ? `Your payment for order ${updatedOrder?._id} is successful.`
+          : `Your payment for order ${updatedOrder._id} is successful. Your product is ready for delivery; track your product for further details.`
       }`,
       receiver: userId,
     };
