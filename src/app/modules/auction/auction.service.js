@@ -479,6 +479,17 @@ const updateAuctionStatuses = async () => {
         socket.join(auction._id.toString());
       });
     });
+    activatedAuctions.forEach(async (auction) => {
+      const updatedActiveAuction = await getUpdatedAuction(auction?._id);
+      global.io.sockets.sockets.forEach((socket) => {
+        socket.broadcast.emit("updated-auction", {
+          updatedAuction: updatedActiveAuction,
+        });
+        global.io
+          .to(auction?._id.toString())
+          .emit("bidHistory", { updatedAuction: updatedActiveAuction });
+      });
+    });
 
     const allAuctions = await Auction.find();
     global.io.emit("allAuctions", allAuctions);
