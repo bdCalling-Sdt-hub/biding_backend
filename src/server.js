@@ -5,6 +5,7 @@ const config = require("./config");
 const { Server } = require("socket.io");
 const socket = require("./socket/socket");
 const seedAdmin = require("./app/DB");
+// make changes
 async function main() {
   try {
     await connectDB();
