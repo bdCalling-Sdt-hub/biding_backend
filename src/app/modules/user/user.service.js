@@ -6,6 +6,8 @@ const User = require("./user.model");
 const config = require("../../../config");
 const { jwtHelpers } = require("../../../helpers/jwtHelpers");
 const { sendEmail } = require("../../../utils/sendEmail");
+const fs = require("fs");
+const path = require("path");
 const {
   registrationSuccessEmailBody,
 } = require("../../../mails/email.register");
@@ -342,7 +344,19 @@ const updateProfile = async (req) => {
   if (!checkValidUser) {
     throw new ApiError(404, "You are not authorized");
   }
+ // Directly delete the existing profile image if present
+ if (checkValidUser.profile_image) {
+  // Replace the base URL with an empty string and normalize the path
+  const relativePath = checkValidUser.profile_image.replace(config.image_url, "").replace(/\\/g, "/");
+  const filePath = path.join(__dirname, "../../../../", relativePath); // Adjusted to point to the root
 
+  console.log(filePath); // Log the path to verify
+
+  // Check if the file exists and delete it
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+}
   const result = await User.findByIdAndUpdate(userId, data, {
     runValidators: true,
     new: true,
