@@ -1,7 +1,8 @@
 const httpStatus = require("http-status");
 const ApiError = require("../../../errors/ApiError");
 const Auction = require("./auction.model");
-
+const fs = require("fs");
+const path = require("path");
 const { default: mongoose } = require("mongoose");
 const { ENUM_AUCTION_STATUS, ENUM_USER_ROLE } = require("../../../utils/enums");
 const Bookmark = require("../bookmark/bookmark.model");
@@ -15,6 +16,7 @@ const QueryBuilder = require("../../../builder/queryBuilder");
 const User = require("../user/user.model");
 const getUpdatedAuction = require("../../../helpers/getUpdatedAuctiion");
 const getUniqueUsersFromBidHistory = require("../../../helpers/getUniqueUsersFromBidHistory");
+const config = require("../../../config");
 // const createAuctionIntoDB = async (data) => {
 //   const startingDate = new Date(data.startingDate);
 //   const [hours, minutes] = data.startingTime.split(":");
@@ -396,6 +398,24 @@ const deleteAuctionFromDB = async (id) => {
       "You can not delete auction when the auction is completed"
     );
   }
+
+// Extract local paths from URLs
+// const baseUrl = "http://192.168.10.11:6050/";
+if (auction.images && Array.isArray(auction.images)) {
+  auction.images.forEach((imageUrl) => {
+    // Replace the base URL with an empty string and normalize the path
+    const relativePath = imageUrl.replace(config.image_url, "").replace(/\\/g, "/");
+    const filePath = path.join(__dirname, "../../../../", relativePath); // Adjusted to point to the root
+
+    console.log(filePath);
+
+    // Check if the file exists and delete it
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  });
+}
+
   const result = await Auction.findByIdAndDelete(id);
   return result;
 };
