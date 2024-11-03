@@ -125,7 +125,7 @@ const createAuctionIntoDB = async (data) => {
       day: "numeric",
       hour: "numeric",
       minute: "numeric",
-      hour12: false,
+      hour12: true,
     };
     const formattedDate = endingDate.toLocaleDateString("en-US", options);
     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
