@@ -158,33 +158,37 @@ const config = require("../../../config");
 // };
 
 const createAuctionIntoDB = async (data) => {
-  // Parse and set UTC times for starting and ending dates
-  const endingDate = new Date(data.endingDate);
-  const [hours, minutes] = data.endingTime.split(":");
+  // Parse and set initial UTC times for starting and ending dates
   const startingDate = new Date(data.startingDate);
   const [startHours, startMinutes] = data.startingTime.split(":");
+  const endingDate = new Date(data.endingDate);
+  const [endHours, endMinutes] = data.endingTime.split(":");
 
-  // Set UTC hours for starting and ending dates
+  // Set hours and minutes in UTC to get accurate starting and ending dates
   startingDate.setUTCHours(startHours, startMinutes);
-  endingDate.setUTCHours(hours, minutes);
+  endingDate.setUTCHours(endHours, endMinutes);
 
-  // Convert dates to New York timezone and store as string
-  const options = { timeZone: "America/New_York", hour12: false };
-  data.startingDateTime = new Date(
-    startingDate.toLocaleString("en-US", options)
+  // Convert dates to New York time (Eastern Time Zone) for consistent validation and storage
+  const nyTimeOptions = { timeZone: "America/New_York", hour12: false };
+  const startDateInNY = new Date(
+    startingDate.toLocaleString("en-US", nyTimeOptions)
   );
-  data.activateDateTime = new Date(
-    endingDate.toLocaleString("en-US", options)
+  const endDateInNY = new Date(
+    endingDate.toLocaleString("en-US", nyTimeOptions)
   );
+
+  // Set the New York time dates to the data object for storage
+  data.startingDateTime = startDateInNY;
+  data.activateDateTime = endDateInNY;
 
   try {
-    // Check if starting and ending dates are in the future
-    const currentDateUTC = new Date().toISOString();
-    if (data.activateDateTime.toISOString() <= currentDateUTC) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future date");
+    // Validate that both the starting and ending dates are in the future (New York time)
+    const currentNYTime = new Date(new Date().toLocaleString("en-US", nyTimeOptions));
+    if (endDateInNY <= currentNYTime) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future ending date");
     }
-    if (data.startingDateTime.toISOString() <= currentDateUTC) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future date");
+    if (startDateInNY <= currentNYTime) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future starting date");
     }
 
     // Create auction in the database
@@ -196,8 +200,8 @@ const createAuctionIntoDB = async (data) => {
       );
     }
 
-    // Format the date and time to a readable format for notification
-    const formattedDate = data.activateDateTime.toLocaleString("en-US", {
+    // Format the ending date for the notification message in New York time
+    const formattedEndDate = endDateInNY.toLocaleString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -206,7 +210,7 @@ const createAuctionIntoDB = async (data) => {
       hour12: true,
       timeZone: "America/New_York",
     });
-    const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate} New York time.`;
+    const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedEndDate} New York time.`;
 
     // Create a notification for the admin
     await Notification.create({
@@ -234,6 +238,7 @@ const createAuctionIntoDB = async (data) => {
     );
   }
 };
+
 
 
 
