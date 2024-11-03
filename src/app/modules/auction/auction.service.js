@@ -157,79 +157,6 @@ const config = require("../../../config");
 //   }
 // };
 
-// const createAuctionIntoDB = async (data) => {
-//   // Parse and set UTC times for starting and ending dates
-//   const endingDate = new Date(data.endingDate);
-//   const [hours, minutes] = data.endingTime.split(":");
-//   const startingDate = new Date(data.startingDate);
-//   const [startHours, startMinutes] = data.startingTime.split(":");
-
-//   // Set UTC hours for starting and ending dates
-//   startingDate.setUTCHours(startHours, startMinutes);
-//   data.startingDateTime = startingDate;
-
-//   endingDate.setUTCHours(hours, minutes);
-//   data.activateDateTime = endingDate;
-
-//   try {
-//     // Check if starting and ending dates are in the future
-//     const currentDateUTC = new Date().toISOString();
-//     if (endingDate.toISOString() <= currentDateUTC) {
-//       throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future date");
-//     }
-//     if (startingDate.toISOString() <= currentDateUTC) {
-//       throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future date");
-//     }
-
-//     // Create auction in the database
-//     const result = await Auction.create(data);
-//     if (!result) {
-//       throw new ApiError(
-//         httpStatus.INTERNAL_SERVER_ERROR,
-//         "Auction not created, try again"
-//       );
-//     }
-
-//     // Format the date and time to a readable format
-//     const options = {
-//       year: "numeric",
-//       month: "long",
-//       day: "numeric",
-//       hour: "numeric",
-//       minute: "numeric",
-//       hour12: true,
-//       timeZone: "UTC",
-//     };
-//     const formattedDate = endingDate.toLocaleDateString("en-US", options);
-//     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate} UTC.`;
-
-//     // Create a notification for the admin
-//     await Notification.create({
-//       message: notificationMessage,
-//       receiver: ENUM_USER_ROLE.ADMIN,
-//     });
-
-//     // Send notifications to the admin
-//     const adminUnseenNotificationCount = await getAdminNotificationCount();
-//     global.io.emit("admin-notifications", adminUnseenNotificationCount);
-
-//     return result;
-//   } catch (err) {
-//     if (err instanceof ApiError) {
-//       throw err;
-//     }
-//     if (err instanceof mongoose.Error.ValidationError) {
-//       const messages = Object.values(err.errors).map((error) => error.message);
-//       throw new ApiError(httpStatus.BAD_REQUEST, messages.join(", "));
-//     }
-
-//     throw new ApiError(
-//       httpStatus.SERVICE_UNAVAILABLE,
-//       "Something went wrong. Try again later."
-//     );
-//   }
-// };
-
 const createAuctionIntoDB = async (data) => {
   // Parse and set UTC times for starting and ending dates
   const endingDate = new Date(data.endingDate);
@@ -241,28 +168,22 @@ const createAuctionIntoDB = async (data) => {
   startingDate.setUTCHours(startHours, startMinutes);
   endingDate.setUTCHours(hours, minutes);
 
-  // Convert dates to New York timezone
-  const nyTimeOptions = { timeZone: "America/New_York", hour12: false };
-  const startDateInNY = new Date(
-    new Intl.DateTimeFormat("en-US", { ...nyTimeOptions, dateStyle: "short", timeStyle: "short" })
-      .format(startingDate)
+  // Convert dates to New York timezone and store as string
+  const options = { timeZone: "America/New_York", hour12: false };
+  data.startingDateTime = new Date(
+    startingDate.toLocaleString("en-US", options)
   );
-  const endDateInNY = new Date(
-    new Intl.DateTimeFormat("en-US", { ...nyTimeOptions, dateStyle: "short", timeStyle: "short" })
-      .format(endingDate)
+  data.activateDateTime = new Date(
+    endingDate.toLocaleString("en-US", options)
   );
-
-  // Set the adjusted New York time dates to the data object
-  data.startingDateTime = startDateInNY;
-  data.activateDateTime = endDateInNY;
 
   try {
     // Check if starting and ending dates are in the future
     const currentDateUTC = new Date().toISOString();
-    if (endDateInNY.toISOString() <= currentDateUTC) {
+    if (data.activateDateTime.toISOString() <= currentDateUTC) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future date");
     }
-    if (startDateInNY.toISOString() <= currentDateUTC) {
+    if (data.startingDateTime.toISOString() <= currentDateUTC) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future date");
     }
 
@@ -275,8 +196,8 @@ const createAuctionIntoDB = async (data) => {
       );
     }
 
-    // Format the date and time to a readable format
-    const options = {
+    // Format the date and time to a readable format for notification
+    const formattedDate = data.activateDateTime.toLocaleString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -284,8 +205,7 @@ const createAuctionIntoDB = async (data) => {
       minute: "numeric",
       hour12: true,
       timeZone: "America/New_York",
-    };
-    const formattedDate = endDateInNY.toLocaleDateString("en-US", options);
+    });
     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate} New York time.`;
 
     // Create a notification for the admin
@@ -314,6 +234,7 @@ const createAuctionIntoDB = async (data) => {
     );
   }
 };
+
 
 
 
