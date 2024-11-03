@@ -31,6 +31,9 @@ app.use(
       "http://68.183.124.246",
       "http://167.71.82.21:3003",
       "http://167.71.82.21",
+      "http://198.211.109.64:3003",
+      "http://198.211.109.64:3000",
+      "http://198.211.109.64",
     ],
     credentials: true,
   })
@@ -61,3 +64,10 @@ app.use(globalErrorHandler);
 app.use(NotFoundHandler.handle);
 
 module.exports = app;
+
+
+
+
+
+
+
