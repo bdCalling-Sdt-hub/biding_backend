@@ -157,6 +157,7 @@ const createAuctionIntoDB = async (data) => {
   }
 };
 
+// make changes here 
 const getAllAuctionFromDB = async (query, userId) => {
   const auctionQuery = new QueryBuilder(Auction.find(), query)
     .search(["name"])
