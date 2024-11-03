@@ -88,107 +88,25 @@ const config = require("../../../config");
 //     );
 //   }
 // };
-// const createAuctionIntoDB = async (data) => {
-//   const endingDate = new Date(data.endingDate);
-//   const [hours, minutes] = data.endingTime.split(":");
-//   const startingDate = new Date(data.startingDate);
-//   const [startHours, startMinutes] = data.startingTime.split(":");
-//   startingDate.setHours(startHours, startMinutes);
-//   data.startingDateTime = startingDate;
-
-//   endingDate.setHours(hours, minutes);
-//   data.activateDateTime = endingDate;
-
-//   try {
-//     // Check if starting date is in the future
-//     data.activateTime = endingDate;
-//     if (endingDate <= new Date()) {
-//       throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
-//     }
-//     if(startingDate <= new Date()){
-//       throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
-//     }
-
-//     // Create auction in the database
-//     const result = await Auction.create(data);
-//     if (!result) {
-//       throw new ApiError(
-//         httpStatus.INTERNAL_SERVER_ERROR,
-//         "Auction not created, try again"
-//       );
-//     }
-
-//     // Format the date and time to a readable format
-//     const options = {
-//       year: "numeric",
-//       month: "long",
-//       day: "numeric",
-//       hour: "numeric",
-//       minute: "numeric",
-//       hour12: true,
-//     };
-//     const formattedDate = endingDate.toLocaleDateString("en-US", options);
-//     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
-
-//     // Create a notification for the admin
-//     await Notification.create({
-//       message: notificationMessage,
-//       receiver: ENUM_USER_ROLE.ADMIN,
-//     });
-
-//     // Send notifications to the admin
-//     const adminUnseenNotificationCount = await getAdminNotificationCount();
-//     global.io.emit("admin-notifications", adminUnseenNotificationCount);
-
-//     return result;
-//   } catch (err) {
-//     if (err instanceof ApiError) {
-//       throw err;
-//     }
-//     if (err instanceof mongoose.Error.ValidationError) {
-//       const messages = Object.values(err.errors).map((error) => error.message);
-//       throw new ApiError(httpStatus.BAD_REQUEST, messages.join(", "));
-//     }
-
-//     throw new ApiError(
-//       httpStatus.SERVICE_UNAVAILABLE,
-//       "Something went wrong. Try again later."
-//     );
-//   }
-// };
-
 const createAuctionIntoDB = async (data) => {
-  // Parse and set initial UTC times for starting and ending dates
+  const endingDate = new Date(data.endingDate);
+  const [hours, minutes] = data.endingTime.split(":");
   const startingDate = new Date(data.startingDate);
   const [startHours, startMinutes] = data.startingTime.split(":");
-  const endingDate = new Date(data.endingDate);
-  const [endHours, endMinutes] = data.endingTime.split(":");
+  startingDate.setHours(startHours, startMinutes);
+  data.startingDateTime = startingDate;
 
-  // Set hours and minutes in UTC to get accurate starting and ending dates
-  startingDate.setUTCHours(startHours, startMinutes);
-  endingDate.setUTCHours(endHours, endMinutes);
-
-  // Convert dates to New York time (Eastern Time Zone) for consistent validation and storage
-  const nyTimeOptions = { timeZone: "America/New_York", hour12: false };
-  const startDateInNY = new Date(
-    startingDate.toLocaleString("en-US", nyTimeOptions)
-  );
-  const endDateInNY = new Date(
-    endingDate.toLocaleString("en-US", nyTimeOptions)
-  );
-
-  // Set the New York time dates to the data object for storage
-  data.startingDateTime = startDateInNY;
-  data.activateDateTime = endDateInNY;
+  endingDate.setHours(hours, minutes);
+  data.activateDateTime = endingDate;
 
   try {
-    // Validate that both the starting and ending dates are in the future (New York time)
-    const currentNYTime = new Date(new Date().toLocaleString("en-US", nyTimeOptions));
-    if (endDateInNY <= currentNYTime) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future ending date");
+    // Check if starting date is in the future
+    data.activateTime = endingDate;
+    if (endingDate <= new Date()) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
     }
-    if (startDateInNY <= currentNYTime) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future starting date");
+    if(startingDate <= new Date()){
+      throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
     }
 
     // Create auction in the database
@@ -200,17 +118,17 @@ const createAuctionIntoDB = async (data) => {
       );
     }
 
-    // Format the ending date for the notification message in New York time
-    const formattedEndDate = endDateInNY.toLocaleString("en-US", {
+    // Format the date and time to a readable format
+    const options = {
       year: "numeric",
       month: "long",
       day: "numeric",
       hour: "numeric",
       minute: "numeric",
-      hour12: true,
-      timeZone: "America/New_York",
-    });
-    const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedEndDate} New York time.`;
+      hour12: false,
+    };
+    const formattedDate = endingDate.toLocaleDateString("en-US", options);
+    const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
 
     // Create a notification for the admin
     await Notification.create({
@@ -238,6 +156,8 @@ const createAuctionIntoDB = async (data) => {
     );
   }
 };
+
+
 
 
 
