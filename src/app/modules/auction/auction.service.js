@@ -105,6 +105,9 @@ const createAuctionIntoDB = async (data) => {
     if (endingDate <= new Date()) {
       throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
     }
+    if(startingDate <= new Date()){
+      throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
+    }
 
     // Create auction in the database
     const result = await Auction.create(data);
