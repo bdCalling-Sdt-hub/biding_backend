@@ -52,7 +52,7 @@ app.use("/uploads", express.static("uploads"));
 // All Routes
 app.use("/", routes);
 app.get("/", async (req, res) => {
-  res.json("Welcome to Bidding Website");
+  res.json("Welcome to Bidding Website!");
   const nun = await getUniqueUsersFromBidHistory("67176ba0eda7b41f66e6f12e");
   console.log("|num", nun);
 });
