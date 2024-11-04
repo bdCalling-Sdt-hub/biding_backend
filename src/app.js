@@ -13,12 +13,6 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "http://192.168.10.103:3000",
-      "http://192.168.10.103:3001",
-      "http://192.168.10.103:3002",
-      "http://192.168.10.103:3003",
-      "http://192.168.10.103:3004",
-      "http://192.168.10.103:3005",
       "http://localhost:3003",
       "http://localhost:3004",
       "http://103.161.9.133:3003",
@@ -31,9 +25,8 @@ app.use(
       "http://68.183.124.246",
       "http://167.71.82.21:3003",
       "http://167.71.82.21",
-      "http://198.211.109.64:3003",
-      "http://198.211.109.64:3000",
-      "http://198.211.109.64",
+      "http://142.93.65.179:3003",
+      "http://142.93.65.179",
     ],
     credentials: true,
   })
@@ -64,10 +57,3 @@ app.use(globalErrorHandler);
 app.use(NotFoundHandler.handle);
 
 module.exports = app;
-
-
-
-
-
-
-
