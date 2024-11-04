@@ -127,7 +127,7 @@ const createAuctionIntoDB = async (data) => {
       minute: "numeric",
       hour12: true,
     };
-    const formattedDate = endingDate.toLocaleDateString("en-US", options);
+    const formattedDate = startingDate.toLocaleDateString("en-US", options);
     const notificationMessage = `${data?.name} has been successfully created and scheduled to start on ${formattedDate}.`;
 
     // Create a notification for the admin
@@ -497,7 +497,7 @@ const updateAuctionStatuses = async () => {
         countdownTime: 9,
       }
     );
-    console.log(`Activated ${auctionsToActivate.modifiedCount} auctions.`);
+    console.log(`Activated ${auctionsToActivate.modifiedCount} auctionss.`);
 
     const activatedAuctions = await Auction.find({
       status: ENUM_AUCTION_STATUS.ACTIVE,
@@ -537,7 +537,7 @@ const updateAuctionStatuses = async () => {
     });
 
     readyAuctionsForBidBuddyBid?.forEach((auction) => {
-      console.log("Nice to meet yo9u in random bit");
+      console.log("Nice to meet you in random bit");
       placeRandomBid(auction?._id);
     });
 
