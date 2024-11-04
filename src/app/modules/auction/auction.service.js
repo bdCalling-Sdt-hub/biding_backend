@@ -527,7 +527,7 @@ const updateAuctionStatuses = async () => {
     });
 
     const allAuctions = await Auction.find();
-    global.io.emit("allAuctions", allAuctions);
+    global.io?.emit("allAuctions", allAuctions);
     // global.io.emit("bidHistory", allAuctions);
 
     // get auctions those are ready for bid with bidBuddy----------------------------
