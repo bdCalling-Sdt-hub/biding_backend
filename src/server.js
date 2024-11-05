@@ -6,7 +6,6 @@ const { Server } = require("socket.io");
 const socket = require("./socket/socket");
 const seedAdmin = require("./app/DB");
 
-
 // make changes
 async function main() {
   try {
@@ -14,7 +13,7 @@ async function main() {
     logger.info(`DB Connected Successfully at ${new Date().toLocaleString()}`);
     seedAdmin();
 
-    console.log(config.port)
+    console.log(config.port);
     const port =
       typeof config.port === "number" ? config.port : Number(config.port);
 
@@ -41,9 +40,9 @@ async function main() {
           "http://167.71.82.21:3003",
           "http://167.71.82.21",
           "http://142.93.65.179:3003",
-          "http://142.93.65.179"
-          ,
-          "http://143.198.175.105:3030"
+          "http://142.93.65.179",
+          "http://143.198.175.105:3030",
+          "http://143.198.175.105:3000",
         ],
       },
     });
