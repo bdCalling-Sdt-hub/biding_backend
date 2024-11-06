@@ -47,27 +47,61 @@ const activateBidBuddy = async (io, socket) => {
       //   },
       //   { new: true }
       // );
+      // await Auction.findByIdAndUpdate(
+      //   auctionId,
+      //   {
+      //     $push: {
+      //       bidBuddyUsers: {
+      //         user: new mongoose.Types.ObjectId(userId), // Ensure ObjectId format
+      //         availableBids: totalBids,
+      //         isActive: true,
+      //       },
+      //     },
+      //     // Conditionally update activateTime only if it's within 9 seconds of the current time
+      //     $set: {
+      //       activateTime: {
+      //         $cond: {
+      //           if: { $lte: ["$activateTime", nineSecondsFromNow] },
+      //           then: new Date(currentTime.getTime() + 9 * 1000),
+      //           else: "$activateTime", // Keep the existing value if condition is not met
+      //         },
+      //       },
+      //     },
+      //   },
+      //   { new: true }
+      // );
       await Auction.findByIdAndUpdate(
         auctionId,
-        {
-          $push: {
-            bidBuddyUsers: {
-              user: new mongoose.Types.ObjectId(userId), // Ensure ObjectId format
-              availableBids: totalBids,
-              isActive: true,
-            },
-          },
-          // Conditionally update activateTime only if it's within 9 seconds of the current time
-          $set: {
-            activateTime: {
-              $cond: {
-                if: { $lte: ["$activateTime", nineSecondsFromNow] },
-                then: new Date(currentTime.getTime() + 9 * 1000),
-                else: "$activateTime", // Keep the existing value if condition is not met
+        [
+          {
+            $set: {
+              // Conditionally set activateTime
+              activateTime: {
+                $cond: {
+                  // Check if activateTime is within 9 seconds from the current time
+                  if: { $lte: ["$activateTime", nineSecondsFromNow] },
+                  // If true, update activateTime to 9 seconds from now
+                  then: new Date(currentTime.getTime() + 9 * 1000),
+                  // If false, keep the existing activateTime
+                  else: "$activateTime",
+                },
+              },
+              // Append new user data to bidBuddyUsers array with userId as ObjectId
+              bidBuddyUsers: {
+                $concatArrays: [
+                  "$bidBuddyUsers",
+                  [
+                    {
+                      user: new mongoose.Types.ObjectId(userId), // Convert userId to ObjectId
+                      availableBids: totalBids,
+                      isActive: true,
+                    },
+                  ],
+                ],
               },
             },
           },
-        },
+        ],
         { new: true }
       );
       // get user
