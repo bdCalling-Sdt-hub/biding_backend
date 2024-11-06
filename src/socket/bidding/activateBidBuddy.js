@@ -31,54 +31,65 @@ const activateBidBuddy = async (io, socket) => {
     const currentTime = new Date();
     const nineSecondsFromNow = new Date(currentTime.getTime() + 9 * 1000);
     if (!existsUser) {
-      // await Auction.findByIdAndUpdate(
-      //   auctionId,
-      //   {
-      //     $push: {
-      //       bidBuddyUsers: {
-      //         user: userId,
-      //         availableBids: totalBids,
-      //         isActive: true,
-      //       },
-      //     },
-      //     activateTime: new Date(currentTime.getTime() + 9 * 1000),
-      //   },
-      //   { new: true }
-      // );
       await Auction.findByIdAndUpdate(
         auctionId,
-        [
-          {
-            $set: {
-              // Conditionally set activateTime
-              activateTime: {
-                $cond: {
-                  // Check if activateTime is within 9 seconds from the current time
-                  if: { $lte: ["$activateTime", nineSecondsFromNow] },
-                  // If true, update activateTime to 9 seconds from now
-                  then: new Date(currentTime.getTime() + 9 * 1000),
-                  // If false, keep the existing activateTime
-                  else: "$activateTime",
-                },
-              },
-              // Append new user data to bidBuddyUsers array
-              bidBuddyUsers: {
-                $concatArrays: [
-                  "$bidBuddyUsers",
-                  [
-                    {
-                      user: userId,
-                      availableBids: totalBids,
-                      isActive: true,
-                    },
-                  ],
-                ],
+        {
+          $push: {
+            bidBuddyUsers: {
+              user: userId,
+              availableBids: totalBids,
+              isActive: true,
+            },
+          },
+
+          // activateTime: new Date(currentTime.getTime() + 9 * 1000),
+          // Conditionally update activateTime only if it's within 9 seconds of the current time
+          $set: {
+            activateTime: {
+              $cond: {
+                if: { $lte: ["$activateTime", nineSecondsFromNow] },
+                then: new Date(currentTime.getTime() + 9 * 1000),
+                else: "$activateTime", // Keep the existing value if condition is not met
               },
             },
           },
-        ],
+        },
         { new: true }
       );
+      // await Auction.findByIdAndUpdate(
+      //   auctionId,
+      //   [
+      //     {
+      //       $set: {
+      //         // Conditionally set activateTime
+      //         activateTime: {
+      //           $cond: {
+      //             // Check if activateTime is within 9 seconds from the current time
+      //             if: { $lte: ["$activateTime", nineSecondsFromNow] },
+      //             // If true, update activateTime to 9 seconds from now
+      //             then: new Date(currentTime.getTime() + 9 * 1000),
+      //             // If false, keep the existing activateTime
+      //             else: "$activateTime",
+      //           },
+      //         },
+      //         // Append new user data to bidBuddyUsers array
+      //         bidBuddyUsers: {
+      //           $concatArrays: [
+      //             "$bidBuddyUsers",
+      //             [
+      //               {
+      //                 user: userId,
+      //                 availableBids: totalBids,
+      //                 isActive: true,
+      //               },
+      //             ],
+      //           ],
+      //         },
+      //       },
+      //     },
+      //   ],
+      //   { new: true }
+      // );
       // get user
       const userData = await User.findById(userId).select("availableBid");
       // update user

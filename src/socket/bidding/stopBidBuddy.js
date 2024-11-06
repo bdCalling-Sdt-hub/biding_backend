@@ -16,6 +16,7 @@ const stopBidBuddy = async (io, socket) => {
         },
         { new: true }
       ).select("bidBuddyUsers");
+      console.log("updated auction",updateAuction)
 
       await User.findByIdAndUpdate(userId, {
         $inc: { availableBid: totalBids },

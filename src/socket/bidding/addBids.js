@@ -4,6 +4,7 @@ const getUpdatedAuction = require("../../helpers/getUpdatedAuctiion");
 
 const addBids = async (io, socket) => {
   socket.on("add-bids", async ({ auctionId, userId, bids }) => {
+    console.log("add bids",auctionId,userId,bids)
     const existUser = await User.findById(userId);
     if (existUser.availableBid < bids) {
       io.to(userId).emit("socket-error", {
