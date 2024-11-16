@@ -21,7 +21,6 @@ async function main() {
     const server = app.listen(port, config.base_url, () => {
       logger.info(`App listening on port:${config.port}`);
     });
-
     // Set up Socket.IO-----------------
     const socketIO = new Server(server, {
       pingTimeout: 60000,
@@ -48,6 +47,8 @@ async function main() {
           "http://192.168.10.25:3030",
           "http://159.203.183.245:4173",
           "http://159.203.183.245:4174",
+          "http://192.168.10.26:3001",
+          "http://192.168.10.25:3000",
         ],
       },
     });
