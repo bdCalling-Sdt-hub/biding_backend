@@ -242,13 +242,15 @@ const createAuctionIntoDB = async (data) => {
   // Set the starting time on the starting date in local time
   startingDate.setHours(startHours, startMinutes);
    // Add 1 day to the starting date
-   startingDate.setDate(startingDate.getDate() + 1); 
+  //  startingDate.setDate(startingDate.getDate() + 1); 
+  endingDate.setHours(endingDate.getHours() + 5);
   data.startingDateTime = startingDate;
 
   // Set the ending time on the ending date in local time
   endingDate.setHours(hours, minutes);
   // Add 1 day to the ending date
-  endingDate.setDate(endingDate.getDate() + 1);
+  // endingDate.setDate(endingDate.getDate() + 1);
+  endingDate.setHours(endingDate.getHours() + 5);
   data.activateDateTime = endingDate;
 
   try {
