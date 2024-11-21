@@ -49,6 +49,8 @@ async function main() {
           "http://159.203.183.245:4174",
           "http://192.168.10.26:3001",
           "http://192.168.10.25:3000",
+          "https://sellaze.com",
+          "https://admin.sellaze.com",
         ],
       },
     });
