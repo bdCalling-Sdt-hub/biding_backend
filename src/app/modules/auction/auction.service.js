@@ -506,6 +506,46 @@ const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
 };
 
 // update auction into db
+// const updateAuctionIntoDB = async (id, data) => {
+//   const auction = await Auction.findById(id).select("status currentPrice");
+//   if (!auction) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "Auction not found");
+//   }
+
+//   if (
+//     auction.status === ENUM_AUCTION_STATUS.COMPLETED &&
+//     auction.currentPrice > 0
+//   ) {
+//     throw new ApiError(
+//       httpStatus.BAD_REQUEST,
+//       "This auction already completed , a user won this auction you can not update this auction right now "
+//     );
+//   }
+//   const endingDate = new Date(data.endingDate);
+//   const [hours, minutes] = data.endingTime.split(":");
+//   const startingDate = new Date(data.startingDate);
+//   const [startHours, startMinutes] = data.startingTime.split(":");
+//   startingDate.setHours(startHours, startMinutes);
+//   data.startingDateTime = startingDate;
+
+//   endingDate.setHours(hours, minutes);
+
+//   data.activateTime = endingDate;
+//   if (endingDate <= new Date()) {
+//     throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
+//   }
+
+//   if (endingDate > new Date()) {
+//     data.status = ENUM_AUCTION_STATUS.UPCOMING;
+//   }
+//   const result = await Auction.findByIdAndUpdate(id, data, {
+//     runValidators: true,
+//     new: true,
+//   });
+
+//   return result;
+// };
+
 const updateAuctionIntoDB = async (id, data) => {
   const auction = await Auction.findById(id).select("status currentPrice");
   if (!auction) {
@@ -518,33 +558,55 @@ const updateAuctionIntoDB = async (id, data) => {
   ) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "This auction already completed , a user won this auction you can not update this auction right now "
+      "This auction is already completed, and a user won this auction. You cannot update it."
     );
   }
+
+  // Parse and handle dates consistently with `createAuctionIntoDB`
   const endingDate = new Date(data.endingDate);
   const [hours, minutes] = data.endingTime.split(":");
   const startingDate = new Date(data.startingDate);
   const [startHours, startMinutes] = data.startingTime.split(":");
+
+  // Set the starting time on the starting date in local time
   startingDate.setHours(startHours, startMinutes);
+  startingDate.setHours(startingDate.getHours() + 5);
   data.startingDateTime = startingDate;
 
+  // Set the ending time on the ending date in local time
   endingDate.setHours(hours, minutes);
-
+  endingDate.setHours(endingDate.getHours() + 5);
   data.activateTime = endingDate;
+
+  // Validate that both dates are in the future
   if (endingDate <= new Date()) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
+    throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future ending date.");
+  }
+  if (startingDate <= new Date()) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future starting date.");
   }
 
+  // Update the auction status based on the new dates
   if (endingDate > new Date()) {
     data.status = ENUM_AUCTION_STATUS.UPCOMING;
   }
+
+  // Update the auction in the database
   const result = await Auction.findByIdAndUpdate(id, data, {
     runValidators: true,
     new: true,
   });
 
+  if (!result) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Auction not updated, try again."
+    );
+  }
+
   return result;
 };
+
 
 // delete auction from db
 const deleteAuctionFromDB = async (id) => {
