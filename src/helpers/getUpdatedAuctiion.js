@@ -122,6 +122,7 @@ const getUpdatedAuction = async (auctionId, bidHistoryLimit = 5) => {
                 bidAmount: "$$bid.bidAmount",
                 time: "$$bid.time",
                 name: { $ifNull: ["$$bid.userInfo.name", null] },
+                username: { $ifNull: ["$$bid.userInfo.username", null] },
                 email: { $ifNull: ["$$bid.userInfo.email", null] },
                 profile_image: {
                   $ifNull: ["$$bid.userInfo.profile_image", null],

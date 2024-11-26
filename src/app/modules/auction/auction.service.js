@@ -232,17 +232,16 @@ const config = require("../../../config");
 // };
 
 const createAuctionIntoDB = async (data) => {
-
-  console.log("date",data)
+  console.log("date", data);
   const endingDate = new Date(data.endingDate); // se the ending date, automatically in local timePar
   const [hours, minutes] = data.endingTime.split(":"); // Extract hours and minutes from endingTime
   const startingDate = new Date(data.startingDate); // Parse the starting date, automatically in local time
   const [startHours, startMinutes] = data.startingTime.split(":"); // Extract hours and minutes from startingTime
-  
+
   // Set the starting time on the starting date in local time
   startingDate.setHours(startHours, startMinutes);
-   // Add 1 day to the starting date
-  //  startingDate.setDate(startingDate.getDate() + 1); 
+  // Add 1 day to the starting date
+  //  startingDate.setDate(startingDate.getDate() + 1);
   startingDate.setHours(startingDate.getHours() + 5);
   data.startingDateTime = startingDate;
 
@@ -259,11 +258,13 @@ const createAuctionIntoDB = async (data) => {
     console.log("Ending Date (Local):", endingDate.toString());
     console.log("Current Date (Local):", new Date().toString());
     data.activateTime = endingDate;
-    
-    if (endingDate <= new Date()) { // Compare to current time in local time zone
+
+    if (endingDate <= new Date()) {
+      // Compare to current time in local time zone
       throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
     }
-    if (startingDate <= new Date()) { // Compare to current time in local time zone
+    if (startingDate <= new Date()) {
+      // Compare to current time in local time zone
       throw new ApiError(httpStatus.BAD_REQUEST, "Please add future date");
     }
 
@@ -314,11 +315,6 @@ const createAuctionIntoDB = async (data) => {
     );
   }
 };
-
-
-
-
-
 
 const getAllAuctionFromDB = async (query, userId) => {
   const auctionQuery = new QueryBuilder(Auction.find(), query)
@@ -481,6 +477,7 @@ const getSingleAuctionFromDB = async (auctionId, bidHistoryLimit = 5) => {
                 time: "$$bid.time",
                 name: { $ifNull: ["$$bid.userInfo.name", null] },
                 email: { $ifNull: ["$$bid.userInfo.email", null] },
+                username: { $ifNull: ["$$bid.userInfo.username", null] },
                 profile_image: {
                   $ifNull: ["$$bid.userInfo.profile_image", null],
                 },
@@ -580,10 +577,16 @@ const updateAuctionIntoDB = async (id, data) => {
 
   // Validate that both dates are in the future
   if (endingDate <= new Date()) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future ending date.");
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Please add a future ending date."
+    );
   }
   if (startingDate <= new Date()) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Please add a future starting date.");
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Please add a future starting date."
+    );
   }
 
   // Update the auction status based on the new dates
@@ -607,7 +610,6 @@ const updateAuctionIntoDB = async (id, data) => {
   return result;
 };
 
-
 // delete auction from db
 const deleteAuctionFromDB = async (id) => {
   const auction = await Auction.findById(id);
@@ -627,22 +629,24 @@ const deleteAuctionFromDB = async (id) => {
     );
   }
 
-// Extract local paths from URLs
-// const baseUrl = "http://192.168.10.11:6050/";
-if (auction.images && Array.isArray(auction.images)) {
-  auction.images.forEach((imageUrl) => {
-    // Replace the base URL with an empty string and normalize the path
-    const relativePath = imageUrl.replace(config.image_url, "").replace(/\\/g, "/");
-    const filePath = path.join(__dirname, "../../../../", relativePath); // Adjusted to point to the root
+  // Extract local paths from URLs
+  // const baseUrl = "http://192.168.10.11:6050/";
+  if (auction.images && Array.isArray(auction.images)) {
+    auction.images.forEach((imageUrl) => {
+      // Replace the base URL with an empty string and normalize the path
+      const relativePath = imageUrl
+        .replace(config.image_url, "")
+        .replace(/\\/g, "/");
+      const filePath = path.join(__dirname, "../../../../", relativePath); // Adjusted to point to the root
 
-    console.log(filePath);
+      console.log(filePath);
 
-    // Check if the file exists and delete it
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  });
-}
+      // Check if the file exists and delete it
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    });
+  }
 
   const result = await Auction.findByIdAndDelete(id);
   return result;

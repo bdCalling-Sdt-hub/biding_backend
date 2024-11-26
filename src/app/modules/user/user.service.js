@@ -17,10 +17,32 @@ const createActivationToken = require("../../../utils/createActivationToken");
 const { ENUM_AUTH_TYPE } = require("../../../utils/enums");
 const Shipping = require("../shippingAddress/shipping.model");
 
+// generate unique user name
+async function generateUniqueUsername(name) {
+  let baseUsername = name.toLowerCase().replace(/\s+/g, "");
+  let username = baseUsername;
+  let isUnique = false;
+
+  // Check for uniqueness in the database
+  while (!isUnique) {
+    const existingUser = await User.findOne({ where: { username } }); // Adjust query based on your ORM
+    if (existingUser) {
+      // Append random digits if not unique
+      const randomDigits = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
+      username = `${baseUsername}-${randomDigits}`;
+    } else {
+      isUnique = true; // Username is unique
+    }
+  }
+
+  return username;
+}
 const registrationUser = async (payload) => {
-  const { name, email, password, confirmPassword, phone_number } = payload;
+  const { name, email, password, confirmPassword, phone_number, username } =
+    payload;
 
   const user = {
+    username,
     name,
     email,
     password,
@@ -300,8 +322,10 @@ const signUPWithGoogle = async (payload) => {
     };
   }
 
+  const uniqueUsername = await generateUniqueUsername(payload.name);
   const createUser = await User.create({
     ...payload,
+    username: uniqueUsername,
     password: "google",
     verified: true,
     isActive: true,
@@ -344,19 +368,21 @@ const updateProfile = async (req) => {
   if (!checkValidUser) {
     throw new ApiError(404, "You are not authorized");
   }
- // Directly delete the existing profile image if present
- if (checkValidUser.profile_image) {
-  // Replace the base URL with an empty string and normalize the path
-  const relativePath = checkValidUser.profile_image.replace(config.image_url, "").replace(/\\/g, "/");
-  const filePath = path.join(__dirname, "../../../../", relativePath); // Adjusted to point to the root
+  // Directly delete the existing profile image if present
+  if (checkValidUser.profile_image) {
+    // Replace the base URL with an empty string and normalize the path
+    const relativePath = checkValidUser.profile_image
+      .replace(config.image_url, "")
+      .replace(/\\/g, "/");
+    const filePath = path.join(__dirname, "../../../../", relativePath); // Adjusted to point to the root
 
-  console.log(filePath); // Log the path to verify
+    console.log(filePath); // Log the path to verify
 
-  // Check if the file exists and delete it
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
+    // Check if the file exists and delete it
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
   }
-}
   const result = await User.findByIdAndUpdate(userId, data, {
     runValidators: true,
     new: true,
