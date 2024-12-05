@@ -2,9 +2,9 @@ const config = require("../../config");
 const Admin = require("../modules/admin/admin.model");
 
 const adminUser = {
-  name: "Manik Sarker",
-  email: "maniksarker265@gmail.com",
-  phone_number: "1234567890",
+  name: "Sellaze Admin",
+  email: "sellazeauctions@gmail.com",
+  phone_number: "+3748374373",
   password: config.default_admin_password,
   role: "ADMIN",
   streetAddress: "123 Admin Street",

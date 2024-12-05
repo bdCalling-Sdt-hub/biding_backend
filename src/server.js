@@ -51,6 +51,8 @@ async function main() {
           "http://192.168.10.25:3000",
           "https://sellaze.com",
           "https://admin.sellaze.com",
+          "http://sellaze.com",
+          "http://admin.sellaze.com",
         ],
       },
     });
