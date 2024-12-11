@@ -26,17 +26,7 @@ async function main() {
       pingTimeout: 60000,
       cors: {
         origin: [
-          "http://localhost:3030",
           "http://localhost:5173",
-          "http://localhost:3003",
-          "http://localhost:3004",
-          "http://192.168.10.103:3004",
-          "http://192.168.10.26:3000",
-          "http://167.71.82.21:3000",
-          "http://192.168.10.26",
-          "http://167.71.82.21",
-          "http://68.183.124.246:3003",
-          "http://68.183.124.246",
           "http://167.71.82.21:3003",
           "http://167.71.82.21",
           "http://142.93.65.179:3003",
