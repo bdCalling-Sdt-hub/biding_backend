@@ -326,15 +326,15 @@ const getAllAuctionFromDB = async (query, userId) => {
   auctionQuery.modelQuery = auctionQuery.modelQuery
     .populate({
       path: "bidBuddyUsers.user",
-      select: "name profile_image",
+      select: "name username profile_image",
     })
     .populate({
       path: "bidHistory.user",
-      select: "name profile_image",
+      select: "name username profile_image",
     })
     .populate({
       path: "winingBidder.user",
-      select: "name profile_image",
+      select: "name username profile_image",
     });
 
   const result = await auctionQuery.modelQuery;
@@ -681,6 +681,7 @@ const getMyBiddingHistoryFromDB = async (userId) => {
         auction.winingBidder.user._id.toString() === userId.toString();
 
       return {
+        _id: auction._id,
         name: auction.name,
         category: auction.category,
         status: isWinner ? "Winner" : "Outbid",

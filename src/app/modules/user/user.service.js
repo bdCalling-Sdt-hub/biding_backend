@@ -285,7 +285,7 @@ const loginUser = async (payload) => {
     );
   }
 
-  const { _id: userId, role } = isUserExist;
+  const { _id: userId, role, email } = isUserExist;
 
   const accessToken = jwtHelpers.createToken(
     { userId, email, role },
