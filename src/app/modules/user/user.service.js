@@ -38,9 +38,11 @@ async function generateUniqueUsername(name) {
   return username;
 }
 const registrationUser = async (payload) => {
-  const { name, email, password, confirmPassword, phone_number, username } =
-    payload;
-
+  const { name, email, password, confirmPassword, phone_number } = payload;
+  console.log("paylaod", payload);
+  const username = payload?.username
+    ? payload?.username
+    : await generateUniqueUsername(name);
   const user = {
     username,
     name,
@@ -60,10 +62,11 @@ const registrationUser = async (payload) => {
       user,
     };
   }
-  if (existingUser) {
+  if (existingUser?.email === email) {
     throw new ApiError(400, "Email already exists");
+  } else if (existingUser?.username === username) {
+    throw new ApiError(400, "Username already exists");
   }
-
   if (password !== confirmPassword) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -255,9 +258,13 @@ cron.schedule("* * * * *", async () => {
 });
 
 const loginUser = async (payload) => {
-  const { email, password } = payload;
+  // const { email, password } = payload;
 
-  const isUserExist = await User.findOne({ email }).select("+password");
+  // const isUserExist = await User.findOne({ email }).select("+password");
+  const { emailOrUsername, password } = payload;
+  const isUserExist = await User.findOne({
+    $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+  });
 
   if (!isUserExist) {
     throw new ApiError(404, "User does not exist");

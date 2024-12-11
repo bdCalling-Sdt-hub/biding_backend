@@ -53,6 +53,7 @@ async function main() {
           "https://admin.sellaze.com",
           "http://sellaze.com",
           "http://admin.sellaze.com",
+          "http://localhost:5174",
         ],
       },
     });
