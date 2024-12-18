@@ -44,6 +44,10 @@ async function main() {
           "http://sellaze.com",
           "http://admin.sellaze.com",
           "http://localhost:5174",
+          "http://192.241.137.164:4173",
+          "https://192.241.137.164:4173",
+          "http://192.241.137.164:4174",
+          "https://192.241.137.164:4174",
         ],
       },
     });
