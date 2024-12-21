@@ -27,6 +27,7 @@ async function main() {
       cors: {
         origin: [
           "http://localhost:5173",
+          "http://localhost:3001",
           "http://167.71.82.21:3003",
           "http://167.71.82.21",
           "http://142.93.65.179:3003",

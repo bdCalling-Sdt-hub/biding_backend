@@ -75,7 +75,8 @@ const handleManualBid = async (io, socket) => {
 
     const updatedAuction = await getUpdatedAuction(auctionId);
     io.to(auctionId).emit("bidHistory", { updatedAuction });
-    socket.broadcast.emit("updated-auction", { updatedAuction });
+    // socket.broadcast.emit("updated-auction", { updatedAuction });
+    io.emit("updated-auction", { updatedAuction });
     io.to(auctionId).emit("bidPlaced", newBid);
   });
 };
