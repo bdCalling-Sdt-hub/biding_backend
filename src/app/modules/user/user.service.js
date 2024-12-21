@@ -18,25 +18,55 @@ const { ENUM_AUTH_TYPE } = require("../../../utils/enums");
 const Shipping = require("../shippingAddress/shipping.model");
 
 // generate unique user name
+// async function generateUniqueUsername(name) {
+//   let baseUsername = name.toLowerCase().replace(/\s+/g, "");
+//   let username = baseUsername;
+//   let isUnique = false;
+
+//   // Check for uniqueness in the database
+//   while (!isUnique) {
+//     const existingUser = await User.findOne({ where: { username } });
+//     if (existingUser) {
+//       // Append random digits if not unique
+//       const randomDigits = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
+//       username = `${baseUsername}-${randomDigits}`;
+//     } else {
+//       isUnique = true; // Username is unique
+//     }
+//   }
+
+//   return username;
+// }
+
 async function generateUniqueUsername(name) {
-  let baseUsername = name.toLowerCase().replace(/\s+/g, "");
-  let username = baseUsername;
+  console.log("name", name);
+  let username = generateRandomString(8);
   let isUnique = false;
 
-  // Check for uniqueness in the database
   while (!isUnique) {
-    const existingUser = await User.findOne({ where: { username } }); // Adjust query based on your ORM
+    const existingUser = await User.findOne({ where: { username } });
     if (existingUser) {
-      // Append random digits if not unique
-      const randomDigits = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
-      username = `${baseUsername}-${randomDigits}`;
+      username = generateRandomString(8);
     } else {
-      isUnique = true; // Username is unique
+      isUnique = true;
     }
   }
 
   return username;
 }
+
+// Helper function to generate a random string of letters and numbers
+function generateRandomString(length) {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * chars.length);
+    result += chars[randomIndex];
+  }
+  return result;
+}
+
 const registrationUser = async (payload) => {
   const { name, email, password, confirmPassword, phone_number } = payload;
   console.log("paylaod", payload);

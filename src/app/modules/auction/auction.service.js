@@ -317,10 +317,16 @@ const createAuctionIntoDB = async (data) => {
 };
 
 const getAllAuctionFromDB = async (query, userId) => {
-  if (query.notComplete == true) {
-    query.status = { $ne: ENUM_AUCTION_STATUS.COMPLETED };
+  const { notComplete } = query;
+
+  if (notComplete == "true") {
+    query.$or = [
+      { status: ENUM_AUCTION_STATUS.ACTIVE },
+      { status: ENUM_AUCTION_STATUS.UPCOMING },
+    ];
   }
-  const auctionQuery = new QueryBuilder(Auction.find(), query)
+  const { notComplete: t, ...otherQuery } = query;
+  const auctionQuery = new QueryBuilder(Auction.find(), otherQuery)
     .search(["name"])
     .filter()
     .sort()
@@ -724,7 +730,7 @@ const updateAuctionStatuses = async () => {
         countdownTime: 9,
       }
     );
-    console.log(`Activated ${auctionsToActivate.modifiedCount} auctionss.`);
+    // console.log(`Activated ${auctionsToActivate.modifiedCount} auctionss.`);
 
     const activatedAuctions = await Auction.find({
       status: ENUM_AUCTION_STATUS.ACTIVE,
@@ -779,7 +785,7 @@ const updateAuctionStatuses = async () => {
         countdownTime: 0,
       }
     );
-    console.log(`Completed ${auctionsToComplete.modifiedCount} auctions.`);
+    // console.log(`Completed ${auctionsToComplete.modifiedCount} auctions.`);
     const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
     // Find and broadcast the completed auctions
     if (auctionsToComplete.modifiedCount > 0) {
