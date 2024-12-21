@@ -317,6 +317,9 @@ const createAuctionIntoDB = async (data) => {
 };
 
 const getAllAuctionFromDB = async (query, userId) => {
+  if (query.notComplete == true) {
+    query.status = { $ne: ENUM_AUCTION_STATUS.COMPLETED };
+  }
   const auctionQuery = new QueryBuilder(Auction.find(), query)
     .search(["name"])
     .filter()
