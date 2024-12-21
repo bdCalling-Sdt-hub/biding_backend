@@ -69,7 +69,6 @@ function generateRandomString(length) {
 
 const registrationUser = async (payload) => {
   const { name, email, password, confirmPassword, phone_number } = payload;
-  console.log("paylaod", payload);
   const username = payload?.username
     ? payload?.username
     : await generateUniqueUsername(name);
