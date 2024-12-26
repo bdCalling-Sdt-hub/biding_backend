@@ -57,7 +57,12 @@ const winingBidderSchema = {
 const auctionSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    category: { type: String, required: true },
+    // category: { type: String, required: true },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "Category",
+    },
 
     reservedBid: { type: Number, required: true },
     incrementValue: { type: Number, required: true },

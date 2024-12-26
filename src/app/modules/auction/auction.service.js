@@ -326,7 +326,10 @@ const getAllAuctionFromDB = async (query, userId) => {
     ];
   }
   const { notComplete: t, ...otherQuery } = query;
-  const auctionQuery = new QueryBuilder(Auction.find(), otherQuery)
+  const auctionQuery = new QueryBuilder(
+    Auction.find().populate({ path: "category" }),
+    otherQuery
+  )
     .search(["name"])
     .filter()
     .sort()
