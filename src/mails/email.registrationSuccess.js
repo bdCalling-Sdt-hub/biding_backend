@@ -50,11 +50,11 @@ const registrationSuccess = (data) => `
     </head>
     <body>
       <div class="container">
-        <h1>Welcome to Bidding Website</h1>
+        <h1>Welcome to Sellaze</h1>
         <p>Dear ${data?.user?.name ? data?.user?.name : data?.admin?.name},</p>
-        <p>Thank you for registering with Bidding Website. We are excited to have you on board and look forward to helping you make the most of our services.</p>
-        <p>If you have any questions or need assistance, please feel free to reach out to us at <a href="mailto:thakursaad613@gmail.com">thakursaad613@gmail.com</a>.</p>
-        <p>Best regards,<br>The Bidding Website Team</p>
+        <p>Thank you for registering with Sellaze. We are excited to have you on board and look forward to helping you make the most of our services.</p>
+        <p>If you have any questions or need assistance, please feel free to reach out to us at <a href="sellazeauctions@gmail.com">sellazeauctions@gmail.com</a>.</p>
+        <p>Best regards,<br>The Sellaze Team</p>
       </div>
     </body>
   </html>
