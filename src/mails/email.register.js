@@ -111,7 +111,7 @@ const registrationSuccessEmailBody = (userData) => `
               </a>
             </div>
             <p>If you didn't register, ignore this email.</p>
-          <p>If you have any questions, feel free to contact us at <a href="mailto:thakursaad613@gmail.com">thakursaad613@gmail.com</a>.</p>
+          <p>If you have any questions, feel free to contact us at <a href="sellazeauctions@gmail.com">sellazeauctions@gmail.com</a>.</p>
         </div>
         <div class="footer">
           <p>&copy; ${new Date().getFullYear()} Sellaze. All rights reserved.</p>
