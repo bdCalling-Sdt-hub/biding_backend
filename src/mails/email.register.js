@@ -95,12 +95,12 @@ const registrationSuccessEmailBody = (userData) => `
     <body>
       <div class="container">
         <div class="header">
-          <h1>Welcome to Bidding Website</h1>
+          <h1>Welcome to Sellaze</h1>
         </div>
         <div class="content">
           <h2>Hello, ${userData?.user?.name}</h2>
 
-          <p>Thank you for registering with Bidding Website. To activate your account, please use the following activation code:</p>
+          <p>Thank you for registering with Sellaze. To activate your account, please use the following activation code:</p>
             <div class="activation-code">${
               userData?.activationCode || "XXXXXX"
             }</div>
@@ -114,8 +114,8 @@ const registrationSuccessEmailBody = (userData) => `
           <p>If you have any questions, feel free to contact us at <a href="mailto:thakursaad613@gmail.com">thakursaad613@gmail.com</a>.</p>
         </div>
         <div class="footer">
-          <p>&copy; ${new Date().getFullYear()} Bidding Website. All rights reserved.</p>
-          <p><a href="https://yourwebsite.com/privacy">Privacy Policy</a> | <a href="https://yourwebsite.com/contact">Contact Us</a></p>
+          <p>&copy; ${new Date().getFullYear()} Sellaze. All rights reserved.</p>
+          <p><a href="https://sellaze.com/privacy-policy">Privacy Policy</a> | <a href="https://sellaze.com/contact">Contact Us</a></p>
         </div>
       </div>
     </body>
