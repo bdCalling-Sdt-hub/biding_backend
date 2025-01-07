@@ -10,7 +10,7 @@ const getUserDetailsFromToken = async (token) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid token");
   }
 
-  // Verify and decode the token
+  // Verify and decode the token-----------------
   const decode = await jwt.verify(token, config.jwt.secret);
   let user;
   if (decode?.role && decode?.role === "ADMIN") {
